@@ -5,7 +5,8 @@ import { apiLimiter } from '@/lib/rate-limit/limiter';
 import { logCycleSchema } from '@/lib/validations/cycle';
 import { computePrediction } from '@/lib/cycle/predictor';
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -15,7 +16,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 
   try {
     const admin = createAdminClient();
-    const { data: existing } = await admin.from('cycle_logs').select('user_id').eq('id', params.id).single();
+    const { data: existing } = await admin.from('cycle_logs').select('user_id').eq('id', id).single();
     if (!existing || existing.user_id !== user.id) {
       return NextResponse.json({ error: 'Not found or forbidden' }, { status: 403 });
     }
@@ -33,7 +34,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     if (result.data.avgFlow !== undefined) updateData.avg_flow = result.data.avgFlow;
     if (result.data.notes !== undefined) updateData.notes = result.data.notes;
 
-    const { data: updated, error } = await admin.from('cycle_logs').update(updateData).eq('id', params.id).select().single();
+    const { data: updated, error } = await admin.from('cycle_logs').update(updateData).eq('id', id).select().single();
     if (error) return NextResponse.json({ error: 'Update failed' }, { status: 500 });
 
     // Recompute
