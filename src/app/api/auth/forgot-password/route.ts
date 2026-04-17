@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     // Always return 200
     return NextResponse.json({ message: 'If that email exists, we sent a link to reset your password' }, { status: 200 });
 
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

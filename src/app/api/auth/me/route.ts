@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import { apiLimiter, getRealIP } from '@/lib/rate-limit/limiter';
+import { apiLimiter } from '@/lib/rate-limit/limiter';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-export async function GET(request: Request) {
-  const ip = getRealIP(request);
+export async function GET() {
   const supabaseServer = await createClient();
   const { data: { session } } = await supabaseServer.auth.getSession();
   
@@ -41,7 +40,7 @@ export async function GET(request: Request) {
       } 
     }, { status: 200 });
 
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

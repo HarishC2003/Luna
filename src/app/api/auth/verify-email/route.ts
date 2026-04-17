@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: 'Email verified successfully' }, { status: 200 });
 
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
