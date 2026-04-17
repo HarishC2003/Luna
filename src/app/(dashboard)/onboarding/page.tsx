@@ -68,7 +68,7 @@ export default function Onboarding() {
         {step === 1 && (
           <div className="animate-slide-in">
             <h2 className="text-3xl font-extrabold text-[#4A1B3C] mb-4">When was your last period?</h2>
-            <p className="text-[#4A1B3C]/70 mb-8">Don't worry if you're not sure — an estimate works fine.</p>
+            <p className="text-[#4A1B3C]/70 mb-8">Don&apos;t worry if you&apos;re not sure — an estimate works fine.</p>
             
             <input 
               type="date" 
@@ -151,7 +151,7 @@ export default function Onboarding() {
             <div className="w-24 h-24 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner border border-rose-100">
               ✨
             </div>
-            <h2 className="text-3xl font-extrabold text-[#4A1B3C] mb-4">You're all set!</h2>
+            <h2 className="text-3xl font-extrabold text-[#4A1B3C] mb-4">You&apos;re all set!</h2>
             <p className="text-[#4A1B3C]/70 mb-8 max-w-sm mx-auto leading-relaxed">
               Luna is completely personalized to your cycle. Remember to log daily to improve prediction accuracy.
             </p>

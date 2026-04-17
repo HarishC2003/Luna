@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { apiLimiter } from '@/lib/rate-limit/limiter';
 import { computePrediction, getPhaseDescription } from '@/lib/cycle/predictor';
 
-export async function GET(request: Request) {
+export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
   let phase = 'unknown';
   if (onboard) {
-      const mappedCycles = last6 ? last6.map((c: any) => ({
+      const mappedCycles = last6 ? last6.map((c: Record<string, unknown>) => ({
           periodStart: new Date(c.period_start),
           periodEnd: c.period_end ? new Date(c.period_end) : undefined,
           cycleLength: c.cycle_length || undefined

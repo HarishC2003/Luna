@@ -80,7 +80,7 @@ export function DayDrawer({ date, isOpen, onClose, dailyLog, cycleLog, onEditDai
               {dailyLog.flow && <div className="p-4 rounded-xl bg-[#FDF8F9]"><span className="text-xs opacity-50 uppercase block mb-1">Flow</span><FlowBadge flow={dailyLog.flow} /></div>}
               {dailyLog.energy && <div className="p-4 rounded-xl bg-[#FDF8F9]"><span className="text-xs opacity-50 uppercase block mb-1">Energy</span><div className="flex gap-1">{Array.from({length: 5}).map((_, i) => <span key={i} className={i < dailyLog.energy! ? 'text-amber-400' : 'text-gray-200'}>⚡</span>)}</div></div>}
               {dailyLog.symptoms && dailyLog.symptoms.length > 0 && <div className="p-4 rounded-xl bg-[#FDF8F9]"><span className="text-xs opacity-50 uppercase block mb-2">Symptoms</span><SymptomChips symptoms={dailyLog.symptoms} /></div>}
-              {dailyLog.notes && <div className="p-4 rounded-xl bg-[#FDF8F9]"><span className="text-xs opacity-50 uppercase block mb-1">Notes</span><p className="text-sm text-[#4A1B3C] italic">"{dailyLog.notes}"</p></div>}
+              {dailyLog.notes && <div className="p-4 rounded-xl bg-[#FDF8F9]"><span className="text-xs opacity-50 uppercase block mb-1">Notes</span><p className="text-sm text-[#4A1B3C] italic">&quot;{dailyLog.notes}&quot;</p></div>}
             </div>
           ) : (
             <div className="p-8 rounded-2xl bg-[#FDF8F9] border border-[#E85D9A]/20 text-center">

@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       .order('period_start', { ascending: false })
       .limit(1);
 
-    let cycleLength = null;
+    // cycleLength computed dynamically below
     if (existingCycles && existingCycles.length > 0) {
         const lastStart = new Date(existingCycles[0].period_start);
         const thisStart = new Date(periodStart);
@@ -66,10 +66,10 @@ export async function POST(request: Request) {
     const { data: onboard } = await admin.from('onboarding_data').select('*').eq('user_id', user.id).single();
 
     if (onboard && last6) {
-        const mappedCycles = last6.map((c: any) => ({
-            periodStart: new Date(c.period_start),
-            periodEnd: c.period_end ? new Date(c.period_end) : undefined,
-            cycleLength: c.cycle_length || undefined
+        const mappedCycles = last6.map((c: Record<string, unknown>) => ({
+            periodStart: new Date(c.period_start as string),
+            periodEnd: c.period_end ? new Date(c.period_end as string) : undefined,
+            cycleLength: (c.cycle_length as number) || undefined
         }));
 
         const prediction = computePrediction(mappedCycles, {
@@ -97,7 +97,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ cycleLog: newCycle }, { status: 201 });
-  } catch (err) {
+  } catch (error) {
+    console.error('[cycles/log] Internal server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

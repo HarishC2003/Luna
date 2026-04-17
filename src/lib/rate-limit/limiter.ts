@@ -1,34 +1,39 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL as string,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN as string,
-});
+function createRedis() {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-export const loginLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(5, '15 m'),
-  analytics: true,
-});
+  if (!url || !token) {
+    console.warn('[rate-limit] UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN is not set. Rate limiting is disabled.');
+    return null;
+  }
 
-export const registerLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(3, '60 m'),
-  analytics: true,
-});
+  return new Redis({ url, token });
+}
 
-export const passwordLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(3, '60 m'),
-  analytics: true,
-});
+const redis = createRedis();
 
-export const apiLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(100, '60 s'),
-  analytics: true,
-});
+function createLimiter(window: Parameters<typeof Ratelimit.slidingWindow>[0], duration: Parameters<typeof Ratelimit.slidingWindow>[1]) {
+  if (!redis) {
+    // Return a mock limiter that always allows requests
+    return {
+      limit: async () => ({ success: true, limit: 0, remaining: 0, reset: 0 }),
+    };
+  }
+
+  return new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(window, duration),
+    analytics: true,
+  });
+}
+
+export const loginLimiter = createLimiter(5, '15 m');
+export const registerLimiter = createLimiter(3, '60 m');
+export const passwordLimiter = createLimiter(3, '60 m');
+export const apiLimiter = createLimiter(100, '60 s');
 
 export function getRealIP(request: Request): string {
   const xForwardedFor = request.headers.get('x-forwarded-for');

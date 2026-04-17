@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { apiLimiter, getRealIP } from '@/lib/rate-limit/limiter';
+import { apiLimiter } from '@/lib/rate-limit/limiter';
 import { onboardingSchema } from '@/lib/validations/cycle';
 import { computePrediction } from '@/lib/cycle/predictor';
 
@@ -65,7 +65,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: 'Onboarding complete' }, { status: 200 });
 
-  } catch (err) {
+  } catch (error) {
+    console.error('[onboarding] Internal server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

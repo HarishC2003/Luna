@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { apiLimiter } from '@/lib/rate-limit/limiter';
 import { generateInsights } from '@/lib/cycle/insights';
 
-export async function GET(request: Request) {
+export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

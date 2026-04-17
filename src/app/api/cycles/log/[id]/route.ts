@@ -28,7 +28,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Validation failed', fields: result.error.flatten() }, { status: 400 });
     }
 
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (result.data.periodStart) updateData.period_start = result.data.periodStart;
     if (result.data.periodEnd !== undefined) updateData.period_end = result.data.periodEnd;
     if (result.data.avgFlow !== undefined) updateData.avg_flow = result.data.avgFlow;
@@ -42,7 +42,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { data: onboard } = await admin.from('onboarding_data').select('*').eq('user_id', user.id).single();
 
     if (onboard && last6) {
-        const mappedCycles = last6.map((c: any) => ({
+        const mappedCycles = last6.map((c: Record<string, unknown>) => ({
             periodStart: new Date(c.period_start),
             periodEnd: c.period_end ? new Date(c.period_end) : undefined,
             cycleLength: c.cycle_length || undefined
@@ -68,7 +68,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     return NextResponse.json(updated, { status: 200 });
-  } catch (err) {
+  } catch (error) {
+    console.error('[cycles/log/id] Internal server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

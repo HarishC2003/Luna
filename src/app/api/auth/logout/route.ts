@@ -22,7 +22,8 @@ export async function POST() {
     response.cookies.delete('sb-refresh-token');
 
     return response;
-  } catch {
+  } catch (error) {
+    console.error('[logout] Internal server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

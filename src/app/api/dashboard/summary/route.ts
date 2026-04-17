@@ -5,7 +5,7 @@ import { apiLimiter } from '@/lib/rate-limit/limiter';
 import { computePrediction, getPhaseDescription } from '@/lib/cycle/predictor';
 import { generateInsights } from '@/lib/cycle/insights';
 
-export async function GET(request: Request) {
+export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -40,10 +40,10 @@ export async function GET(request: Request) {
 
   let phase = 'unknown';
   let daysUntilNextPeriod = 0;
-  let predictionObj = predictionRes.data;
+  const predictionObj = predictionRes.data;
 
   if (onboardRes.data) {
-      const mappedCycles = (recentCyclesRes.data || []).map((c: any) => ({
+      const mappedCycles = (recentCyclesRes.data || []).map((c: Record<string, unknown>) => ({
           periodStart: new Date(c.period_start),
           periodEnd: c.period_end ? new Date(c.period_end) : undefined,
           cycleLength: c.cycle_length || undefined
@@ -71,7 +71,7 @@ export async function GET(request: Request) {
   // calculate streak
   let streakDays = 0;
   if (allLogsRes.data && allLogsRes.data.length > 0) {
-      const sortedDates = allLogsRes.data.map((l:any) => new Date(l.log_date).getTime()).sort((a:any,b:any) => b - a);
+      const sortedDates = allLogsRes.data.map((l: Record<string, unknown>) => new Date(l.log_date as string).getTime()).sort((a: number, b: number) => b - a);
       let currentDate = Date.now();
       for (let i = 0; i < sortedDates.length; i++) {
           const date = sortedDates[i];

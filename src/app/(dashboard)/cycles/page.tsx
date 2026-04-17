@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { CycleLog } from '@/types/cycle';
 import { CycleLogModal } from '@/components/cycle/CycleLogModal';
 import { FlowBadge } from '@/components/cycle/FlowBadge';
@@ -11,7 +11,7 @@ export default function CyclesPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedCycle, setSelectedCycle] = useState<CycleLog | undefined>();
 
-  const fetchCycles = async () => {
+  const fetchCycles = useCallback(async () => {
     try {
       const res = await fetch('/api/cycles?limit=12');
       const data = await res.json();
@@ -21,11 +21,12 @@ export default function CyclesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching on mount is a standard pattern
     fetchCycles();
-  }, []);
+  }, [fetchCycles]);
 
   const openLogModal = (cycle?: CycleLog) => {
     setSelectedCycle(cycle);

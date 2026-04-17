@@ -77,7 +77,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: 'Check your email to verify your account' }, { status: 201 });
 
-  } catch {
+  } catch (error) {
+    console.error('[register] Internal server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,19 +1,39 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { PhaseStatusCard } from '@/components/cycle/PhaseStatusCard';
 import { CalendarGrid } from '@/components/cycle/CalendarGrid';
 import { InsightCard } from '@/components/cycle/InsightCard';
 import { DailyLogModal } from '@/components/cycle/DailyLogModal';
 
+interface Insight {
+  id: string;
+  title: string;
+  body: string;
+  type: string;
+  icon: string;
+}
+
+interface DashboardData {
+  prediction?: {
+    currentPhase?: string;
+    daysUntilNextPeriod?: number;
+    dayOfCycle?: number;
+  };
+  recentCycles?: unknown[];
+  todayLog?: Record<string, unknown>;
+  insights?: Insight[];
+  needsOnboarding?: boolean;
+}
+
 export default function DashboardClient() {
   const router = useRouter();
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDailyModelOpen, setDailyModelOpen] = useState(false);
 
-  const fetchDashboard = async () => {
+  const fetchDashboard = useCallback(async () => {
     try {
       const res = await fetch('/api/dashboard/summary');
       const json = await res.json();
@@ -29,11 +49,12 @@ export default function DashboardClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching on mount is a standard pattern
     fetchDashboard();
-  }, [router]);
+  }, [fetchDashboard]);
 
   if (loading) {
     return (
@@ -65,7 +86,7 @@ export default function DashboardClient() {
       <CalendarGrid 
         prediction={data.prediction}
         cycles={data.recentCycles}
-        logs={data.todayLog ? [data.todayLog] : []} // the summary only gives todayLog, wait actually CalendarGrid expects all logs!
+        logs={data.todayLog ? [data.todayLog] : []}
         onRefresh={fetchDashboard}
       />
 
@@ -73,7 +94,7 @@ export default function DashboardClient() {
         <div className="mt-8">
           <h3 className="text-xl font-bold text-[#4A1B3C] mb-4">Insights</h3>
           <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar pointer-events-auto">
-            {data.insights.map((insight: any) => (
+            {data.insights.map((insight: Insight) => (
               <InsightCard key={insight.id} insight={insight} />
             ))}
           </div>

@@ -7,7 +7,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  initialData?: any;
+  initialData?: Record<string, unknown>;
 }
 
 const FLOWS: FlowIntensity[] = ['spotting', 'light', 'medium', 'heavy'];
@@ -30,7 +30,7 @@ export function CycleLogModal({ isOpen, onClose, onSuccess, initialData }: Props
     setError(null);
 
     try {
-      const payload: any = { periodStart: start };
+      const payload: Record<string, unknown> = { periodStart: start };
       if (end) payload.periodEnd = end;
       if (flow) payload.avgFlow = flow;
       if (notes) payload.notes = notes;
@@ -48,8 +48,8 @@ export function CycleLogModal({ isOpen, onClose, onSuccess, initialData }: Props
       if (!res.ok) throw new Error(data.error || 'Failed to save');
       
       onSuccess();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }

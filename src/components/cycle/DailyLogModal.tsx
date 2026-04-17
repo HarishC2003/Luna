@@ -8,7 +8,7 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   selectedDate?: string;
-  initialData?: any;
+  initialData?: Record<string, unknown>;
 }
 
 const MOODS: { val: Mood, icon: string, label: string }[] = [
@@ -50,7 +50,7 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
     setError(null);
 
     try {
-      const payload: any = { logDate: date };
+      const payload: Record<string, unknown> = { logDate: date };
       if (mood) payload.mood = mood;
       if (energy) payload.energy = energy;
       if (flow) payload.flow = flow;
@@ -67,8 +67,8 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
       if (!res.ok) throw new Error(data.error || 'Failed to save');
       
       onSuccess();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }

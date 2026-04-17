@@ -30,7 +30,8 @@ export async function POST(request: Request) {
 
     if (error) return NextResponse.json({ error: 'Failed to save daily log' }, { status: 500 });
     return NextResponse.json({ dailyLog: newLog }, { status: 201 });
-  } catch (err) {
+  } catch (error) {
+    console.error('[daily-log] Internal server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
