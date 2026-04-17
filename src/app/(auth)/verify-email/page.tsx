@@ -7,13 +7,15 @@ import Link from 'next/link';
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>(() => {
+    return token ? 'loading' : 'error';
+  });
+  const [message, setMessage] = useState(() => {
+    return token ? '' : 'No verification token provided.';
+  });
 
   useEffect(() => {
     if (!token) {
-      setStatus('error');
-      setMessage('No verification token provided.');
       return;
     }
 

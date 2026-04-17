@@ -20,7 +20,7 @@ export default function ForgotPasswordPage() {
       });
       // Always show success to prevent email enumeration
       setSuccess(true);
-    } catch (err) {
+    } catch {
       setSuccess(true);
     } finally {
       setLoading(false);

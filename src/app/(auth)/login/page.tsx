@@ -29,7 +29,7 @@ export default function LoginPage() {
       } else {
         window.location.href = '/dashboard';
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
       setPassword('');
     } finally {
@@ -116,7 +116,7 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-8 text-center text-sm text-[#4A1B3C]/70">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/register" className="text-[#E85D9A] hover:underline font-medium">
             Sign up
           </Link>

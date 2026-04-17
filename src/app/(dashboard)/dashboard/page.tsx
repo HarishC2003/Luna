@@ -59,7 +59,7 @@ export default function DashboardPage() {
           <h1 className="text-4xl font-extrabold text-[#4A1B3C]">
             Welcome home, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E85D9A] to-[#4A1B3C]">{user.displayName}</span>
           </h1>
-          <p className="text-[#4A1B3C]/70 mt-2 text-lg">We're glad to see you taking charge of your rhythm today.</p>
+          <p className="text-[#4A1B3C]/70 mt-2 text-lg">We&apos;re glad to see you taking charge of your rhythm today.</p>
         </div>
         
         <button

@@ -60,7 +60,7 @@ export default function RegisterPage() {
         setSuccessMsg(data.message || 'Check your email to verify your account');
         setFormData({ ...formData, displayName: '', email: '', password: '', confirmPassword: '' });
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
