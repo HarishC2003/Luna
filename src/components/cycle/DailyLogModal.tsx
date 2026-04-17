@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Mood, FlowIntensity, Symptom } from '@/types/cycle';
+import { Mood, FlowIntensity, Symptom, DailyLog } from '@/types/cycle';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   selectedDate?: string;
-  initialData?: Record<string, unknown>;
+  initialData?: Partial<DailyLog>;
 }
 
 const MOODS: { val: Mood, icon: string, label: string }[] = [

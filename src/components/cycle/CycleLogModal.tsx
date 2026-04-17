@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { FlowIntensity } from '@/types/cycle';
+import { FlowIntensity, CycleLog } from '@/types/cycle';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  initialData?: Record<string, unknown>;
+  initialData?: Partial<CycleLog>;
 }
 
 const FLOWS: FlowIntensity[] = ['spotting', 'light', 'medium', 'heavy'];

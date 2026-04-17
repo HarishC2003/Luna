@@ -43,9 +43,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     if (onboard && last6) {
         const mappedCycles = last6.map((c: Record<string, unknown>) => ({
-            periodStart: new Date(c.period_start),
-            periodEnd: c.period_end ? new Date(c.period_end) : undefined,
-            cycleLength: c.cycle_length || undefined
+            periodStart: new Date(c.period_start as string),
+            periodEnd: c.period_end ? new Date(c.period_end as string) : undefined,
+            cycleLength: (c.cycle_length as number) || undefined
         }));
 
         const prediction = computePrediction(mappedCycles, {

@@ -6,23 +6,12 @@ import { PhaseStatusCard } from '@/components/cycle/PhaseStatusCard';
 import { CalendarGrid } from '@/components/cycle/CalendarGrid';
 import { InsightCard } from '@/components/cycle/InsightCard';
 import { DailyLogModal } from '@/components/cycle/DailyLogModal';
-
-interface Insight {
-  id: string;
-  title: string;
-  body: string;
-  type: string;
-  icon: string;
-}
+import { Prediction, CycleLog, DailyLog, Insight } from '@/types/cycle';
 
 interface DashboardData {
-  prediction?: {
-    currentPhase?: string;
-    daysUntilNextPeriod?: number;
-    dayOfCycle?: number;
-  };
-  recentCycles?: unknown[];
-  todayLog?: Record<string, unknown>;
+  prediction?: Prediction;
+  recentCycles?: CycleLog[];
+  todayLog?: DailyLog;
   insights?: Insight[];
   needsOnboarding?: boolean;
 }
@@ -84,8 +73,8 @@ export default function DashboardClient() {
       )}
 
       <CalendarGrid 
-        prediction={data.prediction}
-        cycles={data.recentCycles}
+        prediction={data.prediction ?? null}
+        cycles={data.recentCycles ?? []}
         logs={data.todayLog ? [data.todayLog] : []}
         onRefresh={fetchDashboard}
       />
