@@ -27,6 +27,8 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
+          base: ${{ github.event.before }}
+          head: ${{ github.event.after }}
           extra_args: --debug --only-verified
 
       - name: Lint
