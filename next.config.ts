@@ -28,7 +28,4 @@ export default withSentryConfig(withPWA(nextConfig), {
   silent: true,
   org: "luna",
   project: "luna-app",
-  widenClientFileUpload: true,
-  transpileClientSDK: true,
-  hideSourceMaps: true,
 });
