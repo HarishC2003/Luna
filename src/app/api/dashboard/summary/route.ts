@@ -89,6 +89,7 @@ export async function GET() {
       prediction: predictionObj,
       recentCycles: (recentCyclesRes.data || []).slice(0,3),
       todayLog: todayLogRes.data || null,
+      allLogs: allLogsRes.data || [],
       insights: topInsights,
       streakDays
   }, { status: 200 });

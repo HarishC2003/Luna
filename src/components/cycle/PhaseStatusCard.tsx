@@ -33,7 +33,7 @@ export function PhaseStatusCard({ phase, daysUntilNext, dayOfCycle }: Props) {
         </div>
         
         <div className="bg-white px-6 py-4 rounded-2xl shadow-sm border border-current text-center w-full md:w-auto">
-          <div className="text-3xl font-extrabold shadow-sm bg-clip-text text-transparent bg-gradient-to-r from-current to-current opacity-80 mb-1">
+          <div className="text-4xl font-extrabold text-current opacity-90 mb-1">
             {daysUntilNext < 0 ? 'Late' : daysUntilNext}
           </div>
           <div className="text-sm font-semibold opacity-70 uppercase tracking-wider">

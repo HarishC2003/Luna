@@ -39,3 +39,11 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Upload Sentry source maps
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: your-sentry-org
+          SENTRY_PROJECT: luna
+        run: npx @sentry/cli sourcemaps inject .next && npx @sentry/cli sourcemaps upload .next
+        if: github.ref == 'refs/heads/main'

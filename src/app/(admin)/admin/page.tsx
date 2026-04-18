@@ -1,73 +1,73 @@
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { redirect } from 'next/navigation';
+'use client';
 
-export default async function AdminPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+import { useEffect, useState } from 'react';
 
-  if (!user) {
-    redirect('/login');
-  }
+export default function AdminOverviewPage() {
+  const [stats, setStats] = useState<any>(null);
+  const [authLogs, setAuthLogs] = useState<any[]>([]);
 
-  const adminClient = createAdminClient();
-  const { data: routeUser } = await adminClient.from('profiles').select('role').eq('id', user.id).single();
+  const fetchOverview = async () => {
+    try {
+      const statsRes = await fetch('/api/admin/stats');
+      if (statsRes.ok) setStats(await statsRes.json());
 
-  if (!routeUser || routeUser.role !== 'admin') {
-    redirect('/dashboard');
-  }
+      const logsRes = await fetch('/api/admin/auth-logs?limit=10');
+      if (logsRes.ok) setAuthLogs((await logsRes.json()).logs);
+    } catch {}
+  };
 
-  // Fetch 10 most recent auth logs
-  const { data: logs } = await adminClient
-    .from('auth_logs')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(10);
+  useEffect(() => {
+    fetchOverview();
+    const interval = setInterval(fetchOverview, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!stats) return <div className="animate-pulse">Loading dashboard...</div>;
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Luna Admin Panel</h1>
+    <div className="space-y-8 animate-fade-in">
+      <h2 className="text-3xl font-extrabold text-[#4A1B3C]">Overview</h2>
       
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-100/50">
-              <th className="py-3 px-4 text-sm font-semibold text-gray-600 border-b">Time</th>
-              <th className="py-3 px-4 text-sm font-semibold text-gray-600 border-b">Event Type</th>
-              <th className="py-3 px-4 text-sm font-semibold text-gray-600 border-b">Status</th>
-              <th className="py-3 px-4 text-sm font-semibold text-gray-600 border-b">IP Address</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs?.map((log) => (
-              <tr key={log.id} className="border-b last:border-0 hover:bg-gray-50/50">
-                <td className="py-3 px-4 text-sm text-gray-600">
-                  {new Date(log.created_at).toLocaleString()}
-                </td>
-                <td className="py-3 px-4 text-sm font-medium text-gray-900">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Users', value: stats.totalUsers },
+          { label: 'New Today', value: stats.newUsersToday },
+          { label: 'Active this Week', value: stats.activeThisWeek },
+          { label: 'Cycle Logs', value: stats.totalCycleLogs },
+          { label: 'Notifications Sent', value: stats.notificationsSentToday },
+          { label: 'Pending Deletions', value: stats.pendingDeletions },
+          { label: 'Suspended Users', value: stats.suspendedUsers },
+          { label: 'Crisis Events (All Time)', value: stats.crisisDetectedTotal, danger: true }
+        ].map((s, i) => (
+          <div key={i} className={`bg-white p-6 rounded-3xl shadow-sm border ${s.danger ? 'border-red-500' : 'border-[#E85D9A]/10'}`}>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{s.label}</p>
+            <p className={`text-4xl font-black mt-2 ${s.danger ? 'text-red-500' : 'text-[#E85D9A]'}`}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white p-6 rounded-3xl shadow-sm border border-[#E85D9A]/10">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold text-[#4A1B3C]">Live Auth Feed</h3>
+          <span className="flex items-center text-xs text-green-500 font-bold bg-green-50 px-2 py-1 rounded-full">
+            <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+            LIVE
+          </span>
+        </div>
+        <div className="space-y-3">
+          {authLogs.map(log => (
+            <div key={log.id} className="flex justify-between items-center text-sm p-3 bg-gray-50 rounded-xl">
+              <div>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-bold mr-2 ${log.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                   {log.event_type}
-                </td>
-                <td className="py-3 px-4 text-sm">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    log.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  }`}>
-                    {log.success ? 'Success' : 'Failed'}
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-sm text-gray-500 font-mono">
-                  {log.ip_address}
-                </td>
-              </tr>
-            ))}
-            {(!logs || logs.length === 0) && (
-              <tr>
-                <td colSpan={4} className="py-8 text-center text-gray-500">
-                  No auth logs found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                </span>
+                <span className="text-gray-600 font-mono text-xs">{log.user_id.split('-')[0]}</span>
+              </div>
+              <span className="text-xs text-gray-400">{new Date(log.created_at).toLocaleTimeString()}</span>
+            </div>
+          ))}
+          {authLogs.length === 0 && <p className="text-gray-400 text-sm">No activity</p>}
+        </div>
       </div>
     </div>
   );

@@ -53,8 +53,8 @@ export default function HistoryPage() {
                 {chartData.map(log => {
                     const h = (moodScore(log.mood!) / 5) * 100;
                     return (
-                        <div key={log.id} className="flex-1 flex flex-col items-center gap-2 group">
-                            <div className="w-full relative h-full flex items-end">
+                        <div key={log.id} className="flex-1 h-full flex flex-col justify-end items-center gap-2 group">
+                            <div className="w-full relative h-[80%] flex items-end">
                                 <div className="w-full rounded-t-lg bg-[#E85D9A] transition-all group-hover:bg-[#d44d88] opacity-80" style={{ height: `${h}%` }}></div>
                             </div>
                             <span className="text-[10px] font-semibold text-[#4A1B3C]/50 whitespace-nowrap">{new Date(log.log_date).toLocaleDateString(undefined, { weekday: 'short' })}</span>
@@ -83,7 +83,7 @@ export default function HistoryPage() {
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-4">
                       {log.mood && <div className="flex items-center gap-3"><span className="w-16 text-xs uppercase font-semibold text-[#4A1B3C]/40">Mood</span><MoodBar mood={log.mood} /></div>}
-                      {log.energy && <div className="flex items-center gap-3"><span className="w-16 text-xs uppercase font-semibold text-[#4A1B3C]/40">Energy</span><div className="flex gap-1">{Array.from({length: 5}).map((_, i) => <span key={i} className={i < log.energy! ? 'text-amber-400' : 'text-gray-200'}>⚡</span>)}</div></div>}
+                      {log.energy && <div className="flex items-center gap-3"><span className="w-16 text-xs uppercase font-semibold text-[#4A1B3C]/40">Energy</span><div className="flex gap-1">{Array.from({length: 5}).map((_, i) => <span key={i} className={i < log.energy! ? 'text-lg active-bolt drop-shadow-sm' : 'text-lg grayscale opacity-30'}>⚡</span>)}</div></div>}
                   </div>
                   <div className="space-y-4">
                       {log.flow && <div className="flex items-center gap-3"><span className="w-16 text-xs uppercase font-semibold text-[#4A1B3C]/40">Flow</span><FlowBadge flow={log.flow} /></div>}

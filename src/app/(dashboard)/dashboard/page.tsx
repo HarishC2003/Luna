@@ -13,6 +13,7 @@ interface DashboardData {
   recentCycles?: CycleLog[];
   todayLog?: DailyLog;
   insights?: Insight[];
+  allLogs?: DailyLog[];
   needsOnboarding?: boolean;
 }
 
@@ -75,7 +76,7 @@ export default function DashboardClient() {
       <CalendarGrid 
         prediction={data.prediction ?? null}
         cycles={data.recentCycles ?? []}
-        logs={data.todayLog ? [data.todayLog] : []}
+        logs={data.allLogs ?? []}
         onRefresh={fetchDashboard}
       />
 

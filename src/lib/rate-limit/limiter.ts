@@ -35,6 +35,11 @@ export const registerLimiter = createLimiter(3, '60 m');
 export const passwordLimiter = createLimiter(3, '60 m');
 export const apiLimiter = createLimiter(100, '60 s');
 
+export const chatLimiter = createLimiter(
+  Number(process.env.CHAT_RATE_LIMIT_REQUESTS) || 20,
+  `${process.env.CHAT_RATE_LIMIT_WINDOW_SECONDS || 3600} s` as any
+);
+
 export function getRealIP(request: Request): string {
   const xForwardedFor = request.headers.get('x-forwarded-for');
   if (xForwardedFor) {
