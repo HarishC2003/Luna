@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Mood, FlowIntensity, Symptom, DailyLog } from '@/types/cycle';
 
 interface Props {
@@ -34,13 +34,7 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
   const [symptoms, setSymptoms] = useState<Symptom[]>(() => initialData?.symptoms || []);
   const [notes, setNotes] = useState(() => initialData?.notes || '');
 
-  useEffect(() => {
-    /* eslint-disable-next-line react-hooks/set-state-in-effect */
-    if (isOpen) {
-      setLoading(false);
-      setError(null);
-    }
-  }, [isOpen]);
+
 
   if (!isOpen) return null;
 

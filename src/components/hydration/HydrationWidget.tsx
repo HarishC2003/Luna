@@ -33,11 +33,7 @@ export function HydrationWidget({ phase }: Props) {
 
   useEffect(() => {
     /* eslint-disable-next-line react-hooks/set-state-in-effect */
-    let isMounted = true;
-    if (isMounted) {
-      fetchToday();
-    }
-    return () => { isMounted = false; };
+    fetchToday();
   }, [fetchToday]);
 
   const updateGlasses = async (newCount: number) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { FlowIntensity, CycleLog } from '@/types/cycle';
 
 interface Props {
@@ -22,13 +22,7 @@ export function CycleLogModal({ isOpen, onClose, onSuccess, initialData }: Props
   const [flow, setFlow] = useState<FlowIntensity | ''>(() => (initialData?.avg_flow || '') as FlowIntensity | '');
   const [notes, setNotes] = useState(() => initialData?.notes || '');
 
-  useEffect(() => {
-    /* eslint-disable-next-line react-hooks/set-state-in-effect */
-    if (isOpen && initialData) {
-      setLoading(false);
-      setError(null);
-    }
-  }, [isOpen, initialData]);
+
 
   if (!isOpen) return null;
 
