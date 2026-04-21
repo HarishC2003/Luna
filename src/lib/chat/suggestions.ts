@@ -1,7 +1,7 @@
 import { UserHealthContext } from './context-builder';
 
 export function getSuggestedQuestions(ctx: UserHealthContext): string[] {
-  let suggestions: string[] = [];
+  const suggestions: string[] = [];
 
   const loggedBloating = ctx.recentSymptoms.some(s => s.symptom === 'bloating' && s.daysAgo <= 1);
   const loggedLowEnergy = ctx.recentMoods.some(m => (m.energy !== null && m.energy <= 2) && new Date(m.date).getTime() > Date.now() - 2 * 24 * 60 * 60 * 1000);

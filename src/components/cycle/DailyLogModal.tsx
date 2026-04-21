@@ -36,14 +36,21 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
 
   useEffect(() => {
     if (isOpen) {
+      const dateVal = selectedDate || (initialData?.log_date ? initialData.log_date.split('T')[0] : todayStr);
+      const moodVal = initialData?.mood || '';
+      const energyVal = initialData?.energy || '';
+      const flowVal = initialData?.flow || '';
+      const symptomsVal = initialData?.symptoms || [];
+      const notesVal = initialData?.notes || '';
+
+      setDate(dateVal);
+      setMood(moodVal);
+      setEnergy(energyVal);
+      setFlow(flowVal);
+      setSymptoms(symptomsVal);
+      setNotes(notesVal);
       setLoading(false);
       setError(null);
-      setDate(selectedDate || (initialData?.log_date ? initialData.log_date.split('T')[0] : todayStr));
-      setMood(initialData?.mood || '');
-      setEnergy(initialData?.energy || '');
-      setFlow(initialData?.flow || '');
-      setSymptoms(initialData?.symptoms || []);
-      setNotes(initialData?.notes || '');
     }
   }, [isOpen, selectedDate, initialData, todayStr]);
 

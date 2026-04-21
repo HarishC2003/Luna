@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export function useInstallPrompt() {
   const [canInstall, setCanInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
-  const deferredPrompt = useRef<any>(null);
+  const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     // Check if installed
@@ -13,7 +18,7 @@ export function useInstallPrompt() {
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      deferredPrompt.current = e;
+      deferredPrompt.current = e as BeforeInstallPromptEvent;
       setCanInstall(true);
     };
 

@@ -132,8 +132,8 @@ interface CycleReportProps {
   monthName: string;
   year: number;
   generatedAt: string;
-  cycles: any[];
-  logs: any[];
+  cycles: Record<string, unknown>[];
+  logs: Record<string, unknown>[];
   stats: {
     avgCycleLength: number;
     avgPeriodLength: number;
@@ -141,7 +141,7 @@ interface CycleReportProps {
     topMood: string;
     streak: number;
   };
-  insights: any[];
+  insights: { title: string; body: string }[];
 }
 
 export const CycleReportTemplate = ({ 

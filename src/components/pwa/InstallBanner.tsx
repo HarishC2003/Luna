@@ -16,10 +16,10 @@ export function InstallBanner() {
 
     // Detect iOS
     const ua = window.navigator.userAgent;
-    const iOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
-    setIsIOS(iOS);
+    const iOS = /iPad|iPhone|iPod/.test(ua) && !(window as Window & { MSStream?: unknown }).MSStream;
 
     if (canInstall || iOS) {
+      setIsIOS(iOS);
       setShow(true);
     }
   }, [canInstall, isInstalled]);

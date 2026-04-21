@@ -80,8 +80,8 @@ export function usePushNotifications() {
       
       setIsSubscribed(true);
       return true;
-    } catch (err: any) {
-      setError(err.message || 'Push subscription failed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Push subscription failed');
       return false;
     } finally {
       setIsLoading(false);
@@ -106,8 +106,8 @@ export function usePushNotifications() {
       }
       setIsSubscribed(false);
       return true;
-    } catch (err: any) {
-      setError(err.message || 'Unsubscribe failed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unsubscribe failed');
       return false;
     } finally {
       setIsLoading(false);

@@ -24,12 +24,17 @@ export function CycleLogModal({ isOpen, onClose, onSuccess, initialData }: Props
 
   useEffect(() => {
     if (isOpen) {
+      const startVal = initialData?.period_start ? initialData.period_start.split('T')[0] : todayStr;
+      const endVal = initialData?.period_end ? initialData.period_end.split('T')[0] : '';
+      const flowVal = initialData?.avg_flow || '';
+      const notesVal = initialData?.notes || '';
+
+      setStart(startVal);
+      setEnd(endVal);
+      setFlow(flowVal);
+      setNotes(notesVal);
       setLoading(false);
       setError(null);
-      setStart(initialData?.period_start ? initialData.period_start.split('T')[0] : todayStr);
-      setEnd(initialData?.period_end ? initialData.period_end.split('T')[0] : '');
-      setFlow(initialData?.avg_flow || '');
-      setNotes(initialData?.notes || '');
     }
   }, [isOpen, initialData, todayStr]);
 

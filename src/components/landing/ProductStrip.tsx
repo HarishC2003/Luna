@@ -55,7 +55,7 @@ export function ProductStrip() {
               {/* Action Button */}
               <button className="w-full bg-[#FDF8F9] border border-[#E85D9A]/30 text-[#E85D9A] font-bold py-3 rounded-xl text-sm justify-center flex items-center">
                 <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
-                Log today's symptoms
+                Log today&apos;s symptoms
               </button>
             </div>
           </div>
@@ -77,7 +77,7 @@ export function ProductStrip() {
                 I have bad cramps today
               </div>
               <div className="self-start bg-white border border-gray-100 text-[#4A1B3C] p-3 rounded-2xl rounded-tl-sm max-w-[85%] text-[13px] shadow-sm">
-                You're on day 2 — that's peak cramping time. Try a heat pad on your lower back and ibuprofen if you can take it. How heavy is the flow?
+                You&apos;re on day 2 — that&apos;s peak cramping time. Try a heat pad on your lower back and ibuprofen if you can take it. How heavy is the flow?
               </div>
               <div className="self-end bg-[#E85D9A] text-white p-3 rounded-2xl rounded-tr-sm max-w-[85%] text-[13px] shadow-sm">
                 Pretty heavy

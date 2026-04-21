@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin';
+import { computePrediction } from '@/lib/cycle/predictor';
 
 export interface UserHealthContext {
   today: {
@@ -128,7 +129,6 @@ export async function buildUserHealthContext(userId: string): Promise<UserHealth
     }
   }
 
-  const { computePrediction } = require('@/lib/cycle/predictor');
   const mappedCycles = cycleLogs.map(c => ({
     periodStart: new Date(c.period_start),
     periodEnd: c.period_end ? new Date(c.period_end) : undefined

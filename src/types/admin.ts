@@ -40,9 +40,9 @@ export interface AbuseLogEntry {
   session_id: string;
   reason: string;
   severity: 'low' | 'medium' | 'high';
-  payload: any;
+  payload: unknown;
   created_at: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface AnalyticsData {
@@ -93,5 +93,5 @@ export interface AdminUserDetail {
   cycleStats: { count: number; avgCycleLength: number | null };
   recentAuthLogs: AuthLogEntry[];
   suspensionHistory: UserSuspension[];
-  notificationSettings: any;
+  notificationSettings: unknown;
 }

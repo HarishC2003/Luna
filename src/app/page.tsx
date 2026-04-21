@@ -125,7 +125,7 @@ export default async function LandingPage() {
           
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-[#FDF8F9] p-6 rounded-2xl border border-[#E85D9A]/10">
-              <p className="text-[14px] italic text-[#4A1B3C]/80 mb-6">"Luna told me my cramps would start 2 days before my period and exactly that happened. It's scary accurate now."</p>
+              <p className="text-[14px] italic text-[#4A1B3C]/80 mb-6">&quot;Luna told me my cramps would start 2 days before my period and exactly that happened. It&apos;s scary accurate now.&quot;</p>
               <div className="flex items-center gap-3">
                  <div className="w-8 h-8 rounded-full bg-[#E85D9A] text-white flex items-center justify-center text-xs font-bold">PM</div>
                  <div className="text-[12px] text-gray-500 font-medium">— Priya M., Mumbai</div>
@@ -133,7 +133,7 @@ export default async function LandingPage() {
             </div>
 
             <div className="bg-[#FDF8F9] p-6 rounded-2xl border border-[#E85D9A]/10">
-              <p className="text-[14px] italic text-[#4A1B3C]/80 mb-6">"I asked Luna why I always feel anxious before my period. It explained the luteal phase in a way that actually made sense for my body."</p>
+              <p className="text-[14px] italic text-[#4A1B3C]/80 mb-6">&quot;I asked Luna why I always feel anxious before my period. It explained the luteal phase in a way that actually made sense for my body.&quot;</p>
               <div className="flex items-center gap-3">
                  <div className="w-8 h-8 rounded-full bg-[#E85D9A] text-white flex items-center justify-center text-xs font-bold">AT</div>
                  <div className="text-[12px] text-gray-500 font-medium">— Anika T., Bengaluru</div>
@@ -141,7 +141,7 @@ export default async function LandingPage() {
             </div>
 
             <div className="bg-[#FDF8F9] p-6 rounded-2xl border border-[#E85D9A]/10">
-              <p className="text-[14px] italic text-[#4A1B3C]/80 mb-6">"Finally an app that doesn't share my data. The privacy dashboard showed me exactly what's stored and nothing else."</p>
+              <p className="text-[14px] italic text-[#4A1B3C]/80 mb-6">&quot;Finally an app that doesn&apos;t share my data. The privacy dashboard showed me exactly what&apos;s stored and nothing else.&quot;</p>
               <div className="flex items-center gap-3">
                  <div className="w-8 h-8 rounded-full bg-[#E85D9A] text-white flex items-center justify-center text-xs font-bold">RA</div>
                  <div className="text-[12px] text-gray-500 font-medium">— Reem A., Dubai</div>
@@ -162,7 +162,7 @@ export default async function LandingPage() {
             </div>
             
             <p className="text-[14px] opacity-60 max-w-2xl leading-relaxed mb-8">
-              Luna is built on a simple principle: your menstrual health data is some of the most personal information about you. We built the architecture to ensure even we can't read it.
+              Luna is built on a simple principle: your menstrual health data is some of the most personal information about you. We built the architecture to ensure even we can&apos;t read it.
             </p>
             
             <Link href="/privacy" className="text-[#E85D9A] hover:text-white underline underline-offset-4 text-sm font-medium transition-colors">
@@ -234,7 +234,7 @@ export default async function LandingPage() {
           </div>
 
           <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-[#E85D9A]/10 text-xs text-gray-400 gap-4">
-             <p>© 2025 Luna. Made with care for women's health.</p>
+             <p>© 2025 Luna. Made with care for women&apos;s health.</p>
              <div className="flex gap-6">
                 <Link href="/privacy" className="hover:text-[#E85D9A] transition-colors">Privacy</Link>
                 <Link href="/terms" className="hover:text-[#E85D9A] transition-colors">Terms</Link>

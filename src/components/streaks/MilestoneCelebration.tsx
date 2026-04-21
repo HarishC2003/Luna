@@ -10,6 +10,16 @@ interface Props {
 
 export function MilestoneCelebration({ badgeKeys, onDismiss }: Props) {
   const [visible, setVisible] = useState(true);
+  const [confetti, setConfetti] = useState<Array<{ left: number; delay: number }>>([]);
+
+  useEffect(() => {
+    setConfetti(
+      Array.from({ length: 30 }).map(() => ({
+        left: Math.random() * 100,
+        delay: Math.random() * 1.5,
+      }))
+    );
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -31,13 +41,13 @@ export function MilestoneCelebration({ badgeKeys, onDismiss }: Props) {
     >
       {/* Confetti — 30 falling rects, respects prefers-reduced-motion */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none motion-safe-confetti">
-        {Array.from({ length: 30 }).map((_, i) => (
+        {confetti.map((piece, i) => (
           <span
             key={i}
             className="confetti-piece"
             style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 1.5}s`,
+              left: `${piece.left}%`,
+              animationDelay: `${piece.delay}s`,
               backgroundColor: ['#E85D9A', '#f59e0b', '#22c55e', '#8b5cf6', '#0ea5e9', '#ef4444'][i % 6],
             }}
           />

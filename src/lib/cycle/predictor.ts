@@ -106,7 +106,7 @@ export function computePrediction(cyclesInput: CycleInput[], onboarding: Onboard
   let confidence = 0.20;
   
   const isPCOS = onboarding.conditions?.includes('pcos') || false;
-  let isIrregular = standardDeviation(rawLengths) > 7;
+  const isIrregular = standardDeviation(rawLengths) > 7;
   const isPCOSMode = isPCOS || isIrregular;
 
   // Phase 2: Averaging Strategy
@@ -165,18 +165,18 @@ export function computePrediction(cyclesInput: CycleInput[], onboarding: Onboard
     lastPeriodStart = today; // fallback
   }
 
-  let predictedStart = addDays(lastPeriodStart, avgCycleLength);
+  const predictedStart = addDays(lastPeriodStart, avgCycleLength);
   
   // Phase 4: Compute ovulation and fertile window
   // "ovulationDate = addDays(predictedStart, -14)"
-  let ovulationDate = addDays(predictedStart, -14);
-  let fertileStart = addDays(ovulationDate, -5);
-  let fertileEnd = addDays(ovulationDate, 1);
-  let predictedEnd = addDays(predictedStart, avgPeriodLength - 1);
+  const ovulationDate = addDays(predictedStart, -14);
+  const fertileStart = addDays(ovulationDate, -5);
+  const fertileEnd = addDays(ovulationDate, 1);
+  const predictedEnd = addDays(predictedStart, avgPeriodLength - 1);
 
   // Phase 5: Determine current phase
   let isLate = false;
-  let daysUntilNextPeriod = daysBetween(today, predictedStart);
+  const daysUntilNextPeriod = daysBetween(today, predictedStart);
   if (daysUntilNextPeriod <= 0) {
     isLate = true;
   }

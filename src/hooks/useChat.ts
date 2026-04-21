@@ -12,15 +12,16 @@ export function useChat() {
 
   useEffect(() => {
     // Generate initial session ID and greeting
-    setSessionId(crypto.randomUUID());
-    setMessages([
-      {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: "Hi, I'm Luna. I'm here to help you understand your cycle and feel supported. What's on your mind today?",
-        timestamp: new Date()
-      }
-    ]);
+    const newSessionId = crypto.randomUUID();
+    const initialMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'assistant',
+      content: "Hi, I'm Luna. I'm here to help you understand your cycle and feel supported. What's on your mind today?",
+      timestamp: new Date()
+    };
+
+    setSessionId(newSessionId);
+    setMessages([initialMsg]);
 
     const fetchContext = async () => {
       try {
@@ -152,8 +153,9 @@ export function useChat() {
           }
         }
       }
-    } catch (err: any) {
-      setError(err.message || "Connection lost. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Connection lost. Please try again.";
+      setError(msg);
       setMessages(prev => prev.filter(m => m.id !== assistantMsgId));
     } finally {
       setIsLoading(false);

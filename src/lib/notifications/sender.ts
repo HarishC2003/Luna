@@ -74,10 +74,13 @@ export async function sendPushNotification(
           notificationPayload
         );
         anySuccess = true;
-      } catch (err: any) {
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          // Expired subscription
-          await admin.from('push_subscriptions').delete().eq('id', sub.id);
+      } catch (err: unknown) {
+        if (err && typeof err === 'object' && 'statusCode' in err) {
+          const status = (err as { statusCode: number }).statusCode;
+          if (status === 410 || status === 404) {
+            // Expired subscription
+            await admin.from('push_subscriptions').delete().eq('id', sub.id);
+          }
         }
       }
     }

@@ -28,9 +28,12 @@ export async function getFeatureFlag(key: FeatureFlagKey): Promise<boolean> {
       flagCache.set(key, { value: data.enabled, timestamp: now });
       return data.enabled;
     }
-  } catch (err: any) {
-    if (err?.code !== 'PGRST205' && err?.code !== '42P01') {
-      console.error(`Error fetching feature flag ${key}:`, err);
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const gerr = err as { code: string };
+      if (gerr.code !== 'PGRST205' && gerr.code !== '42P01') {
+        console.error(`Error fetching feature flag ${key}:`, err);
+      }
     }
   }
   
@@ -41,7 +44,7 @@ export async function getFeatureFlag(key: FeatureFlagKey): Promise<boolean> {
 export async function getAllFeatureFlags(): Promise<Record<FeatureFlagKey, boolean>> {
   const admin = createAdminClient();
   const { data } = await admin.from('feature_flags').select('key, enabled');
-  const result: any = {};
+  const result = {} as Record<FeatureFlagKey, boolean>;
   if (data) {
     data.forEach(row => {
       result[row.key as FeatureFlagKey] = row.enabled;
