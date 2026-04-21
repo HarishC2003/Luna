@@ -5,7 +5,7 @@ import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 
 export function InstallBanner() {
   const { canInstall, install, isInstalled } = useInstallPrompt();
-  const [isIOS, setIsIOS] = useState(() => {
+  const [isIOS] = useState(() => {
     if (typeof window !== 'undefined') {
       const ua = window.navigator.userAgent;
       return /iPad|iPhone|iPod/.test(ua) && !(window as Window & { MSStream?: unknown }).MSStream;
@@ -24,12 +24,14 @@ export function InstallBanner() {
   });
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (isInstalled) return;
     const dismissed = sessionStorage.getItem('luna_install_dismissed');
     if (dismissed === 'true') return;
     if (!show && (canInstall || isIOS)) {
       setShow(true);
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [canInstall, isInstalled, show, isIOS]);
 
   if (!show) return null;

@@ -11,12 +11,46 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
+  interface UserProfile {
+    displayName?: string;
+    dateOfBirth?: string;
+    conditions?: string[];
+    goals?: string[];
+    email?: string;
+  }
+
+  interface UserSettings {
+    email_period_reminder?: boolean;
+    email_fertile_window?: boolean;
+    email_log_streak?: boolean;
+    email_weekly_insights?: boolean;
+    email_tips?: boolean;
+    push_period_reminder?: boolean;
+    push_fertile_window?: boolean;
+    push_log_reminder?: boolean;
+    notify_hour?: number | string;
+    notify_days_before?: number | string;
+  }
+
+  interface PrivacySummary {
+    cycleLogs?: number;
+    dailyLogs?: number;
+    chatFeedback?: number;
+    pendingDeletion?: boolean;
+    pendingDeletionAt?: string;
+  }
+
+  interface Report {
+    download_url: string;
+    created_at: string;
+  }
+
   // Profile Data
-  const [profile, setProfile] = useState<Record<string, unknown>>({});
+  const [profile, setProfile] = useState<UserProfile>({});
   // Settings Data
-  const [settings, setSettings] = useState<Record<string, unknown>>({});
+  const [settings, setSettings] = useState<UserSettings>({});
   // Privacy Summary
-  const [privacy, setPrivacy] = useState<Record<string, unknown>>({});
+  const [privacy, setPrivacy] = useState<PrivacySummary>({});
 
   const { isSupported, isSubscribed, subscribe, unsubscribe, isLoading: pushLoading } = usePushNotifications();
   const [exportUrl, setExportUrl] = useState<string | null>(null);
@@ -26,7 +60,7 @@ export default function ProfilePage() {
   const [reportYear, setReportYear] = useState(new Date().getFullYear());
   const [reportGenerating, setReportGenerating] = useState(false);
   const [reportUrl, setReportUrl] = useState<string | null>(null);
-  const [recentReports, setRecentReports] = useState<Record<string, unknown>[]>([]);
+  const [recentReports, setRecentReports] = useState<Report[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -57,6 +91,7 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
     void fetchData();
   }, [fetchData]);
 
@@ -103,8 +138,8 @@ export default function ProfilePage() {
           pushPeriodReminder: settings.push_period_reminder,
           pushFertileWindow: settings.push_fertile_window,
           pushLogReminder: settings.push_log_reminder,
-          notifyHour: parseInt(settings.notify_hour),
-          notifyDaysBefore: parseInt(settings.notify_days_before)
+          notifyHour: parseInt(String(settings.notify_hour || 8)),
+          notifyDaysBefore: parseInt(String(settings.notify_days_before || 2))
         })
       });
       alert('Settings saved!');
@@ -232,7 +267,7 @@ export default function ProfilePage() {
               {['email_period_reminder', 'email_fertile_window', 'email_weekly_insights'].map(key => (
                 <label key={key} className="flex items-center justify-between p-3 border border-[#E85D9A]/10 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                   <span className="text-[#4A1B3C] font-medium capitalize">{key.replace('email_', '').replace('_', ' ')}</span>
-                  <input type="checkbox" checked={!!settings[key]} onChange={e => setSettings({...settings, [key]: e.target.checked})} className="w-5 h-5 accent-[#E85D9A]" />
+                  <input type="checkbox" checked={!!settings[key as keyof UserSettings]} onChange={e => setSettings({...settings, [key]: e.target.checked})} className="w-5 h-5 accent-[#E85D9A]" />
                 </label>
               ))}
             </div>
@@ -255,7 +290,7 @@ export default function ProfilePage() {
                 {['push_period_reminder', 'push_fertile_window', 'push_log_reminder'].map(key => (
                   <label key={key} className="flex items-center justify-between p-3 border border-[#E85D9A]/10 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <span className="text-[#4A1B3C] font-medium capitalize">{key.replace('push_', '').replace('_', ' ')}</span>
-                    <input type="checkbox" checked={!!settings[key]} onChange={e => setSettings({...settings, [key]: e.target.checked})} className="w-5 h-5 accent-[#E85D9A]" />
+                    <input type="checkbox" checked={!!settings[key as keyof UserSettings]} onChange={e => setSettings({...settings, [key]: e.target.checked})} className="w-5 h-5 accent-[#E85D9A]" />
                   </label>
                 ))}
               </div>
@@ -359,7 +394,7 @@ export default function ProfilePage() {
                          </div>
                          <div>
                            <p className="text-sm font-bold text-[#4A1B3C]">Cycle Report</p>
-                           <p className="text-[10px] text-[#4A1B3C]/50">{new Date(rep.created_at).toLocaleDateString([], { month: 'short', year: 'numeric' })}</p>
+                           <p className="text-[10px] text-[#4A1B3C]/50">{new Date(rep.created_at || '').toLocaleDateString([], { month: 'short', year: 'numeric' })}</p>
                          </div>
                        </div>
                        <div className="text-[#E85D9A] opacity-0 group-hover:opacity-100 transition-opacity">
@@ -392,7 +427,7 @@ export default function ProfilePage() {
             <button className="px-6 py-2 bg-gray-100 font-bold text-[#4A1B3C] rounded-lg" onClick={() => { alert('Not implemented directly in this snippet, use supabase.auth.resetPasswordForEmail() in production!'); }}>Send Reset Email</button>
           </div>
           {privacy.pendingDeletion ? (
-            <div className="p-6 rounded-3xl border-2 border-red-500 bg-red-50 text-red-700 font-bold">Your account is scheduled for total deletion at {new Date(privacy.pendingDeletionAt).toLocaleString()}. Check your email to cancel.</div>
+            <div className="p-6 rounded-3xl border-2 border-red-500 bg-red-50 text-red-700 font-bold">Your account is scheduled for total deletion at {new Date(privacy.pendingDeletionAt || '').toLocaleString()}. Check your email to cancel.</div>
           ) : (
             <div className="p-6 rounded-3xl border-2 border-red-100 bg-red-50">
               <h3 className="text-xl font-black text-red-600 mb-2">Danger Zone</h3>

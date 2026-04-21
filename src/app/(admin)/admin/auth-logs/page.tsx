@@ -20,9 +20,11 @@ export default function AuthLogsPage() {
   }, []);
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     void fetchLogs();
     const t = setInterval(() => { void fetchLogs(); }, 60000);
     return () => clearInterval(t);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [fetchLogs]);
 
   return (

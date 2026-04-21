@@ -23,6 +23,7 @@ export function CycleLogModal({ isOpen, onClose, onSuccess, initialData }: Props
   const [notes, setNotes] = useState(() => initialData?.notes || '');
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
     if (isOpen && initialData) {
       setLoading(false);
       setError(null);

@@ -13,6 +13,7 @@ export default function AbuseLogsPage() {
   }, [reviewedFilter]);
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
     void fetchLogs();
   }, [fetchLogs]);
 

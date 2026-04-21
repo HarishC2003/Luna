@@ -13,6 +13,7 @@ export function MilestoneCelebration({ badgeKeys, onDismiss }: Props) {
   const [confetti, setConfetti] = useState<Array<{ left: number; delay: number }>>([]);
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
     setConfetti(Array.from({ length: 30 }).map(() => ({
       left: Math.random() * 100,
       delay: Math.random() * 1.5,

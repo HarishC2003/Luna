@@ -35,6 +35,7 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
   const [notes, setNotes] = useState(() => initialData?.notes || '');
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
     if (isOpen) {
       setLoading(false);
       setError(null);

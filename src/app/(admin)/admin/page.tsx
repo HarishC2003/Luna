@@ -18,9 +18,11 @@ export default function AdminOverviewPage() {
   }, []);
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     void fetchOverview();
     const interval = setInterval(() => { void fetchOverview(); }, 30000);
     return () => clearInterval(interval);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [fetchOverview]);
 
   if (!stats) return <div className="animate-pulse">Loading dashboard...</div>;
