@@ -2,8 +2,13 @@ import { useState, useEffect } from 'react';
 import { ChatMessage } from '@/types/chat';
 
 export function useChat() {
-  const [sessionId, setSessionId] = useState<string>('');
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID());
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [{
+    id: crypto.randomUUID(),
+    role: 'assistant',
+    content: "Hi, I'm Luna. I'm here to help you understand your cycle and feel supported. What's on your mind today?",
+    timestamp: new Date()
+  }]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -11,19 +16,6 @@ export function useChat() {
   const [loggedToday, setLoggedToday] = useState<boolean>(true);
 
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect */
-    // Generate initial session ID and greeting
-    const newSessionId = crypto.randomUUID();
-    const initialMsg: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: "Hi, I'm Luna. I'm here to help you understand your cycle and feel supported. What's on your mind today?",
-      timestamp: new Date()
-    };
-
-    setSessionId(newSessionId);
-    setMessages([initialMsg]);
-
     const fetchContext = async () => {
       try {
         const res = await fetch('/api/chat/suggestions');
@@ -36,7 +28,6 @@ export function useChat() {
       }
     };
     fetchContext();
-    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   const refreshContext = async () => {

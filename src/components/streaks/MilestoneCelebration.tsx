@@ -10,14 +10,14 @@ interface Props {
 
 export function MilestoneCelebration({ badgeKeys, onDismiss }: Props) {
   const [visible, setVisible] = useState(true);
-  const [confetti] = useState<Array<{ left: number; delay: number }>>(() => 
-    Array.from({ length: 30 }).map(() => ({
-      left: Math.random() * 100,
-      delay: Math.random() * 1.5,
-    }))
-  );
+  const [confetti, setConfetti] = useState<Array<{ left: number; delay: number }>>([]);
 
   useEffect(() => {
+    setConfetti(Array.from({ length: 30 }).map(() => ({
+      left: Math.random() * 100,
+      delay: Math.random() * 1.5,
+    })));
+
     const timer = setTimeout(() => {
       setVisible(false);
       onDismiss();

@@ -5,26 +5,32 @@ import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 
 export function InstallBanner() {
   const { canInstall, install, isInstalled } = useInstallPrompt();
-  const [show, setShow] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
+  const [isIOS, setIsIOS] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const ua = window.navigator.userAgent;
+      return /iPad|iPhone|iPod/.test(ua) && !(window as Window & { MSStream?: unknown }).MSStream;
+    }
+    return false;
+  });
+
+  const [show, setShow] = useState(() => {
+    if (typeof window !== 'undefined') {
+      if (isInstalled) return false;
+      const dismissed = sessionStorage.getItem('luna_install_dismissed');
+      if (dismissed === 'true') return false;
+      return false; // Can't reliably read canInstall synchronously here.
+    }
+    return false;
+  });
 
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect */
     if (isInstalled) return;
-
     const dismissed = sessionStorage.getItem('luna_install_dismissed');
     if (dismissed === 'true') return;
-
-    // Detect iOS
-    const ua = window.navigator.userAgent;
-    const iOS = /iPad|iPhone|iPod/.test(ua) && !(window as Window & { MSStream?: unknown }).MSStream;
-
-    if (canInstall || iOS) {
-      setIsIOS(iOS);
+    if (!show && (canInstall || isIOS)) {
       setShow(true);
     }
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, [canInstall, isInstalled]);
+  }, [canInstall, isInstalled, show, isIOS]);
 
   if (!show) return null;
 

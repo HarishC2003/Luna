@@ -27,34 +27,19 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
   const [error, setError] = useState<string | null>(null);
 
   const [todayStr] = useState(() => new Date().toISOString().split('T')[0]);
-  const [date, setDate] = useState(selectedDate || todayStr);
-  const [mood, setMood] = useState<Mood | ''>(initialData?.mood || '');
-  const [energy, setEnergy] = useState<number | ''>(initialData?.energy || '');
-  const [flow, setFlow] = useState<FlowIntensity | ''>(initialData?.flow || '');
-  const [symptoms, setSymptoms] = useState<Symptom[]>(initialData?.symptoms || []);
-  const [notes, setNotes] = useState(initialData?.notes || '');
+  const [date, setDate] = useState(() => selectedDate || (initialData?.log_date ? initialData.log_date.split('T')[0] : new Date().toISOString().split('T')[0]));
+  const [mood, setMood] = useState<Mood | ''>(() => initialData?.mood || '');
+  const [energy, setEnergy] = useState<number | ''>(() => initialData?.energy || '');
+  const [flow, setFlow] = useState<FlowIntensity | ''>(() => initialData?.flow || '');
+  const [symptoms, setSymptoms] = useState<Symptom[]>(() => initialData?.symptoms || []);
+  const [notes, setNotes] = useState(() => initialData?.notes || '');
 
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect */
     if (isOpen) {
-      const dateVal = selectedDate || (initialData?.log_date ? initialData.log_date.split('T')[0] : todayStr);
-      const moodVal = initialData?.mood || '';
-      const energyVal = initialData?.energy || '';
-      const flowVal = initialData?.flow || '';
-      const symptomsVal = initialData?.symptoms || [];
-      const notesVal = initialData?.notes || '';
-
-      setDate(dateVal);
-      setMood(moodVal);
-      setEnergy(energyVal);
-      setFlow(flowVal);
-      setSymptoms(symptomsVal);
-      setNotes(notesVal);
       setLoading(false);
       setError(null);
     }
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, [isOpen, selectedDate, initialData, todayStr]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
