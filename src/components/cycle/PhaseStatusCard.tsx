@@ -1,7 +1,7 @@
-import { getPhaseColor, getPhaseDescription } from '@/lib/cycle/predictor';
+import { getPhaseColor, getPhaseDescription, CyclePhase } from '@/lib/cycle/predictor';
 
 interface Props {
-  phase: string;
+  phase: CyclePhase;
   daysUntilNext: number;
   dayOfCycle: number;
 }

@@ -5,12 +5,14 @@ import { useChat } from '@/hooks/useChat';
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { SuggestionChips } from '@/components/chat/SuggestionChips';
+import { DailyLogModal } from '@/components/cycle/DailyLogModal';
 
 export default function ChatPage() {
-  const { messages, isLoading, error, suggestions, sendMessage, clearHistory, thumbsUp, thumbsDown } = useChat();
+  const { messages, isLoading, error, suggestions, sendMessage, clearHistory, thumbsUp, thumbsDown, contextPill, loggedToday, refreshContext } = useChat();
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [showLogModal, setShowLogModal] = useState(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -56,9 +58,30 @@ export default function ChatPage() {
         </button>
       </div>
 
+      {contextPill && (
+        <div className="bg-[#E85D9A]/5 px-4 py-2 text-center text-xs text-[#4A1B3C]/80 font-medium border-b border-[#E85D9A]/10">
+          ✨ {contextPill}
+        </div>
+      )}
+
       {error && (
         <div className="bg-red-50 text-red-600 px-4 py-2 text-sm flex justify-between items-center border-b border-red-100">
            <span>{error}</span>
+        </div>
+      )}
+
+      {!loggedToday && messages.length <= 1 && (
+        <div className="bg-[#4A1B3C]/5 px-4 py-2.5 text-sm shadow-inner flex flex-wrap items-center justify-between gap-2 border-b border-[#4A1B3C]/10">
+          <span className="text-[#4A1B3C] font-medium flex items-center">
+            <svg className="w-4 h-4 mr-2 text-[#E85D9A]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            You haven't logged today.
+          </span>
+          <button 
+            onClick={() => setShowLogModal(true)}
+            className="text-[#E85D9A] hover:underline font-bold text-sm whitespace-nowrap"
+          >
+            Log now →
+          </button>
         </div>
       )}
 
@@ -90,11 +113,33 @@ export default function ChatPage() {
             <SuggestionChips suggestions={suggestions} onSelect={sendMessage} />
           </div>
         )}
+        {messages.length === 1 && (
+          <div className="flex gap-2 overflow-x-auto no-scrollbar mb-3 pb-1">
+            {["What should I eat today?", "Why do I feel this way?", "When is my period?"].map((q) => (
+              <button 
+                key={q}
+                onClick={() => sendMessage(q)} 
+                className="whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-[#4A1B3C]/10 text-[#4A1B3C] shadow-sm hover:border-[#E85D9A] hover:text-[#E85D9A] transition-colors"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        )}
         <ChatInput onSend={sendMessage} isLoading={isLoading} />
         <p className="text-[10px] text-center text-gray-400 mt-2 leading-tight px-4">
           Your conversations are private and not stored. Luna uses your cycle data to personalise responses.
         </p>
       </div>
+
+      <DailyLogModal 
+        isOpen={showLogModal} 
+        onClose={() => setShowLogModal(false)}
+        onSuccess={() => {
+          setShowLogModal(false);
+          refreshContext();
+        }}
+      />
     </div>
   );
 }

@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { apiLimiter } from '@/lib/rate-limit/limiter';
 import { dailyLogSchema } from '@/lib/validations/cycle';
+import { clearUserContextCache } from '@/lib/chat/context-builder';
+import { checkAndAwardBadges } from '@/lib/streaks/calculator';
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -26,10 +28,23 @@ export async function POST(request: Request) {
         flow: result.data.flow || null,
         symptoms: result.data.symptoms || [],
         notes: result.data.notes || null,
+        water_glasses: result.data.waterGlasses ?? 0,
     }, { onConflict: 'user_id,log_date' }).select().single();
 
     if (error) return NextResponse.json({ error: 'Failed to save daily log' }, { status: 500 });
-    return NextResponse.json({ dailyLog: newLog }, { status: 201 });
+    
+    // Invalidate chat context cache
+    clearUserContextCache(user.id);
+
+    // Check for new badges
+    let newBadges: string[] = [];
+    try {
+      newBadges = await checkAndAwardBadges(user.id);
+    } catch (e) {
+      console.error('[daily-log] badge check failed:', e);
+    }
+
+    return NextResponse.json({ dailyLog: newLog, newBadges }, { status: 201 });
   } catch (error) {
     console.error('[daily-log] Internal server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

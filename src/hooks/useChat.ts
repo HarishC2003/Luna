@@ -7,6 +7,8 @@ export function useChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [contextPill, setContextPill] = useState<string>('');
+  const [loggedToday, setLoggedToday] = useState<boolean>(true);
 
   useEffect(() => {
     // Generate initial session ID and greeting
@@ -20,16 +22,31 @@ export function useChat() {
       }
     ]);
 
-    // Fetch initial suggestions
-    fetch('/api/chat/suggestions')
-      .then(res => res.json())
-      .then(data => {
-        if (data.suggestions) {
-          setSuggestions(data.suggestions);
-        }
-      })
-      .catch(err => console.error("Failed to fetch suggestions", err));
+    const fetchContext = async () => {
+      try {
+        const res = await fetch('/api/chat/suggestions');
+        const data = await res.json();
+        if (data.suggestions) setSuggestions(data.suggestions);
+        if (data.contextPill) setContextPill(data.contextPill);
+        if (typeof data.loggedToday === 'boolean') setLoggedToday(data.loggedToday);
+      } catch (err) {
+        console.error("Failed to fetch context", err);
+      }
+    };
+    fetchContext();
   }, []);
+
+  const refreshContext = async () => {
+    try {
+      const res = await fetch('/api/chat/suggestions');
+      const data = await res.json();
+      if (data.suggestions) setSuggestions(data.suggestions);
+      if (data.contextPill) setContextPill(data.contextPill);
+      if (typeof data.loggedToday === 'boolean') setLoggedToday(data.loggedToday);
+    } catch (err) {
+      console.error("Failed to refresh context", err);
+    }
+  };
 
   const clearHistory = () => {
     setSessionId(crypto.randomUUID());
@@ -172,6 +189,9 @@ export function useChat() {
     clearHistory,
     sessionId,
     thumbsUp,
-    thumbsDown
+    thumbsDown,
+    contextPill,
+    loggedToday,
+    refreshContext
   };
 }

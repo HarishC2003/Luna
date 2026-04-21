@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { getSuggestedQuestions } from '@/lib/chat/suggestions';
 import { apiLimiter, getRealIP } from '@/lib/rate-limit/limiter';
+import { buildUserHealthContext } from '@/lib/chat/context-builder';
 
 export async function GET(request: Request) {
   try {
@@ -34,27 +35,25 @@ export async function GET(request: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { data: onboarding } = await supabase
-      .from('onboarding_data')
-      .select('conditions, goals')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    const ctx = await buildUserHealthContext(user.id);
+    const suggestions = getSuggestedQuestions(ctx);
 
-    const { data: prediction } = await supabase
-      .from('cycle_predictions')
-      .select('current_phase, days_until_next_period')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const loggedToday = ctx.recentSymptoms.some(s => s.daysAgo === 0) || 
+                        ctx.recentMoods.some(m => {
+                          const logDate = new Date(m.date);
+                          logDate.setHours(0,0,0,0);
+                          const today = new Date();
+                          today.setHours(0,0,0,0);
+                          return logDate.getTime() === today.getTime();
+                        });
 
-    const phase = prediction?.current_phase || 'unknown';
-    const conditions = onboarding?.conditions || [];
-    const daysUntilNext = prediction?.days_until_next_period ?? null;
+    let contextPill = `Day ${ctx.today.dayOfCycle || '?'} · ${ctx.today.phase.charAt(0).toUpperCase() + ctx.today.phase.slice(1)}`;
+    const todaySymptom = ctx.recentSymptoms.find(s => s.daysAgo === 0);
+    if (todaySymptom) {
+      contextPill += ` · ${todaySymptom.symptom}`;
+    }
 
-    const suggestions = getSuggestedQuestions(phase, conditions, daysUntilNext);
-
-    return NextResponse.json({ suggestions }, {
+    return NextResponse.json({ suggestions, contextPill, loggedToday }, {
       headers: {
         'Cache-Control': 'private, max-age=300'
       }

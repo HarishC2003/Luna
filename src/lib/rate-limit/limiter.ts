@@ -40,6 +40,8 @@ export const chatLimiter = createLimiter(
   `${process.env.CHAT_RATE_LIMIT_WINDOW_SECONDS || 3600} s` as any
 );
 
+export const reportLimiter = createLimiter(2, '24 h');
+
 export function getRealIP(request: Request): string {
   const xForwardedFor = request.headers.get('x-forwarded-for');
   if (xForwardedFor) {

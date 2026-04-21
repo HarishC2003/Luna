@@ -7,6 +7,7 @@ import { chatLimiter, getRealIP } from '@/lib/rate-limit/limiter';
 import { sanitizeChatInput, stripPII } from '@/lib/chat/pii-stripper';
 import { detectCrisis } from '@/lib/chat/crisis-detector';
 import { buildSystemPrompt } from '@/lib/chat/system-prompt';
+import { buildUserHealthContext, formatContextForPrompt } from '@/lib/chat/context-builder';
 
 export const maxDuration = 60;
 
@@ -15,7 +16,7 @@ const chatSchema = z.object({
   history: z.array(z.object({
     role: z.enum(['user', 'assistant']).transform(v => v === 'assistant' ? 'model' : 'user'),
     content: z.string().max(4000)
-  })).max(20),
+  })).max(10), // capped to max last 10 turns
   sessionId: z.string().uuid()
 });
 
@@ -103,40 +104,30 @@ export async function POST(request: Request) {
     }
 
     // PII Stripping
-    const { cleaned, strippedFields } = stripPII(sanitizedMsg);
+    const { cleaned } = stripPII(sanitizedMsg);
     
-    // Fetch context
-    const [predictionRes, onboardingRes, logsRes] = await Promise.all([
-      supabase.from('cycle_predictions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-      supabase.from('onboarding_data').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('daily_logs').select('symptoms').eq('user_id', user.id).gte('log_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-    ]);
+    // Fetch and build context
+    let formattedContext = '';
+    try {
+      const userContext = await buildUserHealthContext(user.id);
+      formattedContext = formatContextForPrompt(userContext);
+    } catch (ctxErr) {
+      console.error('Context Building Error:', ctxErr);
+      // Fallback to empty context so chat doesn't fully break
+      formattedContext = "No history available.";
+    }
 
-    const prediction = predictionRes.data;
-    const onboarding = onboardingRes.data;
-    const logs = logsRes.data || [];
-
-    const symCounts: Record<string, number> = {};
-    logs.forEach(log => {
-      (log.symptoms || []).forEach((s: string) => { symCounts[s] = (symCounts[s] || 0) + 1; });
-    });
-    const topSymptoms = Object.entries(symCounts).sort((a,b) => b[1] - a[1]).slice(0,3).map(e => e[0]);
-
-    const systemPrompt = buildSystemPrompt({
-      currentPhase: prediction?.current_phase || 'unknown',
-      phaseDescription: prediction?.phase_description || 'We need more tracking data.',
-      avgCycleLength: onboarding?.avg_cycle_length || 28,
-      avgPeriodLength: onboarding?.avg_period_length || 5,
-      daysUntilNextPeriod: prediction?.days_until_next_period ?? null,
-      topSymptoms,
-      conditions: onboarding?.conditions || [],
-      goals: onboarding?.goals || []
-    });
+    const systemPrompt = buildSystemPrompt(formattedContext);
 
     const apiKey = process.env.GEMINI_API_KEY!;
+    if (!apiKey) {
+       console.error('GEMINI_API_KEY is missing from environment variables.');
+       return NextResponse.json({ error: 'Chat service configuration error: API key missing' }, { status: 500 });
+    }
+
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Using gemini-2.5-flash as it's the most capable model available on the free tier without the 0-quota limit.
+    // Using gemini-2.5-flash which is the only active model on your key
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', systemInstruction: systemPrompt });
 
     const contents = history.map(h => ({
@@ -156,13 +147,33 @@ export async function POST(request: Request) {
        validHistory.unshift({ role: 'user', parts: [{ text: 'Hello' }] });
     }
 
-    const chatSession = model.startChat({
-        history: validHistory,
-        generationConfig: { maxOutputTokens: 1000 }
-    });
+    let streamResponse;
+    let retryCount = 0;
+    const MAX_RETRIES = 2;
 
-    // Provide AbortSignal handling since client might disconnect
-    const streamResponse = await chatSession.sendMessageStream(cleaned);
+    while (retryCount <= MAX_RETRIES) {
+      try {
+        const chatSession = model.startChat({
+          history: validHistory,
+          generationConfig: { maxOutputTokens: 250 } // keep responses short
+        });
+        streamResponse = await chatSession.sendMessageStream(cleaned);
+        break; // Successfully got the stream response
+      } catch (err: any) {
+        const isRetryable = err.status === 503 || err.status === 429 || err.message?.includes('high demand') || err.message?.includes('Service Unavailable');
+        if (isRetryable && retryCount < MAX_RETRIES) {
+          retryCount++;
+          // Exponential backoff: 2s, 4s
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+          continue;
+        }
+        throw err; // Rethrow if not retryable or max retries reached
+      }
+    }
+
+    if (!streamResponse) {
+       throw new Error('Failed to initialize Gemini stream after retries');
+    }
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -180,7 +191,7 @@ export async function POST(request: Request) {
              // client disconnect
           } else {
              console.error('Gemini Stream Error:', error);
-             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'Something went wrong. Please try again.' })}\n\n`));
+             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'The AI service is currently overwhelmed. Please try again in a moment.' })}\n\n`));
           }
         } finally {
           controller.close();
@@ -190,8 +201,11 @@ export async function POST(request: Request) {
 
     return new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' } });
 
-  } catch(error) {
+  } catch(error: any) {
     console.error('Message POST Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    if (error.status === 503 || error.message?.includes('high demand')) {
+       return NextResponse.json({ error: 'The AI model is experiencing high demand. Please try again in a few seconds.' }, { status: 503 });
+    }
+    return NextResponse.json({ error: 'Something went wrong on our end.' }, { status: 500 });
   }
 }

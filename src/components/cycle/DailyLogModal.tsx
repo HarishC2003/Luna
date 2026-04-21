@@ -6,7 +6,7 @@ import { Mood, FlowIntensity, Symptom, DailyLog } from '@/types/cycle';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (newBadges?: string[]) => void;
   selectedDate?: string;
   initialData?: Partial<DailyLog>;
 }
@@ -70,8 +70,12 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
       if (symptoms.length) payload.symptoms = symptoms;
       if (notes) payload.notes = notes;
 
-      const res = await fetch('/api/daily-log', {
-        method: 'POST',
+      const isEdit = !!initialData?.id;
+      const url = isEdit ? `/api/history/${initialData.id}` : '/api/daily-log';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
@@ -79,7 +83,7 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save');
       
-      onSuccess();
+      onSuccess(data.newBadges);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

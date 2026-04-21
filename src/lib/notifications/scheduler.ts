@@ -99,6 +99,77 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
         }
       }
 
+      // Check check-in (e.g. at 9AM or whatever hour they want it, but if user wants push notifications)
+      if (settings.push_period_reminder || settings.push_fertile_window) { // Assume if they want pushes, send check-in at their notify hour
+        // For simplicity, we send check-in push if it's their notify hour and they haven't answered
+        const todayStr = new Date().toISOString().split('T')[0];
+        const { data: todayLog } = await admin.from('daily_logs').select('id').eq('user_id', userId).eq('log_date', todayStr).maybeSingle();
+        
+        if (!todayLog) {
+          // They haven't logged anything today = check-in unanswered
+          const { buildUserHealthContext } = require('../chat/context-builder');
+          const { generateCheckinQuestion } = require('../checkin/question-generator');
+          
+          const ctx = await buildUserHealthContext(userId);
+          const checkin = generateCheckinQuestion(ctx);
+          
+          const { data: checkinLogs } = await admin.from('notification_log')
+            .select('id').eq('user_id', userId).eq('notification_type', 'daily_checkin')
+            .gte('sent_at', new Date(new Date().setHours(0,0,0,0)).toISOString());
+            
+          if (!checkinLogs || checkinLogs.length === 0) {
+            const res = await sendPushNotification(userId, 'daily_checkin', {
+              title: 'Luna check-in',
+              body: checkin.question,
+              url: '/dashboard?checkin=true'
+            });
+            res ? sent++ : failed++;
+          }
+        }
+      }
+
+      // Hydration reminder at 2pm IST (14:00)
+      const istHour = (new Date().getUTCHours() + 5) % 24; // rough IST conversion
+      if (istHour === 14 && (settings.push_period_reminder || settings.push_fertile_window)) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const { data: todayLog } = await admin.from('daily_logs')
+          .select('water_glasses')
+          .eq('user_id', userId)
+          .eq('log_date', todayStr)
+          .maybeSingle();
+
+        // Compute the user's phase-based goal
+        const { computePrediction } = require('../cycle/predictor');
+        const { getDailyWaterGoal } = require('../hydration/goal');
+        const { data: cycleLogs } = await admin.from('cycle_logs').select('*').eq('user_id', userId).order('period_start', { ascending: false }).limit(6);
+        const mappedCycles = (cycleLogs || []).map((c: Record<string, unknown>) => ({
+          periodStart: new Date(c.period_start as string),
+          periodEnd: c.period_end ? new Date(c.period_end as string) : undefined
+        }));
+        const computed = computePrediction(mappedCycles, {
+          avgCycleLength: onboard?.avg_cycle_length || 28,
+          avgPeriodLength: onboard?.avg_period_length || 5,
+          lastPeriodStart: cycleLogs && cycleLogs.length > 0 ? new Date(cycleLogs[0].period_start) : undefined
+        });
+        const hydrationGoal = getDailyWaterGoal(computed.currentPhase);
+        const currentGlasses = todayLog?.water_glasses ?? 0;
+
+        if (currentGlasses < Math.floor(hydrationGoal.glasses / 2)) {
+          const { data: hydrationLogs } = await admin.from('notification_log')
+            .select('id').eq('user_id', userId).eq('notification_type', 'hydration_reminder')
+            .gte('sent_at', new Date(new Date().setHours(0,0,0,0)).toISOString());
+
+          if (!hydrationLogs || hydrationLogs.length === 0) {
+            const res = await sendPushNotification(userId, 'hydration_reminder', {
+              title: 'Hydration check-in',
+              body: `You've had ${currentGlasses} glasses today. Goal is ${hydrationGoal.glasses}. Keep going! 💧`,
+              url: '/dashboard'
+            });
+            res ? sent++ : failed++;
+          }
+        }
+      }
+
     } catch (err) {
       console.error(`Error processing notifications for user ${settings.user_id}:`, err);
       failed++;

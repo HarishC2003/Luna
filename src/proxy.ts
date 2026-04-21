@@ -23,7 +23,7 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set({ name, value, ...options }));
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -35,10 +35,14 @@ export async function proxy(request: NextRequest) {
 
   let user = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data, error } = await supabase.auth.getUser();
+    if (error && error.code !== 'refresh_token_not_found') {
+      // Only log unexpected fatal errors, ignore common session expirations
+      console.warn("Auth verify silent fail:", error.message);
+    }
+    user = data?.user || null;
   } catch (error) {
-    console.error("Proxy Supabase fetch failed:", error);
+    // Fail silently, user will be treated as guest
   }
 
   const url = request.nextUrl.clone();

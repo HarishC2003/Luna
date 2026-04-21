@@ -6,6 +6,10 @@ import { PhaseStatusCard } from '@/components/cycle/PhaseStatusCard';
 import { CalendarGrid } from '@/components/cycle/CalendarGrid';
 import { InsightCard } from '@/components/cycle/InsightCard';
 import { DailyLogModal } from '@/components/cycle/DailyLogModal';
+import { CheckInCard } from '@/components/cycle/CheckInCard';
+import { HydrationWidget } from '@/components/hydration/HydrationWidget';
+import { StreakWidget } from '@/components/streaks/StreakWidget';
+import { MilestoneCelebration } from '@/components/streaks/MilestoneCelebration';
 import { Prediction, CycleLog, DailyLog, Insight } from '@/types/cycle';
 
 interface DashboardData {
@@ -22,6 +26,7 @@ export default function DashboardClient() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDailyModelOpen, setDailyModelOpen] = useState(false);
+  const [earnedBadgeKeys, setEarnedBadgeKeys] = useState<string[]>([]);
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -60,6 +65,15 @@ export default function DashboardClient() {
   return (
     <div className="space-y-8 pb-10">
       
+      {earnedBadgeKeys.length > 0 && (
+        <MilestoneCelebration 
+          badgeKeys={earnedBadgeKeys} 
+          onDismiss={() => setEarnedBadgeKeys([])} 
+        />
+      )}
+
+      <CheckInCard onAnswered={fetchDashboard} />
+
       {data.prediction ? (
         <PhaseStatusCard 
           phase={data.prediction.currentPhase || 'unknown'}
@@ -72,6 +86,10 @@ export default function DashboardClient() {
           <p className="text-[#4A1B3C]/70">Log your first period to activate cycle predictions.</p>
         </div>
       )}
+
+      <HydrationWidget phase={data.prediction?.currentPhase || 'unknown'} />
+
+      <StreakWidget />
 
       <CalendarGrid 
         prediction={data.prediction ?? null}
@@ -101,7 +119,13 @@ export default function DashboardClient() {
       <DailyLogModal 
         isOpen={isDailyModelOpen} 
         onClose={() => setDailyModelOpen(false)} 
-        onSuccess={() => { setDailyModelOpen(false); fetchDashboard(); }}
+        onSuccess={(newBadges?: string[]) => { 
+          setDailyModelOpen(false); 
+          if (newBadges && newBadges.length > 0) {
+            setEarnedBadgeKeys(newBadges);
+          }
+          fetchDashboard(); 
+        }}
         initialData={data.todayLog}
       />
     </div>

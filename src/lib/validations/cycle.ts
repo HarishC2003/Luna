@@ -51,4 +51,5 @@ export const dailyLogSchema = z.object({
   flow: z.enum(['none', 'spotting', 'light', 'medium', 'heavy']).optional().nullable(),
   symptoms: z.array(z.enum(['cramps', 'headache', 'bloating', 'breast_tenderness', 'fatigue', 'acne', 'back_pain', 'nausea', 'mood_swings', 'insomnia'])).max(10).optional().nullable(),
   notes: z.string().max(300).refine((val) => val === null || val === '' || stripHtml(val), 'HTML tags not allowed').optional().nullable(),
+  waterGlasses: z.number().int().min(0).max(20).optional().nullable(),
 });

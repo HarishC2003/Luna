@@ -52,16 +52,13 @@ export async function GET() {
       const computed = computePrediction(mappedCycles, {
           avgCycleLength: onboardRes.data.avg_cycle_length,
           avgPeriodLength: onboardRes.data.avg_period_length,
-          lastPeriodStart: recentCyclesRes.data && recentCyclesRes.data.length > 0 ? new Date(recentCyclesRes.data[0].period_start) : (onboardRes.data.last_period_start ? new Date(onboardRes.data.last_period_start) : null)
+          lastPeriodStart: recentCyclesRes.data && recentCyclesRes.data.length > 0 ? new Date(recentCyclesRes.data[0].period_start) : (onboardRes.data.last_period_start ? new Date(onboardRes.data.last_period_start) : undefined)
       });
-      phase = computed.currentPhase;
-      daysUntilNextPeriod = computed.daysUntilNextPeriod;
       
       if (predictionObj) {
-        predictionObj.currentPhase = phase;
-        predictionObj.daysUntilNextPeriod = daysUntilNextPeriod;
-        predictionObj.phaseDescription = getPhaseDescription(phase);
-        predictionObj.dayOfCycle = computed.dayOfCycle;
+        Object.assign(predictionObj, computed, {
+          phaseDescription: getPhaseDescription(computed.currentPhase)
+        });
       }
   }
 

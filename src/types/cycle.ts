@@ -36,6 +36,7 @@ export interface DailyLog {
   flow: FlowIntensity | null;
   symptoms: Symptom[];
   notes: string | null;
+  water_glasses: number;
   created_at: string;
   updated_at: string;
 }
@@ -61,9 +62,13 @@ export interface Prediction {
   ovulationDate: Date;
   confidence: number;
   basedOnCycles: number;
+  avgCycleLength: number;
+  avgPeriodLength: number;
   currentPhase: Phase;
-  daysUntilNextPeriod: number;
   dayOfCycle: number;
+  daysUntilNextPeriod: number;
+  isLate: boolean;
+  isPCOSMode: boolean;
 }
 
 export interface Insight {

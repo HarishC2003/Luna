@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const prediction = computePrediction([], {
       avgCycleLength: result.data.avgCycleLength,
       avgPeriodLength: result.data.avgPeriodLength,
-      lastPeriodStart: result.data.lastPeriodStart ? new Date(result.data.lastPeriodStart) : null
+      lastPeriodStart: result.data.lastPeriodStart ? new Date(result.data.lastPeriodStart) : undefined
     });
 
     // Save prediction

@@ -1,102 +1,215 @@
-import { Prediction, Phase } from '@/types/cycle';
+export type CyclePhase = 'menstrual' | 'follicular' | 'ovulatory' | 'luteal' | 'unknown';
 
-export interface CycleData {
+export interface CycleInput {
   periodStart: Date;
   periodEnd?: Date;
-  cycleLength?: number;
 }
 
-export interface OnboardingDataInput {
+export interface OnboardingDefaults {
   avgCycleLength: number;
   avgPeriodLength: number;
-  lastPeriodStart?: Date | null;
+  lastPeriodStart?: Date;
+  conditions?: string[];
 }
 
-export function computePrediction(cycles: CycleData[], onboarding: OnboardingDataInput): Prediction {
-  const completedCycles = cycles.filter(c => c.periodStart && c.cycleLength);
-  const recentCycles = completedCycles.sort((a, b) => b.periodStart.getTime() - a.periodStart.getTime()).slice(0, 6);
+export interface Prediction {
+  predictedStart: Date;
+  predictedEnd: Date;
+  fertileStart: Date;
+  fertileEnd: Date;
+  ovulationDate: Date;
+  confidence: number;
+  basedOnCycles: number;
+  avgCycleLength: number;
+  avgPeriodLength: number;
+  currentPhase: CyclePhase;
+  dayOfCycle: number;
+  daysUntilNextPeriod: number;
+  isLate: boolean;
+  isPCOSMode: boolean;
+}
 
-  let predictedCycleLength = onboarding.avgCycleLength;
-  let confidence = 0.2;
+// Helpers
+export function daysBetween(a: Date, b: Date): number {
+  const d1 = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+  const d2 = new Date(b.getFullYear(), b.getMonth(), b.getDate());
+  return Math.round((d2.getTime() - d1.getTime()) / 86400000);
+}
 
-  if (recentCycles.length >= 3) {
-    const weights = [0.4, 0.3, 0.2, 0.1];
-    let totalWeight = 0;
-    let weightedSum = 0;
-    
-    for (let i = 0; i < Math.min(recentCycles.length, 4); i++) {
-        weightedSum += recentCycles[i].cycleLength! * weights[i];
-        totalWeight += weights[i];
-    }
-    
-    predictedCycleLength = Math.round(weightedSum / totalWeight);
-    confidence = Math.min(0.95, 0.5 + (recentCycles.length * 0.1));
-  } else if (recentCycles.length > 0) {
-    const sum = recentCycles.reduce((acc, curr) => acc + curr.cycleLength!, 0);
-    predictedCycleLength = Math.round(sum / recentCycles.length);
-    confidence = 0.3 + (recentCycles.length * 0.05);
+export function addDays(date: Date, days: number): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+}
+
+export function standardDeviation(values: number[]): number {
+  if (values.length <= 1) return 0;
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (values.length - 1);
+  return Math.sqrt(variance);
+}
+
+export function median(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 0) return (sorted[mid - 1] + sorted[mid]) / 2;
+  return sorted[mid];
+}
+
+export function getPhaseDescription(phase: CyclePhase): string {
+  switch (phase) {
+    case 'menstrual': return "Your period is here. Rest and be gentle with yourself.";
+    case 'follicular': return "Energy is building. A good time to start new things.";
+    case 'ovulatory': return "You're at your peak energy and social mood.";
+    case 'luteal': return "Winding down. Cravings and mood shifts are normal now.";
+    default: return "Log your period to see your cycle phase.";
   }
+}
 
+export function getPhaseColor(phase: CyclePhase): string {
+  switch (phase) {
+    case 'menstrual': return 'bg-rose-100 text-rose-700 border-rose-300';
+    case 'follicular': return 'bg-purple-100 text-purple-700 border-purple-300';
+    case 'ovulatory': return 'bg-teal-100 text-teal-700 border-teal-300';
+    case 'luteal': return 'bg-amber-100 text-amber-700 border-amber-300';
+    default: return 'bg-gray-100 text-gray-500 border-gray-300';
+  }
+}
+
+export function computePrediction(cyclesInput: CycleInput[], onboarding: OnboardingDefaults): Prediction {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  let lastStart = onboarding.lastPeriodStart;
-  if (cycles.length > 0) {
-      const sortedAll = [...cycles].sort((a, b) => b.periodStart.getTime() - a.periodStart.getTime());
-      lastStart = sortedAll[0].periodStart;
-  }
-
-  let predictedStart = new Date(today);
+  // Phase 1: Sort desc and extract raw cycle lengths
+  const sortedCycles = [...cyclesInput].sort((a, b) => b.periodStart.getTime() - a.periodStart.getTime());
   
-  if (lastStart) {
-      predictedStart = new Date(lastStart);
-      predictedStart.setDate(predictedStart.getDate() + predictedCycleLength);
-      
-      // If predicted start is in the past, keep adding predictedCycleLength until it's in the future
-      // Actually, if it's overdue, the prediction is exactly that it was due then.
-      // We don't advance it until it's logged. The instructions say "daysUntilNextPeriod: days from today to predictedStart (negative if overdue)"
-  } else {
-      // No data at all, just pretend it starts today for fallback
-      predictedStart.setDate(predictedStart.getDate() + 28);
+  const rawLengths: number[] = [];
+  const rawPeriodLengths: number[] = [];
+
+  for (let i = 0; i < sortedCycles.length - 1; i++) {
+    const len = daysBetween(sortedCycles[i + 1].periodStart, sortedCycles[i].periodStart);
+    if (len >= 15 && len <= 60) {
+      rawLengths.push(len);
+    }
   }
 
-  const predictedEnd = new Date(predictedStart);
-  predictedEnd.setDate(predictedEnd.getDate() + onboarding.avgPeriodLength);
+  sortedCycles.forEach(c => {
+    if (c.periodEnd) {
+      const plen = daysBetween(c.periodStart, c.periodEnd) + 1;
+      rawPeriodLengths.push(plen);
+    }
+  });
 
-  const ovulationDate = new Date(predictedStart);
-  ovulationDate.setDate(predictedStart.getDate() + (predictedCycleLength - 14));
+  const numCycles = rawLengths.length;
 
-  const fertileStart = new Date(ovulationDate);
-  fertileStart.setDate(ovulationDate.getDate() - 5);
+  let avgCycleLength = onboarding.avgCycleLength;
+  let avgPeriodLength = onboarding.avgPeriodLength;
+  let confidence = 0.20;
+  
+  const isPCOS = onboarding.conditions?.includes('pcos') || false;
+  let isIrregular = standardDeviation(rawLengths) > 7;
+  const isPCOSMode = isPCOS || isIrregular;
 
-  const fertileEnd = new Date(ovulationDate);
-  fertileEnd.setDate(ovulationDate.getDate() + 1);
+  // Phase 2: Averaging Strategy
+  if (numCycles === 0) {
+    // Case A
+    avgCycleLength = onboarding.avgCycleLength || 28;
+    avgPeriodLength = onboarding.avgPeriodLength || 5;
+    confidence = 0.20;
+  } else if (isPCOSMode && numCycles > 0) {
+    // PCOS Mode
+    avgCycleLength = Math.round(median(rawLengths));
+    const meanPeriod = rawPeriodLengths.length > 0 ? Math.round(rawPeriodLengths.reduce((a, b) => a + b) / rawPeriodLengths.length) : onboarding.avgPeriodLength;
+    avgPeriodLength = meanPeriod;
+    confidence = Math.min(0.60, 0.20 + numCycles * 0.1);
+  } else if (numCycles === 1) {
+    // Case B
+    avgCycleLength = rawLengths[0];
+    avgPeriodLength = rawPeriodLengths.length > 0 ? Math.round(rawPeriodLengths.reduce((a, b) => a + b) / rawPeriodLengths.length) : onboarding.avgPeriodLength;
+    confidence = 0.35;
+  } else if (numCycles === 2) {
+    // Case C
+    avgCycleLength = Math.round((rawLengths[0] + rawLengths[1]) / 2);
+    avgPeriodLength = rawPeriodLengths.length > 0 ? Math.round(rawPeriodLengths.reduce((a, b) => a + b) / rawPeriodLengths.length) : onboarding.avgPeriodLength;
+    confidence = 0.50;
+  } else if (numCycles >= 3 && numCycles <= 5) {
+    // Case D
+    let weights = [0.4, 0.3, 0.2, 0.1].slice(0, numCycles);
+    const sumW = weights.reduce((a, b) => a + b, 0);
+    weights = weights.map(w => w / sumW);
+    let weightedSum = 0;
+    for (let i = 0; i < numCycles; i++) {
+        weightedSum += rawLengths[i] * weights[i];
+    }
+    avgCycleLength = Math.round(weightedSum);
+    avgPeriodLength = rawPeriodLengths.length > 0 ? Math.round(rawPeriodLengths.reduce((a, b) => a + b) / rawPeriodLengths.length) : onboarding.avgPeriodLength;
+    confidence = Math.min(0.78, 0.50 + (numCycles * 0.08));
+  } else {
+    // Case E: 6+
+    const weights = [0.30, 0.25, 0.20, 0.12, 0.08, 0.05];
+    let weightedSum = 0;
+    for (let i = 0; i < 6; i++) {
+        weightedSum += rawLengths[i] * weights[i];
+    }
+    avgCycleLength = Math.round(weightedSum);
+    avgPeriodLength = rawPeriodLengths.length > 0 ? Math.round(rawPeriodLengths.reduce((a, b) => a + b) / rawPeriodLengths.length) : onboarding.avgPeriodLength;
+    confidence = 0.85;
+  }
 
-  const daysUntilNextPeriod = Math.floor((predictedStart.getTime() - today.getTime()) / (1000 * 3600 * 24));
+  // Phase 3: Next period start
+  const lastPeriodStartRaw = sortedCycles[0]?.periodStart ?? onboarding.lastPeriodStart;
+  let lastPeriodStart: Date;
+  
+  if (lastPeriodStartRaw) {
+    lastPeriodStart = new Date(lastPeriodStartRaw.getFullYear(), lastPeriodStartRaw.getMonth(), lastPeriodStartRaw.getDate());
+  } else {
+    lastPeriodStart = today; // fallback
+  }
 
-  let currentPhase: Phase = 'unknown';
+  let predictedStart = addDays(lastPeriodStart, avgCycleLength);
+  
+  // Phase 4: Compute ovulation and fertile window
+  // "ovulationDate = addDays(predictedStart, -14)"
+  let ovulationDate = addDays(predictedStart, -14);
+  let fertileStart = addDays(ovulationDate, -5);
+  let fertileEnd = addDays(ovulationDate, 1);
+  let predictedEnd = addDays(predictedStart, avgPeriodLength - 1);
+
+  // Phase 5: Determine current phase
+  let isLate = false;
+  let daysUntilNextPeriod = daysBetween(today, predictedStart);
+  if (daysUntilNextPeriod <= 0) {
+    isLate = true;
+  }
+
+
+  let currentPhase: CyclePhase = 'unknown';
   let dayOfCycle = 0;
 
-  if (lastStart) {
-      const msSinceLast = today.getTime() - lastStart.getTime();
-      dayOfCycle = Math.floor(msSinceLast / (1000 * 3600 * 24)) + 1;
-      
-      const daysToOvulation = predictedCycleLength - 14;
-      
-      if (today < lastStart) {
-          currentPhase = 'unknown';
-      } else if (dayOfCycle <= onboarding.avgPeriodLength) {
-          currentPhase = 'menstrual';
-      } else if (dayOfCycle < daysToOvulation - 1) {
-          currentPhase = 'follicular';
-      } else if (dayOfCycle >= daysToOvulation - 1 && dayOfCycle <= daysToOvulation + 1) {
-          currentPhase = 'ovulatory';
-      } else if (dayOfCycle <= predictedCycleLength) {
-          currentPhase = 'luteal';
+  if (lastPeriodStartRaw) {
+    dayOfCycle = daysBetween(lastPeriodStart, today) + 1;
+    if (dayOfCycle < 1) {
+       currentPhase = 'unknown';
+    } else {
+      const menstrualEnd = avgPeriodLength;
+      const follicularEnd = (avgCycleLength - 14) - 2;
+      const ovulatoryEnd = (avgCycleLength - 14) + 2;
+      const lutealEnd = avgCycleLength;
+
+      if (dayOfCycle <= menstrualEnd) {
+        currentPhase = 'menstrual';
+      } else if (dayOfCycle <= follicularEnd) {
+        currentPhase = 'follicular';
+      } else if (dayOfCycle <= ovulatoryEnd) {
+        currentPhase = 'ovulatory';
       } else {
-           // overdue
-          currentPhase = 'luteal';
+        currentPhase = 'luteal';
       }
+      
+      if (dayOfCycle > avgCycleLength + 14) {
+        currentPhase = 'luteal';
+        isLate = true;
+      }
+    }
   }
 
   return {
@@ -106,29 +219,13 @@ export function computePrediction(cycles: CycleData[], onboarding: OnboardingDat
     fertileEnd,
     ovulationDate,
     confidence,
-    basedOnCycles: recentCycles.length,
+    basedOnCycles: numCycles,
+    avgCycleLength,
+    avgPeriodLength,
     currentPhase,
+    dayOfCycle,
     daysUntilNextPeriod,
-    dayOfCycle
+    isLate,
+    isPCOSMode
   };
-}
-
-export function getPhaseDescription(phase: string): string {
-    switch(phase) {
-        case 'menstrual': return 'Your period. Energy might be lower as hormones drop.';
-        case 'follicular': return 'Energy rises as estrogen goes up. Great time for new goals.';
-        case 'ovulatory': return 'Fertile window. Peak energy and sociability.';
-        case 'luteal': return 'Energy winds down. Body prepares for next cycle.';
-        default: return 'Log your period to unlock cycle tracking.';
-    }
-}
-
-export function getPhaseColor(phase: string): string {
-    switch(phase) {
-        case 'menstrual': return 'bg-rose-100 text-rose-700 border-rose-300';
-        case 'follicular': return 'bg-purple-100 text-purple-700 border-purple-300';
-        case 'ovulatory': return 'bg-teal-100 text-teal-700 border-teal-300';
-        case 'luteal': return 'bg-amber-100 text-amber-700 border-amber-300';
-        default: return 'bg-gray-100 text-gray-500 border-gray-300';
-    }
 }

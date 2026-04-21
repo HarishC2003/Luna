@@ -5,10 +5,13 @@ import { DailyLog } from '@/types/cycle';
 import { MoodBar } from '@/components/cycle/MoodBar';
 import { FlowBadge } from '@/components/cycle/FlowBadge';
 import { SymptomChips } from '@/components/cycle/SymptomChips';
+import { DailyLogModal } from '@/components/cycle/DailyLogModal';
 
 export default function HistoryPage() {
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingLog, setEditingLog] = useState<DailyLog | null>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -28,6 +31,36 @@ export default function HistoryPage() {
     };
     fetchLogs();
   }, []);
+
+  const fetchLogs = async () => {
+    try {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 30);
+      
+      const res = await fetch(`/api/daily-log?startDate=${start.toISOString().split('T')[0]}&endDate=${end.toISOString().split('T')[0]}`);
+      const data = await res.json();
+      setLogs(data.logs || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setLogs(logs.filter(l => l.id !== id));
+        setIsDeleting(null);
+      } else {
+        alert('Failed to delete log');
+      }
+    } catch (e) {
+      alert('An error occurred');
+    }
+  };
 
   const moodScore = (mood: string | null) => {
     switch(mood) {
@@ -90,11 +123,54 @@ export default function HistoryPage() {
                       {log.symptoms && log.symptoms.length > 0 && <div className="flex flex-col gap-2"><span className="text-xs uppercase font-semibold text-[#4A1B3C]/40 block">Symptoms</span><SymptomChips symptoms={log.symptoms} /></div>}
                   </div>
                 </div>
+
+                <div className="flex sm:flex-col gap-2 justify-center sm:pl-4 sm:border-l border-[#E85D9A]/10">
+                   {isDeleting === log.id ? (
+                     <div className="flex flex-col gap-2 animate-scale-in">
+                       <span className="text-[10px] font-bold text-red-500 uppercase text-center">Are you sure?</span>
+                       <div className="flex gap-2">
+                        <button onClick={() => handleDelete(log.id)} className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                        <button onClick={() => setIsDeleting(null)} className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                       </div>
+                     </div>
+                   ) : (
+                     <div className="flex sm:flex-col gap-2">
+                        <button 
+                          onClick={() => setEditingLog(log)}
+                          className="p-2 rounded-xl text-[#E85D9A] hover:bg-[#E85D9A]/10 transition-colors"
+                          title="Edit Log"
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        </button>
+                        <button 
+                          onClick={() => setIsDeleting(log.id)}
+                          className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                          title="Delete Log"
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                     </div>
+                   )}
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      <DailyLogModal 
+        isOpen={!!editingLog} 
+        onClose={() => setEditingLog(null)} 
+        initialData={editingLog || undefined}
+        onSuccess={() => {
+          setEditingLog(null);
+          fetchLogs();
+        }}
+      />
     </div>
   );
 }
