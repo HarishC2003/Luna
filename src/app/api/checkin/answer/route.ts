@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     // Fetch existing log
     const { data: log } = await admin.from('daily_logs').select('*').eq('user_id', user.id).eq('log_date', todayStr).maybeSingle();
 
-    const updates: Record<string, any> = {
+    const updates: Record<string, unknown> = {
       user_id: user.id,
       log_date: todayStr
     };

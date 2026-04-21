@@ -19,7 +19,6 @@ export function stripPII(input: string): { cleaned: string; strippedFields: stri
     cleaned = cleaned.substring(0, 2000);
   }
 
-  const strippedFields: string[] = [];
   const uniqueStripped = new Set<string>();
 
   // 1. Phone numbers

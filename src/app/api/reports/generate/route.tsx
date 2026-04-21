@@ -18,9 +18,10 @@ export async function POST(request: Request) {
 
   try {
     const { month, year } = await request.json();
+    const nowTimestamp = Date.now();
     
     // Validate
-    const currentYear = new Date().getFullYear();
+    const currentYear = new Date(nowTimestamp).getFullYear();
     if (!month || month < 1 || month > 12) return NextResponse.json({ error: 'Invalid month' }, { status: 400 });
     if (!year || (year !== currentYear && year !== currentYear - 1)) return NextResponse.json({ error: 'Invalid year' }, { status: 400 });
 
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
     // 2. Fetch Data
     const startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
     const endDate = new Date(year, month, 0).toISOString().split('T')[0];
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const thirtyDaysAgo = new Date(nowTimestamp - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     const [profileRes, recentCyclesRes, dailyLogsRes, last30LogsRes, onboardRes] = await Promise.all([
       admin.from('profiles').select('display_name, email').eq('id', user.id).single(),
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
     ]);
 
     const streak = await calculateCurrentStreak(user.id);
-    const insights = generateInsights(recentCyclesRes.data || [], last30LogsRes.data || []).slice(0, 5);
+    const insightsArr = generateInsights(recentCyclesRes.data || [], last30LogsRes.data || []).slice(0, 5);
 
     // 3. Compute Stats
     const logs = dailyLogsRes.data || [];
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
     const topSymptoms = Object.entries(symCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0].replace('_', ' '));
     const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown';
 
-    const stats = {
+    const statsData = {
       avgCycleLength: onboardRes.data?.avg_cycle_length || 28,
       avgPeriodLength: onboardRes.data?.avg_period_length || 5,
       topSymptoms,
@@ -66,18 +67,19 @@ export async function POST(request: Request) {
     const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
 
     // 4. Generate PDF
-    const pdfBuffer = await ReactPDF.renderToBuffer(
+    const template = (
       <CycleReportTemplate 
         userName={profileRes.data?.display_name || user.email || 'User'}
         monthName={monthName}
         year={year}
-        generatedAt={new Date().toLocaleDateString()}
+        generatedAt={new Date(nowTimestamp).toLocaleDateString()}
         cycles={recentCyclesRes.data || []}
-        logs={logs.slice(0, 31)} // Last 30 days roughly
-        stats={stats}
-        insights={insights}
+        logs={logs.slice(0, 31)}
+        stats={statsData}
+        insights={insightsArr}
       />
     );
+    const pdfBuffer = await ReactPDF.renderToBuffer(template);
 
     // 5. Upload to Supabase Storage
     const fileName = `${year}-${month}.pdf`;
@@ -86,9 +88,7 @@ export async function POST(request: Request) {
     // Ensure bucket exists (best effort)
     try {
        await admin.storage.createBucket('reports', { public: false });
-    } catch(e) {
-       // Bucket likely already exists
-    }
+    } catch(e) { /* ignore */ }
 
     const { error: uploadError } = await admin.storage
       .from('reports')
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
 
     if (signError) throw new Error(signError.message || 'Failed to sign URL');
 
-    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+    const expiresAt = new Date(nowTimestamp + 48 * 60 * 60 * 1000).toISOString();
 
     // 7. Store in data_export_requests
     await admin.from('data_export_requests').upsert({
@@ -114,13 +114,14 @@ export async function POST(request: Request) {
       status: 'ready',
       download_url: signData.signedUrl,
       expires_at: expiresAt,
-      created_at: new Date().toISOString()
+      created_at: new Date(nowTimestamp).toISOString()
     });
 
     return NextResponse.json({ downloadUrl: signData.signedUrl, expiresAt });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('[reports/generate] Internal server error:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -8,7 +8,6 @@ export interface CheckInQuestion {
 
 export function generateCheckinQuestion(context: UserHealthContext): CheckInQuestion {
   const { phase, dayOfCycle, daysUntilNextPeriod, isLate } = context.today;
-  const recentEnergy = context.recentMoods.length > 0 ? context.recentMoods[0].energy : null;
   const yesterdayMood = context.recentMoods.find(m => m.date === new Date(Date.now() - 86400000).toISOString().split('T')[0]);
 
   if (yesterdayMood && yesterdayMood.energy && yesterdayMood.energy <= 2) {

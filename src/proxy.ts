@@ -41,7 +41,7 @@ export async function proxy(request: NextRequest) {
       console.warn("Auth verify silent fail:", error.message);
     }
     user = data?.user || null;
-  } catch (error) {
+  } catch {
     // Fail silently, user will be treated as guest
   }
 

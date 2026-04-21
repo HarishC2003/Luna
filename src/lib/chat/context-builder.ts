@@ -67,15 +67,13 @@ export async function buildUserHealthContext(userId: string): Promise<UserHealth
     { data: onboardingData },
     { data: recentLogsData },
     { data: thirtyDayLogsData },
-    { data: cycleLogsData },
-    { data: profileData }
+    { data: cycleLogsData }
   ] = await Promise.all([
     supabase.from('cycle_predictions').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('onboarding_data').select('*').eq('user_id', userId).maybeSingle(),
     supabase.from('daily_logs').select('*').eq('user_id', userId).gte('log_date', sevenDaysAgo).order('log_date', { ascending: false }),
     supabase.from('daily_logs').select('symptoms').eq('user_id', userId).gte('log_date', thirtyDaysAgo),
-    supabase.from('cycle_logs').select('*').eq('user_id', userId).order('period_start', { ascending: false }).limit(6),
-    supabase.from('profiles').select('id').eq('id', userId).maybeSingle()
+    supabase.from('cycle_logs').select('*').eq('user_id', userId).order('period_start', { ascending: false }).limit(6)
   ]);
 
   const recentLogs = recentLogsData || [];

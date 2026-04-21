@@ -16,16 +16,19 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function usePushNotifications() {
-  const [isSupported, setIsSupported] = useState(false);
-  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [isSupported] = useState(() => {
+    return typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  });
+  const [permission, setPermission] = useState<NotificationPermission>(() => {
+    return typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default';
+  });
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!isSupported ? false : true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
-      setIsSupported(true);
-      setPermission(Notification.permission);
+    if (isSupported) {
+      // Permission already set by initializer, only need to check subscription status
       
       navigator.serviceWorker.ready.then(registration => {
         registration.pushManager.getSubscription().then(sub => {
@@ -33,10 +36,8 @@ export function usePushNotifications() {
           setIsLoading(false);
         }).catch(() => setIsLoading(false));
       }).catch(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
     }
-  }, []);
+  }, [isSupported]);
 
   const subscribe = async () => {
     if (!isSupported) return false;

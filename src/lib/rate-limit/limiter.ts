@@ -37,7 +37,7 @@ export const apiLimiter = createLimiter(100, '60 s');
 
 export const chatLimiter = createLimiter(
   Number(process.env.CHAT_RATE_LIMIT_REQUESTS) || 20,
-  `${process.env.CHAT_RATE_LIMIT_WINDOW_SECONDS || 3600} s` as any
+  `${process.env.CHAT_RATE_LIMIT_WINDOW_SECONDS || 3600} s` as Parameters<typeof Ratelimit.slidingWindow>[1]
 );
 
 export const reportLimiter = createLimiter(2, '24 h');

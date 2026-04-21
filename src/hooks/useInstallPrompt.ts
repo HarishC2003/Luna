@@ -7,14 +7,16 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function useInstallPrompt() {
   const [canInstall, setCanInstall] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [isInstalled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(display-mode: standalone)').matches;
+    }
+    return false;
+  });
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
-    // Check if installed
-    if (typeof window !== 'undefined') {
-      setIsInstalled(window.matchMedia('(display-mode: standalone)').matches);
-    }
+    // ... handle install logic in event below
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();

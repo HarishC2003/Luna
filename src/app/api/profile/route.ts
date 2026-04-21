@@ -54,14 +54,14 @@ export async function PATCH(request: Request) {
     let recompute = false;
 
     if (pd.displayName || pd.dateOfBirth !== undefined) {
-      const updateObj: any = {};
+      const updateObj: Record<string, unknown> = {};
       if (pd.displayName) updateObj.display_name = pd.displayName;
       if (pd.dateOfBirth !== undefined) updateObj.date_of_birth = pd.dateOfBirth;
       await admin.from('profiles').update(updateObj).eq('id', user.id);
     }
 
     if (pd.conditions || pd.goals) {
-      const updateObj: any = {};
+      const updateObj: Record<string, unknown> = {};
       if (pd.conditions) updateObj.conditions = pd.conditions;
       if (pd.goals) updateObj.goals = pd.goals;
       await admin.from('onboarding_data').update(updateObj).eq('user_id', user.id);

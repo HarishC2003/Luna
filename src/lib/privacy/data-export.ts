@@ -1,7 +1,6 @@
 import { createAdminClient } from '../supabase/admin';
 import { sendEmailNotification } from '../notifications/sender';
 import { dataExportReadyEmail } from '../email/templates';
-const logger = console;
 
 export async function generateUserDataExport(userId: string): Promise<string> {
   const admin = createAdminClient();

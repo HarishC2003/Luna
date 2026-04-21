@@ -31,7 +31,13 @@ export function HydrationWidget({ phase }: Props) {
     }
   }, []);
 
-  useEffect(() => { fetchToday(); }, [fetchToday]);
+  useEffect(() => {
+    let isMounted = true;
+    if (isMounted) {
+      fetchToday();
+    }
+    return () => { isMounted = false; };
+  }, [fetchToday]);
 
   const updateGlasses = async (newCount: number) => {
     const clamped = Math.max(0, Math.min(20, newCount));

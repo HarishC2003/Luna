@@ -193,7 +193,6 @@ export function computePrediction(cyclesInput: CycleInput[], onboarding: Onboard
       const menstrualEnd = avgPeriodLength;
       const follicularEnd = (avgCycleLength - 14) - 2;
       const ovulatoryEnd = (avgCycleLength - 14) + 2;
-      const lutealEnd = avgCycleLength;
 
       if (dayOfCycle <= menstrualEnd) {
         currentPhase = 'menstrual';

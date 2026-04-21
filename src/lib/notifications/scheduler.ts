@@ -1,6 +1,10 @@
 import { createAdminClient } from '../supabase/admin';
 import { sendEmailNotification, sendPushNotification } from './sender';
-import { periodReminderEmail, fertileWindowEmail, weeklyInsightsEmail } from '../email/templates';
+import { periodReminderEmail, fertileWindowEmail } from '../email/templates';
+import { buildUserHealthContext } from '../chat/context-builder';
+import { generateCheckinQuestion } from '../checkin/question-generator';
+import { computePrediction } from '../cycle/predictor';
+import { getDailyWaterGoal } from '../hydration/goal';
 
 export async function runDailyNotifications(): Promise<{ sent: number; failed: number }> {
   let sent = 0;
@@ -48,7 +52,7 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
               const res = await sendEmailNotification(userId, 'period_reminder', periodReminderEmail({
                 displayName, daysUntil, predictedDate: predictedStart.toLocaleDateString(), appUrl
               }));
-              res ? sent++ : failed++;
+              if (res) { sent++; } else { failed++; }
             }
             if (settings.push_period_reminder) {
               const res = await sendPushNotification(userId, 'period_reminder', {
@@ -56,7 +60,7 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
                 body: `Predicted to start in ${daysUntil} days.`,
                 url: '/dashboard'
               });
-              res ? sent++ : failed++;
+              if (res) { sent++; } else { failed++; }
             }
           }
         }
@@ -84,7 +88,7 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
                       fertileEnd: new Date(prediction.fertile_end).toLocaleDateString(),
                       ovulationDate: new Date(prediction.ovulation_date).toLocaleDateString(), appUrl
                     }));
-                    res ? sent++ : failed++;
+                    if (res) { sent++; } else { failed++; }
                  }
                  if (settings.push_fertile_window) {
                     const res = await sendPushNotification(userId, 'fertile_window', {
@@ -92,7 +96,7 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
                       body: 'Your predicted fertile window begins tomorrow.',
                       url: '/dashboard'
                     });
-                    res ? sent++ : failed++;
+                    if (res) { sent++; } else { failed++; }
                  }
               }
            }
@@ -107,9 +111,6 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
         
         if (!todayLog) {
           // They haven't logged anything today = check-in unanswered
-          const { buildUserHealthContext } = require('../chat/context-builder');
-          const { generateCheckinQuestion } = require('../checkin/question-generator');
-          
           const ctx = await buildUserHealthContext(userId);
           const checkin = generateCheckinQuestion(ctx);
           
@@ -123,7 +124,7 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
               body: checkin.question,
               url: '/dashboard?checkin=true'
             });
-            res ? sent++ : failed++;
+            if (res) { sent++; } else { failed++; }
           }
         }
       }
@@ -139,8 +140,6 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
           .maybeSingle();
 
         // Compute the user's phase-based goal
-        const { computePrediction } = require('../cycle/predictor');
-        const { getDailyWaterGoal } = require('../hydration/goal');
         const { data: cycleLogs } = await admin.from('cycle_logs').select('*').eq('user_id', userId).order('period_start', { ascending: false }).limit(6);
         const mappedCycles = (cycleLogs || []).map((c: Record<string, unknown>) => ({
           periodStart: new Date(c.period_start as string),
@@ -165,7 +164,7 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
               body: `You've had ${currentGlasses} glasses today. Goal is ${hydrationGoal.glasses}. Keep going! 💧`,
               url: '/dashboard'
             });
-            res ? sent++ : failed++;
+            if (res) { sent++; } else { failed++; }
           }
         }
       }
