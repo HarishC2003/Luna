@@ -10,7 +10,6 @@ if (process.env.VAPID_PRIVATE_KEY && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
   );
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
 
 export async function sendEmailNotification(
   userId: string,
@@ -18,6 +17,7 @@ export async function sendEmailNotification(
   templatePayload: { subject: string; html: string; text: string }
 ): Promise<boolean> {
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy');
     const admin = createAdminClient();
     const { data: profile } = await admin.from('profiles').select('email').eq('id', userId).single();
     if (!profile?.email) return false;
