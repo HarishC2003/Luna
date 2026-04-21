@@ -1,22 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { FeatureFlag } from '@/types/admin';
 
 export default function FeatureFlagsPage() {
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchFlags = async () => {
+  const fetchFlags = useCallback(async () => {
     setLoading(true);
     const res = await fetch('/api/admin/feature-flags');
     if (res.ok) setFlags(await res.json());
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
-    fetchFlags();
-  }, []);
+    void fetchFlags();
+  }, [fetchFlags]);
 
   const toggleFlag = async (key: string, current: boolean) => {
     if (key === 'maintenance_mode' && !current) {

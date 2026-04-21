@@ -1,20 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { AbuseLogEntry } from '@/types/admin';
 
 export default function AbuseLogsPage() {
   const [logs, setLogs] = useState<AbuseLogEntry[]>([]);
   const [reviewedFilter, setReviewedFilter] = useState('false');
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     const res = await fetch(`/api/admin/abuse-logs?reviewed=${reviewedFilter}`);
     if (res.ok) setLogs((await res.json()).logs);
-  };
+  }, [reviewedFilter]);
 
   useEffect(() => {
-    fetchLogs();
-  }, [reviewedFilter]);
+    void fetchLogs();
+  }, [fetchLogs]);
 
   const review = async (id: string, action: string) => {
     const notes = prompt('Any notes? (Max 300 chars)');

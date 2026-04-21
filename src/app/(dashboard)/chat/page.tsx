@@ -10,30 +10,24 @@ import { DailyLogModal } from '@/components/cycle/DailyLogModal';
 export default function ChatPage() {
   const { messages, isLoading, error, suggestions, sendMessage, clearHistory, thumbsUp, thumbsDown, contextPill, loggedToday, refreshContext } = useChat();
   const bottomRef = useRef<HTMLDivElement>(null);
-  const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
 
+  const showFeedback = messages.length >= 3 && !isLoading && !feedbackGiven;
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    
-    // Show feedback if there's at least one user message and an assistant response
-    if (messages.length >= 3 && !isLoading && !feedbackGiven) {
-      setShowFeedback(true);
-    }
   }, [messages, isLoading, feedbackGiven]);
 
   const handleFeedback = (isUp: boolean) => {
-    isUp ? thumbsUp() : thumbsDown();
+    if (isUp) { thumbsUp(); } else { thumbsDown(); }
     setFeedbackGiven(true);
-    setShowFeedback(false);
   };
 
   const handleClearHistory = () => {
     if (confirm('Are you sure you want to clear this conversation?')) {
       clearHistory();
       setFeedbackGiven(false);
-      setShowFeedback(false);
     }
   };
 
@@ -74,7 +68,7 @@ export default function ChatPage() {
         <div className="bg-[#4A1B3C]/5 px-4 py-2.5 text-sm shadow-inner flex flex-wrap items-center justify-between gap-2 border-b border-[#4A1B3C]/10">
           <span className="text-[#4A1B3C] font-medium flex items-center">
             <svg className="w-4 h-4 mr-2 text-[#E85D9A]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-            You haven't logged today.
+            You haven&apos;t logged today.
           </span>
           <button 
             onClick={() => setShowLogModal(true)}

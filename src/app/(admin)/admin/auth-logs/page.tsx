@@ -1,15 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { AuthLogEntry } from '@/types/admin';
 
 export default function AuthLogsPage() {
   const [logs, setLogs] = useState<AuthLogEntry[]>([]);
   const [suspiciousIps, setSuspiciousIps] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  const fetchLogs = async () => {
-    setLoading(true);
+  const fetchLogs = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/auth-logs');
       if (res.ok) {
@@ -17,16 +14,16 @@ export default function AuthLogsPage() {
         setLogs(data.logs);
         setSuspiciousIps(data.suspiciousIps || []);
       }
-    } finally {
-      setLoading(false);
+    } catch {
+      // Ignore errors
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchLogs();
-    const t = setInterval(fetchLogs, 60000);
+    void fetchLogs();
+    const t = setInterval(() => { void fetchLogs(); }, 60000);
     return () => clearInterval(t);
-  }, []);
+  }, [fetchLogs]);
 
   return (
     <div className="space-y-6">

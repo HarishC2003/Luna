@@ -5,14 +5,12 @@ import type { AdminUser } from '@/types/admin';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [sort, setSort] = useState('created_at');
   
   const fetchUsers = useCallback(async () => {
-    setLoading(true);
     try {
       const res = await fetch(`/api/admin/users?page=${page}&limit=20&search=${search}&sort=${sort}&order=desc`);
       if (res.ok) {
@@ -20,8 +18,8 @@ export default function UsersPage() {
         setUsers(data.users);
         setTotalPages(data.totalPages || 1);
       }
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      console.error(e);
     }
   }, [page, search, sort]);
 

@@ -57,7 +57,7 @@ export default function HistoryPage() {
       } else {
         alert('Failed to delete log');
       }
-    } catch (e) {
+    } catch (_e) {
       alert('An error occurred');
     }
   };

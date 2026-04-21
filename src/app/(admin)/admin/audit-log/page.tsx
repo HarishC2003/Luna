@@ -37,7 +37,7 @@ export default async function AuditLogPage() {
               <tr key={log.id} className="hover:bg-gray-50/50">
                 <td className="p-4 text-sm font-mono text-gray-500">{new Date(log.created_at).toLocaleString()}</td>
                 <td className="p-4">
-                  <p className="font-bold text-[#4A1B3C]">{(log.profiles as any)?.email}</p>
+                  <p className="font-bold text-[#4A1B3C]">{(log.profiles as { email: string })?.email}</p>
                 </td>
                 <td className="p-4">
                   <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-bold font-mono">

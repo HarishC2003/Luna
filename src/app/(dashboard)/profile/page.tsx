@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
@@ -12,28 +12,23 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   
   // Profile Data
-  const [profile, setProfile] = useState<Record<string, any>>({});
+  const [profile, setProfile] = useState<Record<string, unknown>>({});
   // Settings Data
-  const [settings, setSettings] = useState<Record<string, any>>({});
+  const [settings, setSettings] = useState<Record<string, unknown>>({});
   // Privacy Summary
-  const [privacy, setPrivacy] = useState<Record<string, any>>({});
+  const [privacy, setPrivacy] = useState<Record<string, unknown>>({});
 
   const { isSupported, isSubscribed, subscribe, unsubscribe, isLoading: pushLoading } = usePushNotifications();
   const [exportUrl, setExportUrl] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [deletionPhrase, setDeletionPhrase] = useState('');
-  const [resetSent, setResetSent] = useState(false);
   const [reportMonth, setReportMonth] = useState(new Date().getMonth() + 1);
   const [reportYear, setReportYear] = useState(new Date().getFullYear());
   const [reportGenerating, setReportGenerating] = useState(false);
   const [reportUrl, setReportUrl] = useState<string | null>(null);
-  const [recentReports, setRecentReports] = useState<Record<string, any>[]>([]);
+  const [recentReports, setRecentReports] = useState<Record<string, unknown>[]>([]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [profRes, setRes, privRes] = await Promise.all([
@@ -44,27 +39,31 @@ export default function ProfilePage() {
       setProfile(await profRes.json());
       setSettings(await setRes.json());
       setPrivacy(await privRes.json());
-    } catch (err) {
-      console.error(err);
+    } catch (_err) {
+      console.error(_err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       const res = await fetch('/api/privacy/reports'); // I need to create this simple list API or fetch from elsewhere
       const data = await res.json();
       setRecentReports(data.reports || []);
-    } catch (e) {
-      console.error(e);
+    } catch (_e) {
+      console.error(_e);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     /* eslint-disable-next-line react-hooks/set-state-in-effect */
-    if (activeTab === 'privacy') fetchReports();
-  }, [activeTab]);
+    if (activeTab === 'privacy') void fetchReports();
+  }, [activeTab, fetchReports]);
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +80,7 @@ export default function ProfilePage() {
         })
       });
       alert('Profile saved!');
-    } catch (err) {
+    } catch (_err) {
       alert('Failed to save profile');
     } finally {
       setSaving(false);
@@ -109,7 +108,7 @@ export default function ProfilePage() {
         })
       });
       alert('Settings saved!');
-    } catch (err) {
+    } catch (_err) {
       alert('Failed to save settings');
     } finally {
       setSaving(false);
@@ -172,7 +171,7 @@ export default function ProfilePage() {
     try {
       await fetch('/api/notifications/test', { method: 'POST' });
       alert('Test sent!');
-    } catch (err) {
+    } catch (_err) {
       alert('Failed to send test push.');
     }
   };
@@ -390,7 +389,7 @@ export default function ProfilePage() {
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-[#E85D9A]/10">
             <h3 className="text-xl font-bold text-[#4A1B3C] mb-2">Reset Password</h3>
             <p className="text-[#4A1B3C]/70 text-sm mb-4">You will receive an email instruction at {profile.email} to securely reset your credentials.</p>
-            <button className="px-6 py-2 bg-gray-100 font-bold text-[#4A1B3C] rounded-lg" onClick={() => { setResetSent(true); alert('Not implemented directly in this snippet, use supabase.auth.resetPasswordForEmail() in production!'); }}>Send Reset Email</button>
+            <button className="px-6 py-2 bg-gray-100 font-bold text-[#4A1B3C] rounded-lg" onClick={() => { alert('Not implemented directly in this snippet, use supabase.auth.resetPasswordForEmail() in production!'); }}>Send Reset Email</button>
           </div>
           {privacy.pendingDeletion ? (
             <div className="p-6 rounded-3xl border-2 border-red-500 bg-red-50 text-red-700 font-bold">Your account is scheduled for total deletion at {new Date(privacy.pendingDeletionAt).toLocaleString()}. Check your email to cancel.</div>

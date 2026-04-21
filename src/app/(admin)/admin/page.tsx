@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import type { AdminStats, AuthLogEntry } from '@/types/admin';
 
 export default function AdminOverviewPage() {
-  const [stats, setStats] = useState<any>(null);
-  const [authLogs, setAuthLogs] = useState<any[]>([]);
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [authLogs, setAuthLogs] = useState<AuthLogEntry[]>([]);
 
-  const fetchOverview = async () => {
+  const fetchOverview = useCallback(async () => {
     try {
       const statsRes = await fetch('/api/admin/stats');
       if (statsRes.ok) setStats(await statsRes.json());
@@ -14,13 +15,13 @@ export default function AdminOverviewPage() {
       const logsRes = await fetch('/api/admin/auth-logs?limit=10');
       if (logsRes.ok) setAuthLogs((await logsRes.json()).logs);
     } catch {}
-  };
+  }, []);
 
   useEffect(() => {
-    fetchOverview();
-    const interval = setInterval(fetchOverview, 30000);
+    void fetchOverview();
+    const interval = setInterval(() => { void fetchOverview(); }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchOverview]);
 
   if (!stats) return <div className="animate-pulse">Loading dashboard...</div>;
 
