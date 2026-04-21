@@ -11,6 +11,7 @@ export function useChat() {
   const [loggedToday, setLoggedToday] = useState<boolean>(true);
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     // Generate initial session ID and greeting
     const newSessionId = crypto.randomUUID();
     const initialMsg: ChatMessage = {
@@ -35,6 +36,7 @@ export function useChat() {
       }
     };
     fetchContext();
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   const refreshContext = async () => {
@@ -147,7 +149,7 @@ export function useChat() {
               } else if (data.type === 'error') {
                 throw new Error(data.message);
               }
-            } catch (err) {
+            } catch {
               // Ignore malformed JSON chunks from split boundaries
             }
           }
@@ -169,7 +171,9 @@ export function useChat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, rating: 1 })
       });
-    } catch (e) {}
+    } catch {
+      // ignore
+    }
   };
 
   const thumbsDown = async () => {
@@ -179,7 +183,9 @@ export function useChat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, rating: -1 })
       });
-    } catch (e) {}
+    } catch {
+      // ignore
+    }
   };
 
   return {

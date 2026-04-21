@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { apiLimiter } from '@/lib/rate-limit/limiter';
-import { getAllFeatureFlags } from '@/lib/feature-flags';
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -28,11 +27,11 @@ export async function GET(request: Request) {
       enabled: f.enabled,
       description: f.description,
       updated_at: f.updated_at,
-      updated_by_email: f.profiles ? (f.profiles as any).email : 'System'
+      updated_by_email: f.profiles ? (f.profiles as unknown as { email: string }).email : 'System'
     }));
 
     return NextResponse.json(mapped);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

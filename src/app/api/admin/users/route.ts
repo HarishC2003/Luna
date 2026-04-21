@@ -31,16 +31,16 @@ export async function GET(request: Request) {
       query = query.ilike('email', `${search}%`);
     }
     
-    query = query.order(sort as any, { ascending: order }).range((page - 1) * limit, page * limit - 1);
+    query = query.order(sort as 'created_at' | 'email' | 'display_name' | 'role', { ascending: order }).range((page - 1) * limit, page * limit - 1);
     
     const { data: users, count, error } = await query;
     if (error) throw error;
 
     // Fetch relational data for the found users
     const userIds = users?.map(u => u.id) || [];
-    let cycleLogs: any[] = [];
-    let authLogs: any[] = [];
-    let suspensions: any[] = [];
+    let cycleLogs: Record<string, unknown>[] = [];
+    let authLogs: Record<string, unknown>[] = [];
+    let suspensions: Record<string, unknown>[] = [];
     
     if (userIds.length > 0) {
       const [{ data: cl }, { data: al }, { data: susp }] = await Promise.all([
@@ -74,8 +74,8 @@ export async function GET(request: Request) {
       page,
       totalPages: count ? Math.ceil(count / limit) : 0
     });
-  } catch (error) {
-    captureAPIError(error, { route: '/api/admin/users' });
+  } catch {
+    captureAPIError(new Error('Admin fetch users error'), { route: '/api/admin/users' });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

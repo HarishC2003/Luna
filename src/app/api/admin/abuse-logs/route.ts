@@ -48,7 +48,7 @@ export async function GET(request: Request) {
       logs: anonymizedLogs,
       total: count || 0
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

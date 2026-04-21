@@ -25,7 +25,7 @@ export async function DELETE(request: Request) {
     await admin.from('push_subscriptions').delete().eq('endpoint', parsed.data.endpoint).eq('user_id', user.id);
 
     return NextResponse.json({ message: 'Unsubscribed' });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

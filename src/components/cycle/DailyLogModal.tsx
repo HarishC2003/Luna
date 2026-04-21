@@ -26,7 +26,7 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const [todayStr] = useState(() => new Date().toISOString().split('T')[0]);
   const [date, setDate] = useState(selectedDate || todayStr);
   const [mood, setMood] = useState<Mood | ''>(initialData?.mood || '');
   const [energy, setEnergy] = useState<number | ''>(initialData?.energy || '');
@@ -35,6 +35,7 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
   const [notes, setNotes] = useState(initialData?.notes || '');
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (isOpen) {
       const dateVal = selectedDate || (initialData?.log_date ? initialData.log_date.split('T')[0] : todayStr);
       const moodVal = initialData?.mood || '';
@@ -52,6 +53,7 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
       setLoading(false);
       setError(null);
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [isOpen, selectedDate, initialData, todayStr]);
 
   if (!isOpen) return null;

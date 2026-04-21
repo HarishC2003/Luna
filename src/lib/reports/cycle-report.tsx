@@ -1,5 +1,6 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
+import { CycleLog, DailyLog } from '@/types/cycle';
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 
 const styles = StyleSheet.create({
   page: {
@@ -132,8 +133,8 @@ interface CycleReportProps {
   monthName: string;
   year: number;
   generatedAt: string;
-  cycles: Record<string, unknown>[];
-  logs: Record<string, unknown>[];
+  cycles: CycleLog[];
+  logs: DailyLog[];
   stats: {
     avgCycleLength: number;
     avgPeriodLength: number;

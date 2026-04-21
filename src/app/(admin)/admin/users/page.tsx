@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { AdminUser } from '@/types/admin';
 
 export default function UsersPage() {
@@ -11,12 +11,7 @@ export default function UsersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [sort, setSort] = useState('created_at');
   
-  useEffect(() => {
-    const t = setTimeout(() => fetchUsers(), 400);
-    return () => clearTimeout(t);
-  }, [search, page, sort]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/users?page=${page}&limit=20&search=${search}&sort=${sort}&order=desc`);
@@ -28,7 +23,12 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search, sort]);
+
+  useEffect(() => {
+    const t = setTimeout(() => fetchUsers(), 400);
+    return () => clearTimeout(t);
+  }, [fetchUsers]);
 
   const changeRole = async (id: string, role: string) => {
     const res = await fetch(`/api/admin/users/${id}/role`, {

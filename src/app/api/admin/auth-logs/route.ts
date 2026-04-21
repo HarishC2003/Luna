@@ -64,7 +64,7 @@ export async function GET(request: Request) {
       page: p.page,
       suspiciousIps
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

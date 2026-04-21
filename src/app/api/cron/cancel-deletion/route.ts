@@ -21,7 +21,7 @@ export async function GET(request: Request) {
       '<html><body style="font-family:sans-serif;text-align:center;padding:50px;"><h2>Account Deletion Cancelled</h2><p>Your Luna account is safe and will not be deleted.</p><a href="/">Return to Dashboard</a></body></html>',
       { headers: { 'Content-Type': 'text/html' } }
     );
-  } catch (err) {
+  } catch {
     return new NextResponse('Internal server error', { status: 500 });
   }
 }

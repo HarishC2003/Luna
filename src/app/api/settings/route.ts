@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { apiLimiter } from '@/lib/rate-limit/limiter';
 import { notificationSettingsSchema } from '@/lib/validations/settings';
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -28,7 +28,9 @@ export async function GET(request: Request) {
       notify_hour: 8,
       notify_days_before: 2
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(message);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
@@ -52,7 +54,7 @@ export async function PATCH(request: Request) {
     const pd = parsed.data;
     const admin = createAdminClient();
 
-    const upsertData: any = { user_id: user.id };
+    const upsertData: Record<string, unknown> = { user_id: user.id };
     if (pd.emailPeriodReminder !== undefined) upsertData.email_period_reminder = pd.emailPeriodReminder;
     if (pd.emailFertileWindow !== undefined) upsertData.email_fertile_window = pd.emailFertileWindow;
     if (pd.emailLogStreak !== undefined) upsertData.email_log_streak = pd.emailLogStreak;
@@ -68,7 +70,9 @@ export async function PATCH(request: Request) {
     if (error) throw error;
 
     return NextResponse.json(data);
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(message);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

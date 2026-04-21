@@ -135,7 +135,7 @@ export async function POST(request: Request) {
       parts: [{ text: sanitizeChatInput(h.content) || ' ' }]
     }));
 
-    const validHistory: any[] = [];
+    const validHistory: { role: string; parts: { text: string }[] }[] = [];
     for (const msg of contents) {
       if (validHistory.length > 0 && validHistory[validHistory.length - 1].role === msg.role) {
          validHistory[validHistory.length - 1].parts[0].text += '\n\n' + msg.parts[0].text;
@@ -159,8 +159,8 @@ export async function POST(request: Request) {
         });
         streamResponse = await chatSession.sendMessageStream(cleaned);
         break; // Successfully got the stream response
-      } catch (err: any) {
-        const isRetryable = err.status === 503 || err.status === 429 || err.message?.includes('high demand') || err.message?.includes('Service Unavailable');
+      } catch (err: unknown) {
+        const isRetryable = err instanceof Error && ((err as unknown as { status?: number }).status === 503 || (err as unknown as { status?: number }).status === 429 || err.message?.includes('high demand') || err.message?.includes('Service Unavailable'));
         if (isRetryable && retryCount < MAX_RETRIES) {
           retryCount++;
           // Exponential backoff: 2s, 4s
@@ -186,8 +186,8 @@ export async function POST(request: Request) {
              }
           }
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
-        } catch (error: any) {
-          if (error.name === 'AbortError') {
+        } catch (error: unknown) {
+          if (error instanceof Error && error.name === 'AbortError') {
              // client disconnect
           } else {
              console.error('Gemini Stream Error:', error);
@@ -201,9 +201,9 @@ export async function POST(request: Request) {
 
     return new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' } });
 
-  } catch(error: any) {
+  } catch(error: unknown) {
     console.error('Message POST Error:', error);
-    if (error.status === 503 || error.message?.includes('high demand')) {
+    if (error instanceof Error && (error.message?.includes('high demand') || (error as unknown as { status?: number }).status === 503)) {
        return NextResponse.json({ error: 'The AI model is experiencing high demand. Please try again in a few seconds.' }, { status: 503 });
     }
     return NextResponse.json({ error: 'Something went wrong on our end.' }, { status: 500 });

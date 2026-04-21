@@ -38,8 +38,6 @@ export async function GET() {
       admin.from('onboarding_data').select('*').eq('user_id', user.id).single()
   ]);
 
-  let phase = 'unknown';
-  let daysUntilNextPeriod = 0;
   const predictionObj = predictionRes.data;
 
   if (onboardRes.data) {

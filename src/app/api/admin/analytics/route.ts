@@ -45,11 +45,14 @@ export async function GET(request: Request) {
     ]);
 
     // Grouping helper
-    const groupByDate = (items: any[], dateField: string) => {
+    const groupByDate = (items: Record<string, unknown>[], dateField: string) => {
       const counts: Record<string, number> = {};
       items.forEach(item => {
-         const d = item[dateField].split('T')[0];
-         counts[d] = (counts[d] || 0) + 1;
+         const val = item[dateField];
+         if (typeof val === 'string') {
+           const d = val.split('T')[0];
+           counts[d] = (counts[d] || 0) + 1;
+         }
       });
       return Object.entries(counts).map(([date, count]) => ({ date, count })).sort((a,b) => a.date.localeCompare(b.date));
     };
@@ -104,7 +107,7 @@ export async function GET(request: Request) {
       retention30d,
       cycleDistribution
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

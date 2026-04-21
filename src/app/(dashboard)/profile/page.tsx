@@ -12,11 +12,11 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   
   // Profile Data
-  const [profile, setProfile] = useState<any>({});
+  const [profile, setProfile] = useState<Record<string, any>>({});
   // Settings Data
-  const [settings, setSettings] = useState<any>({});
+  const [settings, setSettings] = useState<Record<string, any>>({});
   // Privacy Summary
-  const [privacy, setPrivacy] = useState<any>({});
+  const [privacy, setPrivacy] = useState<Record<string, any>>({});
 
   const { isSupported, isSubscribed, subscribe, unsubscribe, isLoading: pushLoading } = usePushNotifications();
   const [exportUrl, setExportUrl] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export default function ProfilePage() {
   const [reportYear, setReportYear] = useState(new Date().getFullYear());
   const [reportGenerating, setReportGenerating] = useState(false);
   const [reportUrl, setReportUrl] = useState<string | null>(null);
-  const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [recentReports, setRecentReports] = useState<Record<string, any>[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -62,6 +62,7 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
     if (activeTab === 'privacy') fetchReports();
   }, [activeTab]);
 
@@ -122,8 +123,8 @@ export default function ProfilePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setExportUrl(data.downloadUrl);
-    } catch (err: any) {
-      alert(err.message || 'Export failed');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Export failed');
     } finally {
       setExporting(false);
     }
@@ -142,8 +143,8 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error(data.error);
       setReportUrl(data.downloadUrl);
       fetchReports();
-    } catch (err: any) {
-      alert(err.message || 'Report generation failed');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Report generation failed');
     } finally {
       setReportGenerating(false);
     }
@@ -162,8 +163,8 @@ export default function ProfilePage() {
       const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
       await supabase.auth.signOut();
       router.push('/login');
-    } catch (err: any) {
-      alert(err.message || 'Failed to schedule deletion.');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to schedule deletion.');
     }
   };
 
@@ -188,7 +189,7 @@ export default function ProfilePage() {
       {/* Tab Nav */}
       <div className="flex border-b border-[#E85D9A]/20 mb-8 overflow-x-auto hide-scrollbar">
         {['profile', 'notifications', 'privacy', 'account'].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab as any)} className={`px-6 py-3 font-semibold uppercase tracking-wider text-sm transition-colors whitespace-nowrap ${activeTab === tab ? 'text-[#E85D9A] border-b-2 border-[#E85D9A]' : 'text-[#4A1B3C]/50 hover:text-[#E85D9A]/70'}`}>
+          <button key={tab} onClick={() => setActiveTab(tab as 'profile'|'notifications'|'privacy'|'account')} className={`px-6 py-3 font-semibold uppercase tracking-wider text-sm transition-colors whitespace-nowrap ${activeTab === tab ? 'text-[#E85D9A] border-b-2 border-[#E85D9A]' : 'text-[#4A1B3C]/50 hover:text-[#E85D9A]/70'}`}>
             {tab}
           </button>
         ))}

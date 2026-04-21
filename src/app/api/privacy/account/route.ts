@@ -25,9 +25,10 @@ export async function DELETE(request: Request) {
 
     const scheduledAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     return NextResponse.json({ message: 'Account scheduled for deletion in 24 hours', scheduledAt });
-  } catch (error: any) {
-    if (error.message?.includes('already pending')) {
-      return NextResponse.json({ error: error.message }, { status: 409 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    if (message.includes('already pending')) {
+      return NextResponse.json({ error: message }, { status: 409 });
     }
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }

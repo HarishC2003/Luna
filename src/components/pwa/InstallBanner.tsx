@@ -9,6 +9,7 @@ export function InstallBanner() {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (isInstalled) return;
 
     const dismissed = sessionStorage.getItem('luna_install_dismissed');
@@ -22,6 +23,7 @@ export function InstallBanner() {
       setIsIOS(iOS);
       setShow(true);
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [canInstall, isInstalled]);
 
   if (!show) return null;

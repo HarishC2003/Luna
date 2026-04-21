@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     }, { onConflict: 'endpoint' });
 
     return NextResponse.json({ message: 'Push notifications enabled' }, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

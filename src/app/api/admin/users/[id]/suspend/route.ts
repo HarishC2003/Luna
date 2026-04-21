@@ -44,7 +44,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       await logAdminAction({ adminId: user.id, action: 'user_suspension_lifted', targetType: 'user', targetId: id, metadata: { reason } });
       return NextResponse.json({ message: 'Suspension lifted' });
     }
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

@@ -1,4 +1,4 @@
-import { computePrediction, daysBetween, addDays, getPhaseColor, getPhaseDescription, CycleInput } from '../predictor';
+import { computePrediction, daysBetween, addDays, CycleInput } from '../predictor';
 
 describe('daysBetween', () => {
   it('handles standard dates', () => {

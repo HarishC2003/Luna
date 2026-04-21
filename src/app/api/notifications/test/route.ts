@@ -19,7 +19,7 @@ export const testPushLimiter = redis ? new Ratelimit({
   analytics: false,
 }) : { limit: async () => ({ success: true }) };
 
-export async function POST(request: Request) {
+export async function POST(_request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ sent: result ? 1 : 0 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

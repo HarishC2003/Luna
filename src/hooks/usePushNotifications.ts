@@ -61,8 +61,8 @@ export function usePushNotifications() {
         applicationServerKey: convertedVapidKey
       });
 
-      const p256dh = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('p256dh')!))));
-      const auth = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('auth')!))));
+      const p256dh = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('p256dh')!)) as number[]));
+      const auth = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('auth')!)) as number[]));
 
       const payload = {
         endpoint: subscription.endpoint,

@@ -6,6 +6,35 @@ import { reportLimiter } from '@/lib/rate-limit/limiter';
 import { CycleReportTemplate } from '@/lib/reports/cycle-report';
 import { generateInsights } from '@/lib/cycle/insights';
 import { calculateCurrentStreak } from '@/lib/streaks/calculator';
+import { CycleLog, DailyLog } from '@/types/cycle';
+
+const getReportTemplate = (data: {
+  userName: string;
+  monthName: string;
+  year: number;
+  generatedAt: string;
+  cycles: CycleLog[];
+  logs: DailyLog[];
+  stats: {
+    avgCycleLength: number;
+    avgPeriodLength: number;
+    topSymptoms: string[];
+    topMood: string;
+    streak: number;
+  };
+  insights: { title: string; body: string }[];
+}) => (
+  <CycleReportTemplate 
+    userName={data.userName}
+    monthName={data.monthName}
+    year={data.year}
+    generatedAt={data.generatedAt}
+    cycles={data.cycles}
+    logs={data.logs}
+    stats={data.stats}
+    insights={data.insights}
+  />
+);
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -18,10 +47,10 @@ export async function POST(request: Request) {
 
   try {
     const { month, year } = await request.json();
-    const nowTimestamp = Date.now();
+    const currentTimestamp = Date.now();
     
     // Validate
-    const currentYear = new Date(nowTimestamp).getFullYear();
+    const currentYear = new Date(currentTimestamp).getFullYear();
     if (!month || month < 1 || month > 12) return NextResponse.json({ error: 'Invalid month' }, { status: 400 });
     if (!year || (year !== currentYear && year !== currentYear - 1)) return NextResponse.json({ error: 'Invalid year' }, { status: 400 });
 
@@ -30,7 +59,7 @@ export async function POST(request: Request) {
     // 2. Fetch Data
     const startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
     const endDate = new Date(year, month, 0).toISOString().split('T')[0];
-    const thirtyDaysAgo = new Date(nowTimestamp - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const thirtyDaysAgo = new Date(currentTimestamp - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     const [profileRes, recentCyclesRes, dailyLogsRes, last30LogsRes, onboardRes] = await Promise.all([
       admin.from('profiles').select('display_name, email').eq('id', user.id).single(),
@@ -66,19 +95,19 @@ export async function POST(request: Request) {
 
     const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
 
+    const templateData = {
+      userName: profileRes.data?.display_name || user.email || 'User',
+      monthName,
+      year,
+      generatedAt: new Date(currentTimestamp).toLocaleDateString(),
+      cycles: recentCyclesRes.data || [],
+      logs: logs.slice(0, 31),
+      stats: statsData,
+      insights: insightsArr
+    };
+    
     // 4. Generate PDF
-    const template = (
-      <CycleReportTemplate 
-        userName={profileRes.data?.display_name || user.email || 'User'}
-        monthName={monthName}
-        year={year}
-        generatedAt={new Date(nowTimestamp).toLocaleDateString()}
-        cycles={recentCyclesRes.data || []}
-        logs={logs.slice(0, 31)}
-        stats={statsData}
-        insights={insightsArr}
-      />
-    );
+    const template = getReportTemplate(templateData);
     const pdfBuffer = await ReactPDF.renderToBuffer(template);
 
     // 5. Upload to Supabase Storage
@@ -88,7 +117,7 @@ export async function POST(request: Request) {
     // Ensure bucket exists (best effort)
     try {
        await admin.storage.createBucket('reports', { public: false });
-    } catch(e) { /* ignore */ }
+    } catch { /* ignore */ }
 
     const { error: uploadError } = await admin.storage
       .from('reports')
@@ -106,7 +135,7 @@ export async function POST(request: Request) {
 
     if (signError) throw new Error(signError.message || 'Failed to sign URL');
 
-    const expiresAt = new Date(nowTimestamp + 48 * 60 * 60 * 1000).toISOString();
+    const expiresAt = new Date(currentTimestamp + 48 * 60 * 60 * 1000).toISOString();
 
     // 7. Store in data_export_requests
     await admin.from('data_export_requests').upsert({
@@ -114,7 +143,7 @@ export async function POST(request: Request) {
       status: 'ready',
       download_url: signData.signedUrl,
       expires_at: expiresAt,
-      created_at: new Date(nowTimestamp).toISOString()
+      created_at: new Date(currentTimestamp).toISOString()
     });
 
     return NextResponse.json({ downloadUrl: signData.signedUrl, expiresAt });

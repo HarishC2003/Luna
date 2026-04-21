@@ -37,7 +37,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ke
     await setFeatureFlag(key as FeatureFlagKey, enabled, user.id);
 
     return NextResponse.json({ key, enabled });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

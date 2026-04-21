@@ -56,8 +56,10 @@ export default function AbuseLogsPage() {
               </div>
             ) : (
               <div className="text-sm text-green-700 bg-green-50 p-2 rounded-lg inline-block font-bold">
-                Reviewed via {l.metadata.action}
-                {l.metadata.notes && <span className="block mt-1 font-normal text-green-600 text-xs">Note: {l.metadata.notes}</span>}
+                Reviewed via {String(l.metadata.action)}
+                {(l.metadata.notes && typeof l.metadata.notes === 'string') ? (
+                  <span className="block mt-1 font-normal text-green-600 text-xs">Note: {l.metadata.notes}</span>
+                ) : null}
               </div>
             )}
           </div>

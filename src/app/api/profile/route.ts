@@ -5,7 +5,7 @@ import { apiLimiter } from '@/lib/rate-limit/limiter';
 import { profileUpdateSchema } from '@/lib/validations/settings';
 import { computePrediction } from '@/lib/cycle/predictor';
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -29,7 +29,9 @@ export async function GET(request: Request) {
       avgPeriodLength: onboardRes.data?.avg_period_length || null,
       onboardingCompleted: onboardRes.data?.completed || false
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(message);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
@@ -101,7 +103,9 @@ export async function PATCH(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(message);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

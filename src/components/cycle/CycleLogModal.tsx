@@ -16,26 +16,23 @@ export function CycleLogModal({ isOpen, onClose, onSuccess, initialData }: Props
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const [todayStr] = useState(() => new Date().toISOString().split('T')[0]);
   const [start, setStart] = useState(initialData?.period_start ? initialData.period_start.split('T')[0] : todayStr);
   const [end, setEnd] = useState(initialData?.period_end ? initialData.period_end.split('T')[0] : '');
   const [flow, setFlow] = useState<FlowIntensity | ''>(initialData?.avg_flow || '');
   const [notes, setNotes] = useState(initialData?.notes || '');
 
   useEffect(() => {
-    if (isOpen) {
-      const startVal = initialData?.period_start ? initialData.period_start.split('T')[0] : todayStr;
-      const endVal = initialData?.period_end ? initialData.period_end.split('T')[0] : '';
-      const flowVal = initialData?.avg_flow || '';
-      const notesVal = initialData?.notes || '';
-
-      setStart(startVal);
-      setEnd(endVal);
-      setFlow(flowVal);
-      setNotes(notesVal);
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (isOpen && initialData) {
+      setStart(initialData.period_start ? initialData.period_start.split('T')[0] : todayStr);
+      setEnd(initialData.period_end ? initialData.period_end.split('T')[0] : '');
+      setFlow((initialData.avg_flow || '') as FlowIntensity | '');
+      setNotes(initialData.notes || '');
       setLoading(false);
       setError(null);
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [isOpen, initialData, todayStr]);
 
   if (!isOpen) return null;

@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { apiLimiter } from '@/lib/rate-limit/limiter';
 import { captureAPIError, trackAdminAction } from '@/lib/monitoring/sentry';
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -65,7 +65,7 @@ export async function GET(request: Request) {
       pendingDeletions: pendingDel || 0,
       suspendedUsers: suspUsers || 0
     });
-  } catch (error) {
+  } catch (error: unknown) {
     captureAPIError(error, { route: '/api/admin/stats' });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }

@@ -63,7 +63,7 @@ export async function POST(request: Request) {
 
     clearUserContextCache(user.id);
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error(err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
