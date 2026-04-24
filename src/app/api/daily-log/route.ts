@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const logDateNormalized = new Date(result.logDate).toISOString().split('T')[0];
 
-    const insertData: any = {
+    const insertData: Record<string, unknown> = {
         user_id: user.id,
         log_date: logDateNormalized,
         mood: result.mood || null,
@@ -35,12 +35,33 @@ export async function POST(request: Request) {
         insertData.water_glasses = result.waterGlasses;
     }
 
-    const { data: newLog, error } = await admin.from('daily_logs').upsert(
+    let newLog;
+    const { data: firstAttemptData, error } = await admin.from('daily_logs').upsert(
         insertData,
         { onConflict: 'user_id,log_date' }
     ).select().single();
 
-    if (error) return NextResponse.json({ error: 'Failed to save daily log' }, { status: 500 });
+    if (error) {
+        if (error.code === '42703') { // undefined_column
+            console.warn('[daily-log] water_glasses column missing. Falling back without it.');
+            delete insertData.water_glasses;
+            const { data: fallbackData, error: fallbackError } = await admin.from('daily_logs').upsert(
+                insertData,
+                { onConflict: 'user_id,log_date' }
+            ).select().single();
+            
+            if (fallbackError) {
+                console.error('[daily-log] Fallback Supabase error:', fallbackError);
+                return NextResponse.json({ error: 'Failed to save daily log' }, { status: 500 });
+            }
+            newLog = fallbackData;
+        } else {
+            console.error('[daily-log] Supabase error:', error);
+            return NextResponse.json({ error: 'Failed to save daily log' }, { status: 500 });
+        }
+    } else {
+        newLog = firstAttemptData;
+    }
     
     // Invalidate chat context cache
     clearUserContextCache(user.id);

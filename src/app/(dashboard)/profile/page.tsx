@@ -10,6 +10,8 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'profile'|'notifications'|'privacy'|'account'>('profile');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
   
   interface UserProfile {
     displayName?: string;
@@ -70,11 +72,20 @@ export default function ProfilePage() {
         fetch('/api/settings'),
         fetch('/api/privacy/summary')
       ]);
-      setProfile(await profRes.json());
-      setSettings(await setRes.json());
-      setPrivacy(await privRes.json());
+      if (profRes.ok) {
+        const profileData = await profRes.json();
+        setProfile(profileData);
+      }
+      if (setRes.ok) {
+        const settingsData = await setRes.json();
+        setSettings(settingsData);
+      }
+      if (privRes.ok) {
+        const privacyData = await privRes.json();
+        setPrivacy(privacyData);
+      }
     } catch (_err) {
-      console.error(_err);
+      console.error('Failed to load profile:', _err);
     } finally {
       setLoading(false);
     }
@@ -103,8 +114,9 @@ export default function ProfilePage() {
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError('');
     try {
-      await fetch('/api/profile', {
+      const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -114,9 +126,16 @@ export default function ProfilePage() {
           goals: profile.goals
         })
       });
-      alert('Profile saved!');
-    } catch (_err) {
-      alert('Failed to save profile');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to save');
+      }
+      setSuccess('Profile updated successfully');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save profile';
+      setError(message);
+      setTimeout(() => setError(''), 3000);
     } finally {
       setSaving(false);
     }
@@ -125,26 +144,19 @@ export default function ProfilePage() {
   const saveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError('');
     try {
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          emailPeriodReminder: settings.email_period_reminder,
-          emailFertileWindow: settings.email_fertile_window,
-          emailLogStreak: settings.email_log_streak,
-          emailWeeklyInsights: settings.email_weekly_insights,
-          emailTips: settings.email_tips,
-          pushPeriodReminder: settings.push_period_reminder,
-          pushFertileWindow: settings.push_fertile_window,
-          pushLogReminder: settings.push_log_reminder,
-          notifyHour: parseInt(String(settings.notify_hour || 8)),
-          notifyDaysBefore: parseInt(String(settings.notify_days_before || 2))
-        })
+        body: JSON.stringify(settings)
       });
-      alert('Settings saved!');
+      if (!res.ok) throw new Error('Failed to save settings');
+      setSuccess('Settings saved');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (_err) {
-      alert('Failed to save settings');
+      setError('Failed to save settings');
+      setTimeout(() => setError(''), 3000);
     } finally {
       setSaving(false);
     }
@@ -154,9 +166,13 @@ export default function ProfilePage() {
     setExporting(true);
     try {
       const res = await fetch('/api/privacy/export', { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setExportUrl(data.downloadUrl);
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Export failed');
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      setExportUrl(url);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Export failed');
     } finally {
@@ -173,9 +189,13 @@ export default function ProfilePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ month: reportMonth, year: reportYear })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setReportUrl(data.downloadUrl);
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Report generation failed');
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      setReportUrl(url);
       fetchReports();
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Report generation failed');
@@ -202,6 +222,41 @@ export default function ProfilePage() {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!profile.email) {
+      setError('Email address not found.');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+    setSaving(true);
+    try {
+      const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(profile.email, {
+        redirectTo: `${window.location.origin}/update-password`,
+      });
+      if (resetErr) throw resetErr;
+      setSuccess('Password reset email sent! Check your inbox.');
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send reset email');
+      setTimeout(() => setError(''), 5000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+      await supabase.auth.signOut();
+      router.push('/login');
+      router.refresh();
+    } catch (_err: unknown) {
+      setError('Failed to log out.');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
   const handleTestPush = async () => {
     try {
       await fetch('/api/notifications/test', { method: 'POST' });
@@ -211,13 +266,45 @@ export default function ProfilePage() {
     }
   };
 
-  // Add conditions/goals toggle logic here, basic map for snippet
-  const toggleArrayItem = (arr: string[] = [], item: string) => arr.includes(item) ? arr.filter(i => i !== item) : [...arr, item].slice(0, 4);
+  const toggleCondition = (c: string) => {
+    setProfile(prev => ({
+      ...prev,
+      conditions: prev.conditions?.includes(c)
+        ? prev.conditions.filter(item => item !== c)
+        : [...(prev.conditions || []), c]
+    }));
+  };
 
-  if (loading) return <div className="p-8 text-center text-[#E85D9A] animate-pulse">Loading settings...</div>;
+  const toggleGoal = (g: string) => {
+    setProfile(prev => ({
+      ...prev,
+      goals: prev.goals?.includes(g)
+        ? prev.goals.filter(item => item !== g)
+        : [...(prev.goals || []), g]
+    }));
+  };
+
+  if (loading) return (
+    <div className="max-w-3xl mx-auto pb-10 space-y-4 pt-8 px-6">
+      <div className="h-12 bg-gray-200 rounded animate-pulse" />
+      <div className="h-12 bg-gray-200 rounded animate-pulse" />
+      <div className="h-12 bg-gray-200 rounded animate-pulse" />
+    </div>
+  );
 
   return (
-    <div className="max-w-3xl mx-auto pb-10">
+    <div className="max-w-3xl mx-auto pb-10 px-6 sm:px-0 mt-6 relative">
+      {success && (
+        <div className="fixed top-4 right-4 bg-green-100 text-green-800 px-4 py-3 rounded-lg shadow-lg z-50">
+          {success}
+        </div>
+      )}
+      {error && (
+        <div className="fixed top-4 right-4 bg-red-100 text-red-800 px-4 py-3 rounded-lg shadow-lg z-50">
+          {error}
+        </div>
+      )}
+
       <h1 className="text-3xl font-extrabold text-[#4A1B3C] mb-8">Settings</h1>
       
       {/* Tab Nav */}
@@ -243,7 +330,7 @@ export default function ProfilePage() {
             <label className="block text-sm font-semibold text-[#4A1B3C] mb-2 uppercase tracking-wide">Health Conditions</label>
             <div className="flex flex-wrap gap-2">
               {['pcos', 'endometriosis', 'irregular', 'none'].map(c => (
-                <button type="button" key={c} onClick={() => setProfile({...profile, conditions: toggleArrayItem(profile.conditions, c)})} className={`px-4 py-2 rounded-full uppercase text-xs font-bold transition-colors ${profile.conditions?.includes(c) ? 'bg-[#E85D9A] text-white' : 'bg-gray-100 text-[#4A1B3C]'}`}>{c}</button>
+                <button type="button" key={c} onClick={() => toggleCondition(c)} className={`px-4 py-2 rounded-full uppercase text-xs font-bold transition-colors ${profile.conditions?.includes(c) ? 'bg-[#E85D9A] text-white' : 'bg-gray-100 text-[#4A1B3C]'}`}>{c}</button>
               ))}
             </div>
           </div>
@@ -251,7 +338,7 @@ export default function ProfilePage() {
             <label className="block text-sm font-semibold text-[#4A1B3C] mb-2 uppercase tracking-wide">Goals</label>
             <div className="flex flex-wrap gap-2">
               {['track', 'conceive', 'avoid', 'health'].map(c => (
-                <button type="button" key={c} onClick={() => setProfile({...profile, goals: toggleArrayItem(profile.goals, c)})} className={`px-4 py-2 rounded-full uppercase text-xs font-bold transition-colors ${profile.goals?.includes(c) ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-[#4A1B3C]'}`}>{c}</button>
+                <button type="button" key={c} onClick={() => toggleGoal(c)} className={`px-4 py-2 rounded-full uppercase text-xs font-bold transition-colors ${profile.goals?.includes(c) ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-[#4A1B3C]'}`}>{c}</button>
               ))}
             </div>
           </div>
@@ -382,11 +469,11 @@ export default function ProfilePage() {
               </button>
             )}
 
-            {recentReports.length > 0 && (
+            {recentReports.filter(rep => rep.download_url && rep.download_url !== 'direct_download').length > 0 && (
               <div className="mt-8">
                 <h4 className="text-[10px] font-black text-[#4A1B3C]/30 uppercase tracking-[0.2em] mb-4">Past 3 Months</h4>
                 <div className="space-y-3">
-                  {recentReports.slice(0, 3).map((rep, idx) => (
+                  {recentReports.filter(rep => rep.download_url && rep.download_url !== 'direct_download').slice(0, 3).map((rep, idx) => (
                     <a key={idx} href={rep.download_url} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-[#E85D9A]/20 transition-all group">
                        <div className="flex items-center gap-3">
                          <div className="w-8 h-8 rounded-lg bg-[#E85D9A]/10 flex items-center justify-center text-[#E85D9A]">
@@ -424,7 +511,14 @@ export default function ProfilePage() {
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-[#E85D9A]/10">
             <h3 className="text-xl font-bold text-[#4A1B3C] mb-2">Reset Password</h3>
             <p className="text-[#4A1B3C]/70 text-sm mb-4">You will receive an email instruction at {profile.email} to securely reset your credentials.</p>
-            <button className="px-6 py-2 bg-gray-100 font-bold text-[#4A1B3C] rounded-lg" onClick={() => { alert('Not implemented directly in this snippet, use supabase.auth.resetPasswordForEmail() in production!'); }}>Send Reset Email</button>
+            <button disabled={saving} className="px-6 py-2 bg-gray-100 hover:bg-gray-200 transition-colors font-bold text-[#4A1B3C] rounded-lg disabled:opacity-50" onClick={handleResetPassword}>Send Reset Email</button>
+          </div>
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-[#E85D9A]/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="text-xl font-bold text-[#4A1B3C] mb-1">Sign Out</h3>
+              <p className="text-[#4A1B3C]/70 text-sm">Log out of your account securely.</p>
+            </div>
+            <button onClick={handleLogout} className="px-8 py-3 bg-[#4A1B3C] hover:bg-[#321228] transition-colors text-white font-bold rounded-xl shadow-sm w-full sm:w-auto">Log Out</button>
           </div>
           {privacy.pendingDeletion ? (
             <div className="p-6 rounded-3xl border-2 border-red-500 bg-red-50 text-red-700 font-bold">Your account is scheduled for total deletion at {new Date(privacy.pendingDeletionAt || '').toLocaleString()}. Check your email to cancel.</div>

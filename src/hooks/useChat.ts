@@ -138,16 +138,23 @@ export function useChat() {
                   m.id === assistantMsgId ? { ...m, isStreaming: false } : m
                 ));
               } else if (data.type === 'error') {
-                throw new Error(data.message);
+                setError(data.message);
+                setMessages(prev => prev.map(m =>
+                  m.id === assistantMsgId ? { ...m, isStreaming: false, content: m.content || 'Something went wrong. Please try again.' } : m
+                ));
+                return;
               }
-            } catch {
+            } catch (_err) {
               // Ignore malformed JSON chunks from split boundaries
             }
           }
         }
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Connection lost. Please try again.";
+      let msg = err instanceof Error ? err.message : "Connection lost. Please try again.";
+      if (msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('rate limit')) {
+        msg = 'Chat is busy right now. Please try again in a minute.';
+      }
       setError(msg);
       setMessages(prev => prev.filter(m => m.id !== assistantMsgId));
     } finally {

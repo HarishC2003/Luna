@@ -47,7 +47,7 @@ export function ChatBubble({ message, isOwn }: { message: ChatMessage, isOwn: bo
            )}
          </div>
          
-         <div className={`text-[10px] text-gray-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity`}>
+         <div suppressHydrationWarning className={`text-[10px] text-gray-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity`}>
            {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
          </div>
       </div>

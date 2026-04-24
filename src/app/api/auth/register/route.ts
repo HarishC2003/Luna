@@ -65,13 +65,20 @@ export async function POST(request: Request) {
 
     // Send email
     const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`;
-    await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL!,
-      to: email,
-      subject: 'Verify your Luna account',
-      html: verificationEmail({ displayName, verifyUrl }),
-      text: `Welcome! Please verify your email at: ${verifyUrl}`
-    });
+    const { html, text } = verificationEmail({ displayName, verifyUrl });
+
+    try {
+      await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || 'Luna <onboarding@resend.dev>',
+        to: email,
+        subject: 'Verify your Luna account',
+        html,
+        text
+      });
+      console.log('Verification email sent to:', email);
+    } catch (emailError) {
+      console.error('Resend error:', emailError);
+    }
 
     await supabase.from('auth_logs').insert({ user_id: userId, event_type: 'register', ip_address: ip, success: true });
 

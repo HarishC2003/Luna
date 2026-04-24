@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { apiLimiter } from '@/lib/rate-limit/limiter';
-import { createExportDownloadUrl } from '@/lib/privacy/data-export';
+import { generateUserDataExport } from '@/lib/privacy/data-export';
 
 export async function POST(_request: Request) {
   try {
@@ -28,10 +28,22 @@ export async function POST(_request: Request) {
       return NextResponse.json({ error: 'Export limit reached. Maximum 3 exports per 24 hours.' }, { status: 429 });
     }
 
-    const downloadUrl = await createExportDownloadUrl(user.id);
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const exportJson = await generateUserDataExport(user.id);
 
-    return NextResponse.json({ downloadUrl, expiresAt });
+    await admin.from('data_export_requests').insert({
+      user_id: user.id,
+      status: 'ready',
+      download_url: 'direct_download',
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    });
+
+    return new Response(exportJson, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Disposition': 'attachment; filename="luna-privacy-export.json"'
+      }
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Export Error:', error);

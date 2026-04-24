@@ -44,7 +44,9 @@ export const dailyLogSchema = z.object({
     const now = new Date();
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(now.getDate() - 60);
-    return date <= now && date >= sixtyDaysAgo;
+    const tomorrow = new Date();
+    tomorrow.setDate(now.getDate() + 2);
+    return date <= tomorrow && date >= sixtyDaysAgo;
   }, 'Date must be within past 60 days and not in the future'),
   mood: z.enum(['great', 'good', 'okay', 'low', 'terrible']).optional().nullable(),
   energy: z.number().int().min(1).max(5).optional().nullable(),

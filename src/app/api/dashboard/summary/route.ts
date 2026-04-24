@@ -16,7 +16,7 @@ export async function GET() {
   const admin = createAdminClient();
   
   // Fetch profiles table to check if onboarding is complete
-  const { data: profile } = await admin.from('profiles').select('onboarding_completed').eq('id', user.id).single();
+  const { data: profile } = await admin.from('profiles').select('onboarding_completed, display_name').eq('id', user.id).single();
   
   if (!profile?.onboarding_completed) {
       return NextResponse.json({ needsOnboarding: true }, { status: 200 });
@@ -86,6 +86,7 @@ export async function GET() {
       todayLog: todayLogRes.data || null,
       allLogs: allLogsRes.data || [],
       insights: topInsights,
-      streakDays
+      streakDays,
+      displayName: profile?.display_name
   }, { status: 200 });
 }

@@ -128,7 +128,7 @@ export async function POST(request: Request) {
     const genAI = new GoogleGenerativeAI(apiKey);
     
     // Updated to recommended model
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', systemInstruction: systemPrompt });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', systemInstruction: systemPrompt });
 
     // Ensure roles are user or model
     const geminiHistory = history.map(h => ({
@@ -174,7 +174,12 @@ export async function POST(request: Request) {
              // client disconnect
           } else {
              console.error('Gemini Stream Error:', error);
-             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'The AI service is currently overwhelmed. Please try again in a moment.' })}\n\n`));
+             const isQuotaError = error instanceof Error && error.message.includes('quota');
+             const message = isQuotaError 
+               ? 'Chat is temporarily unavailable. Please try again in a few minutes.' 
+               : 'Something went wrong. Please try again.';
+             
+             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message })}\n\n`));
           }
         } finally {
           controller.close();

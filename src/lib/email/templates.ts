@@ -4,17 +4,20 @@ interface VerifyEmailProps {
 }
 
 export function verificationEmail({ displayName, verifyUrl }: VerifyEmailProps) {
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px;">
-      <h1 style="color: #4A1B3C; text-align: center;">Welcome to Luna, ${displayName}!</h1>
-      <p style="color: #333333; font-size: 16px; line-height: 1.5;">Thank you for joining Luna. We're thrilled to have you here.</p>
-      <p style="color: #333333; font-size: 16px; line-height: 1.5;">Please verify your email address by clicking the button below. This link will expire in 24 hours.</p>
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${verifyUrl}" style="background-color: #E85D9A; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Verify Email Address</a>
+  return {
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px;">
+        <h1 style="color: #4A1B3C; text-align: center;">Welcome to Luna, ${displayName}!</h1>
+        <p style="color: #333333; font-size: 16px; line-height: 1.5;">Thank you for joining Luna. We're thrilled to have you here.</p>
+        <p style="color: #333333; font-size: 16px; line-height: 1.5;">Please verify your email address by clicking the button below. This link will expire in 24 hours.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${verifyUrl}" style="background-color: #E85D9A; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Verify Email Address</a>
+        </div>
+        <p style="color: #777777; font-size: 14px; text-align: center;">If you didn't create an account, you can safely ignore this email.</p>
       </div>
-      <p style="color: #777777; font-size: 14px; text-align: center;">If you didn't create an account, you can safely ignore this email.</p>
-    </div>
-  `;
+    `,
+    text: `Welcome to Luna, ${displayName}! Verify your email: ${verifyUrl}`,
+  };
 }
 
 interface PasswordResetProps {

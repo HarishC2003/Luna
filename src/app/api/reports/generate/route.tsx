@@ -110,43 +110,24 @@ export async function POST(request: Request) {
     const template = getReportTemplate(templateData);
     const pdfBuffer = await ReactPDF.renderToBuffer(template);
 
-    // 5. Upload to Supabase Storage
-    const fileName = `${year}-${month}.pdf`;
-    const filePath = `${user.id}/${fileName}`;
-    
-    // Ensure bucket exists (best effort)
-    try {
-       await admin.storage.createBucket('reports', { public: false });
-    } catch { /* ignore */ }
-
-    const { error: uploadError } = await admin.storage
-      .from('reports')
-      .upload(filePath, pdfBuffer, {
-        contentType: 'application/pdf',
-        upsert: true
-      });
-
-    if (uploadError) throw new Error(uploadError.message);
-
-    // 6. Generate Signed URL (48 hours)
-    const { data: signData, error: signError } = await admin.storage
-      .from('reports')
-      .createSignedUrl(filePath, 48 * 60 * 60);
-
-    if (signError) throw new Error(signError.message || 'Failed to sign URL');
-
+    // 5. Log generation request
     const expiresAt = new Date(currentTimestamp + 48 * 60 * 60 * 1000).toISOString();
-
-    // 7. Store in data_export_requests
     await admin.from('data_export_requests').upsert({
       user_id: user.id,
       status: 'ready',
-      download_url: signData.signedUrl,
+      download_url: 'direct_download',
       expires_at: expiresAt,
       created_at: new Date(currentTimestamp).toISOString()
     });
 
-    return NextResponse.json({ downloadUrl: signData.signedUrl, expiresAt });
+    // 6. Return PDF Buffer directly
+    return new Response(pdfBuffer as unknown as BodyInit, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="Luna_Cycle_Report_${year}_${month}.pdf"`
+      }
+    });
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
