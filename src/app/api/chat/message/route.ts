@@ -122,21 +122,23 @@ export async function POST(request: Request) {
     const apiKey = process.env.GEMINI_API_KEY!;
     if (!apiKey) {
        console.error('GEMINI_API_KEY is missing from environment variables.');
-       return NextResponse.json({ error: 'Chat service configuration error: API key missing' }, { status: 500 });
+       return NextResponse.json({ error: 'AI service is not configured' }, { status: 503 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Using gemini-2.5-flash which is the only active model on your key
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', systemInstruction: systemPrompt });
+    // Updated to recommended model
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', systemInstruction: systemPrompt });
 
-    const contents = history.map(h => ({
-      role: h.role,
+    // Ensure roles are user or model
+    const geminiHistory = history.map(h => ({
+      role: h.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: sanitizeChatInput(h.content) || ' ' }]
     }));
 
+    // Merge consecutive messages from same role if needed (Gemini strict alternating role requirement)
     const validHistory: { role: string; parts: { text: string }[] }[] = [];
-    for (const msg of contents) {
+    for (const msg of geminiHistory) {
       if (validHistory.length > 0 && validHistory[validHistory.length - 1].role === msg.role) {
          validHistory[validHistory.length - 1].parts[0].text += '\n\n' + msg.parts[0].text;
       } else {
@@ -147,38 +149,19 @@ export async function POST(request: Request) {
        validHistory.unshift({ role: 'user', parts: [{ text: 'Hello' }] });
     }
 
-    let streamResponse;
-    let retryCount = 0;
-    const MAX_RETRIES = 2;
-
-    while (retryCount <= MAX_RETRIES) {
-      try {
-        const chatSession = model.startChat({
-          history: validHistory,
-          generationConfig: { maxOutputTokens: 250 } // keep responses short
-        });
-        streamResponse = await chatSession.sendMessageStream(cleaned);
-        break; // Successfully got the stream response
-      } catch (err: unknown) {
-        const isRetryable = err instanceof Error && ((err as unknown as { status?: number }).status === 503 || (err as unknown as { status?: number }).status === 429 || err.message?.includes('high demand') || err.message?.includes('Service Unavailable'));
-        if (isRetryable && retryCount < MAX_RETRIES) {
-          retryCount++;
-          // Exponential backoff: 2s, 4s
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
-          continue;
-        }
-        throw err; // Rethrow if not retryable or max retries reached
-      }
-    }
-
-    if (!streamResponse) {
-       throw new Error('Failed to initialize Gemini stream after retries');
+    // Ensure the last message in history is NOT from the user, because we are about to send a user message.
+    if (validHistory.length > 0 && validHistory[validHistory.length - 1].role === 'user') {
+       validHistory.push({ role: 'model', parts: [{ text: 'Okay, tell me more.' }] });
     }
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of streamResponse.stream) {
+          const chatSession = model.startChat({
+            history: validHistory,
+          });
+          const result = await chatSession.sendMessageStream(cleaned);
+          for await (const chunk of result.stream) {
              const text = chunk.text();
              if (text) {
                 const payload = `data: ${JSON.stringify({ type: 'delta', text })}\n\n`;
@@ -199,7 +182,14 @@ export async function POST(request: Request) {
       }
     });
 
-    return new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' } });
+    return new Response(stream, { 
+        headers: { 
+            'Content-Type': 'text/event-stream', 
+            'Cache-Control': 'no-cache, no-transform', 
+            'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no'
+        } 
+    });
 
   } catch(error: unknown) {
     console.error('Message POST Error:', error);

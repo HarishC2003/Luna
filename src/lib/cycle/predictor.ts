@@ -176,7 +176,7 @@ export function computePrediction(cyclesInput: CycleInput[], onboarding: Onboard
 
   // Phase 5: Determine current phase
   let isLate = false;
-  const daysUntilNextPeriod = daysBetween(today, predictedStart);
+  let daysUntilNextPeriod = daysBetween(today, predictedStart);
   if (daysUntilNextPeriod <= 0) {
     isLate = true;
   }
@@ -196,6 +196,7 @@ export function computePrediction(cyclesInput: CycleInput[], onboarding: Onboard
 
       if (dayOfCycle <= menstrualEnd) {
         currentPhase = 'menstrual';
+        daysUntilNextPeriod = avgCycleLength - dayOfCycle;
       } else if (dayOfCycle <= follicularEnd) {
         currentPhase = 'follicular';
       } else if (dayOfCycle <= ovulatoryEnd) {

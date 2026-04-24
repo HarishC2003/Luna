@@ -38,6 +38,7 @@ export function HydrationWidget({ phase }: Props) {
 
   const updateGlasses = async (newCount: number) => {
     const clamped = Math.max(0, Math.min(20, newCount));
+    const previousGlasses = glasses;
     setGlasses(clamped);
     setAnimating(true);
     setTimeout(() => setAnimating(false), 400);
@@ -46,13 +47,17 @@ export function HydrationWidget({ phase }: Props) {
     const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
 
     try {
-      await fetch('/api/daily-log', {
+      const res = await fetch('/api/daily-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ logDate: todayStr, waterGlasses: clamped })
       });
+      if (!res.ok) {
+        throw new Error('Failed to update hydration log');
+      }
     } catch (e) {
       console.error(e);
+      setGlasses(previousGlasses);
     }
   };
 

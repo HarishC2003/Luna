@@ -33,12 +33,19 @@ export function PhaseStatusCard({ phase, daysUntilNext, dayOfCycle }: Props) {
         </div>
         
         <div className="bg-white px-6 py-4 rounded-2xl shadow-sm border border-current text-center w-full md:w-auto">
-          <div className="text-4xl font-extrabold text-current opacity-90 mb-1">
-            {daysUntilNext < 0 ? 'Late' : daysUntilNext}
-          </div>
-          <div className="text-sm font-semibold opacity-70 uppercase tracking-wider">
-            {daysUntilNext < 0 ? 'Days Overdue' : 'Days Until Period'}
-          </div>
+          {daysUntilNext <= 0 ? (
+            <>
+              <div className="text-4xl font-extrabold text-red-500 mb-1">!</div>
+              <div className="text-sm font-bold text-red-500 uppercase tracking-wider">Period may be late</div>
+            </>
+          ) : (
+            <>
+              <div className="text-4xl font-extrabold text-current opacity-90 mb-1">{daysUntilNext}</div>
+              <div className="text-sm font-semibold opacity-70 uppercase tracking-wider">
+                {phase === 'menstrual' ? 'Days until next cycle' : 'Days until period'}
+              </div>
+            </>
+          )}
         </div>
       </div>
 

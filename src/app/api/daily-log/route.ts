@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { ZodError } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { apiLimiter } from '@/lib/rate-limit/limiter';
@@ -16,20 +17,28 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const result = dailyLogSchema.safeParse(body);
-    if (!result.success) return NextResponse.json({ error: 'Validation failed', fields: result.error.flatten() }, { status: 400 });
+    const result = dailyLogSchema.parse(body);
 
     const admin = createAdminClient();
-    const { data: newLog, error } = await admin.from('daily_logs').upsert({
+    const logDateNormalized = new Date(result.logDate).toISOString().split('T')[0];
+
+    const insertData: any = {
         user_id: user.id,
-        log_date: result.data.logDate,
-        mood: result.data.mood || null,
-        energy: result.data.energy || null,
-        flow: result.data.flow || null,
-        symptoms: result.data.symptoms || [],
-        notes: result.data.notes || null,
-        water_glasses: result.data.waterGlasses ?? 0,
-    }, { onConflict: 'user_id,log_date' }).select().single();
+        log_date: logDateNormalized,
+        mood: result.mood || null,
+        energy: result.energy || null,
+        flow: result.flow || null,
+        symptoms: result.symptoms || [],
+        notes: result.notes || null,
+    };
+    if (result.waterGlasses !== undefined && result.waterGlasses !== null) {
+        insertData.water_glasses = result.waterGlasses;
+    }
+
+    const { data: newLog, error } = await admin.from('daily_logs').upsert(
+        insertData,
+        { onConflict: 'user_id,log_date' }
+    ).select().single();
 
     if (error) return NextResponse.json({ error: 'Failed to save daily log' }, { status: 500 });
     
@@ -46,6 +55,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ dailyLog: newLog, newBadges }, { status: 201 });
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: error.flatten() }, { status: 400 });
+    }
     console.error('[daily-log] Internal server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
