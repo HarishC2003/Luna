@@ -132,7 +132,7 @@ export async function POST(request: Request) {
 
     // Ensure roles are user or model
     const geminiHistory = history.map(h => ({
-      role: h.role === 'assistant' ? 'model' : 'user',
+      role: h.role,
       parts: [{ text: sanitizeChatInput(h.content) || ' ' }]
     }));
 
