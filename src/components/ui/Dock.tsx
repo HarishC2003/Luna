@@ -137,7 +137,7 @@ export default function Dock({
     [magnification, dockHeight]
   );
   const heightRow = useTransform(isHovered, [0, 1], [panelHeight, maxHeight]);
-  const height = useSpring(heightRow as any, spring);
+  const height = useSpring(heightRow as MotionValue<number>, spring);
 
   return (
     <motion.div style={{ height, scrollbarWidth: 'none' }} className="dock-outer">

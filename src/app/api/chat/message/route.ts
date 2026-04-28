@@ -133,14 +133,14 @@ export async function POST(request: Request) {
       parameters: {
         type: SchemaType.OBJECT,
         properties: {
-          mood: { type: SchemaType.STRING, description: "Mood: great, good, okay, low, or terrible" } as any,
-          energy: { type: SchemaType.INTEGER, description: "Energy level from 1 to 5" } as any,
-          flow: { type: SchemaType.STRING, description: "Flow: none, spotting, light, medium, or heavy" } as any,
-          symptoms: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } as any, description: "Array of symptoms like cramps, headache, etc." } as any,
-          notes: { type: SchemaType.STRING, description: "Any extra notes" } as any
+          mood: { type: SchemaType.STRING, description: "Mood: great, good, okay, low, or terrible" },
+          energy: { type: SchemaType.INTEGER, description: "Energy level from 1 to 5" },
+          flow: { type: SchemaType.STRING, description: "Flow: none, spotting, light, medium, or heavy" },
+          symptoms: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Array of symptoms like cramps, headache, etc." },
+          notes: { type: SchemaType.STRING, description: "Any extra notes" }
         }
       }
-    };
+    } as import('@google/generative-ai').FunctionDeclaration;
 
     // Ensure roles are user or model
     const geminiHistory = history.map(h => ({
