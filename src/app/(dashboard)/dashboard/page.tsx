@@ -24,6 +24,14 @@ interface DashboardData {
   displayName?: string;
 }
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  if (hour < 21) return 'Good evening';
+  return 'Good night';
+}
+
 export default function DashboardClient() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
@@ -95,9 +103,9 @@ export default function DashboardClient() {
 
       {/* Top Greeting Bar */}
       <div className="flex items-center justify-between mb-2">
-        <div>
-          <h1 className="text-[16px] font-medium text-[#1A0A12]">Good morning, {data.displayName || 'User'}</h1>
-          <p className="text-[12px] text-[#9E7A8A] mt-[2px]">{dateStr}</p>
+        <div className="flex flex-col gap-1 items-start">
+          <h1 className="text-[16px] font-medium text-[#1A0A12]">{getGreeting()}, {data.displayName || 'User'}</h1>
+          <p className="text-[12px] text-[#9E7A8A] font-medium">{dateStr}</p>
         </div>
         <Link href="/profile">
           <div className="w-[36px] h-[36px] rounded-full bg-[#E85D9A] text-white flex items-center justify-center text-[14px] font-bold shadow-sm">
@@ -105,6 +113,8 @@ export default function DashboardClient() {
           </div>
         </Link>
       </div>
+
+      <CheckInCard onAnswered={fetchDashboard} />
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-[16px] md:gap-[24px]">
         {/* Left Column (Primary Cycle Info) */}
@@ -151,8 +161,6 @@ export default function DashboardClient() {
 
         {/* Right Column (Daily Logging & Widgets) */}
         <div className="md:col-span-5 lg:col-span-4 flex flex-col gap-[16px]">
-          <CheckInCard onAnswered={fetchDashboard} />
-          
           {/* Today's Log Quick-Card */}
           <TodayLogQuickCard todayLog={data.todayLog || null} onOpenLog={() => setDailyModelOpen(true)} />
 

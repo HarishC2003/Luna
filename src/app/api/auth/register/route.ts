@@ -3,7 +3,7 @@ import { registerSchema } from '@/lib/validations/auth';
 import { registerLimiter, getRealIP } from '@/lib/rate-limit/limiter';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { generateSecureToken, hashToken } from '@/lib/auth/password';
-import { resend } from '@/lib/email/client';
+import { sendEmail } from '@/lib/email/client';
 import { verificationEmail } from '@/lib/email/templates';
 
 export async function POST(request: Request) {
@@ -68,16 +68,28 @@ export async function POST(request: Request) {
     const { html, text } = verificationEmail({ displayName, verifyUrl });
 
     try {
-      await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || 'Luna <onboarding@resend.dev>',
+      const result = await sendEmail({
         to: email,
         subject: 'Verify your Luna account',
         html,
         text
       });
-      console.log('Verification email sent to:', email);
+      console.log('Email send result:', result);
+      
+      if (!result.success) {
+        console.error('Email send failed:', result.error);
+        // We still return 201 so the user gets created, but they might need to use the terminal link to verify
+      }
     } catch (emailError) {
-      console.error('Resend error:', emailError);
+      console.error('Email send exception:', emailError);
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('VERIFICATION EMAIL (dev mode)');
+      console.log('To:', email);
+      console.log('Link:', verifyUrl);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
 
     await supabase.from('auth_logs').insert({ user_id: userId, event_type: 'register', ip_address: ip, success: true });

@@ -55,7 +55,11 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
       const payload: Record<string, unknown> = { logDate: date };
       if (mood) payload.mood = mood;
       if (energy) payload.energy = energy;
-      if (flow) payload.flow = flow;
+      if (flow) {
+        payload.flow = flow;
+      } else {
+        payload.flow = 'none';
+      }
       if (symptoms.length) payload.symptoms = symptoms;
       if (notes) payload.notes = notes;
 
@@ -83,11 +87,14 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#4A1B3C]/40 backdrop-blur-sm animate-fade-in" onClick={onClose}>
       <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-        <div className="px-6 py-4 border-b border-[#E85D9A]/10 flex justify-between items-center bg-[#FDF8F9]">
-          <h2 className="text-xl font-bold text-[#4A1B3C]">Log your day</h2>
-          <button onClick={onClose} className="p-2 hover:bg-[#E85D9A]/10 rounded-full text-[#4A1B3C] transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+        <div className="px-6 py-4 border-b border-[#E85D9A]/10 bg-[#FDF8F9]">
+          <div className="flex justify-between items-center mb-1">
+            <h2 className="text-xl font-bold text-[#4A1B3C]">Log your day</h2>
+            <button onClick={onClose} className="p-2 hover:bg-[#E85D9A]/10 rounded-full text-[#4A1B3C] transition-colors">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <p className="text-sm font-medium text-[#9E7A8A]">Log any or all: Mood · Energy · Symptoms · Flow</p>
         </div>
 
         <div className="overflow-y-auto flex-1 p-6">

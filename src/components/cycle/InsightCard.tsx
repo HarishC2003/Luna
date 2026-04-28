@@ -4,11 +4,11 @@ interface Props {
   insight: Insight;
 }
 
-const TYPE_THEMES: Record<string, { bg: string, accent: string, text: string }> = {
-  alert: { bg: 'bg-[#FFF0F4]', accent: 'bg-[#E85D9A]', text: 'text-[#72243E]' },
-  tip: { bg: 'bg-[#F0EDFE]', accent: 'bg-[#7F77DD]', text: 'text-[#3C3489]' },
-  milestone: { bg: 'bg-[#E8F8F2]', accent: 'bg-[#1D9E75]', text: 'text-[#085041]' },
-  pattern: { bg: 'bg-[#FEF6E7]', accent: 'bg-[#BA7517]', text: 'text-[#633806]' },
+const TYPE_THEMES: Record<string, { bg: string, accent: string, text: string, fill: string }> = {
+  alert: { bg: 'bg-[#FFF0F4]', accent: 'bg-[#E85D9A]', text: 'text-[#72243E]', fill: '#E85D9A' },
+  tip: { bg: 'bg-[#F0EDFE]', accent: 'bg-[#7F77DD]', text: 'text-[#3C3489]', fill: '#7F77DD' },
+  milestone: { bg: 'bg-[#E8F8F2]', accent: 'bg-[#1D9E75]', text: 'text-[#085041]', fill: '#1D9E75' },
+  pattern: { bg: 'bg-[#FEF6E7]', accent: 'bg-[#BA7517]', text: 'text-[#633806]', fill: '#BA7517' },
 };
 
 export function InsightCard({ insight }: Props) {

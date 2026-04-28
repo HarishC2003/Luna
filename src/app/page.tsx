@@ -4,6 +4,8 @@ import { ProductStrip } from '@/components/landing/ProductStrip';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import SplitText from '@/components/ui/SplitText';
+import GradientText from '@/components/ui/GradientText';
 
 export default async function LandingPage() {
   const supabase = await createClient();
@@ -21,9 +23,18 @@ export default async function LandingPage() {
         {/* HERO SECTION */}
         <section className="max-w-6xl mx-auto px-4 md:px-6 py-12 md:py-24 grid md:grid-cols-2 gap-12 items-center">
           <div className="flex flex-col items-center text-center md:items-start md:text-left">
-            <h1 className="text-[40px] leading-tight font-medium text-[#4A1B3C] tracking-tight">
-              Your cycle, understood.
-            </h1>
+            <SplitText 
+              tag="h1"
+              text="Your cycle, understood."
+              className="text-[40px] leading-tight font-medium text-[#4A1B3C] tracking-tight"
+              delay={50}
+              duration={0.8}
+              ease="back.out(1.7)"
+              splitType="chars"
+              from={{ opacity: 0, y: 30, scale: 0.9 }}
+              to={{ opacity: 1, y: 0, scale: 1 }}
+              textAlign="left"
+            />
             <p className="text-[18px] text-[#72243E] mt-3 max-w-[480px]">
               Track periods, decode symptoms, and chat with an AI that knows your body — privately and personally.
             </p>
@@ -153,7 +164,17 @@ export default async function LandingPage() {
         {/* PRIVACY PROMISE BLOCK */}
         <section className="bg-[#4A1B3C] text-white py-20 px-4">
           <div className="max-w-4xl mx-auto text-center flex flex-col items-center">
-            <h2 className="text-[28px] font-medium mb-8">Your health data is yours. Always.</h2>
+            <h2 className="text-[28px] font-medium mb-8 flex items-center gap-2 justify-center">
+              Your health data is yours.{' '}
+              <GradientText
+                colors={['#E85D9A', '#FF9FFC', '#E85D9A']}
+                animationSpeed={5}
+                showBorder={false}
+                className="font-bold inline-block"
+              >
+                Always.
+              </GradientText>
+            </h2>
             
             <div className="flex flex-wrap justify-center gap-4 mb-8">
               <div className="px-4 py-2 rounded-full border border-[#E85D9A] text-sm font-medium">Never sold</div>

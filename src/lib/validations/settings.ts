@@ -3,16 +3,16 @@ import { z } from 'zod';
 const stripHtml = (val: string) => !/<[^>]*>?/gm.test(val);
 
 export const notificationSettingsSchema = z.object({
-  emailPeriodReminder: z.boolean().optional(),
-  emailFertileWindow: z.boolean().optional(),
-  emailLogStreak: z.boolean().optional(),
-  emailWeeklyInsights: z.boolean().optional(),
-  emailTips: z.boolean().optional(),
-  pushPeriodReminder: z.boolean().optional(),
-  pushFertileWindow: z.boolean().optional(),
-  pushLogReminder: z.boolean().optional(),
-  notifyHour: z.number().int().min(0).max(23).optional(),
-  notifyDaysBefore: z.number().int().min(1).max(5).optional(),
+  email_period_reminder: z.boolean().optional(),
+  email_fertile_window: z.boolean().optional(),
+  email_log_streak: z.boolean().optional(),
+  email_weekly_insights: z.boolean().optional(),
+  email_tips: z.boolean().optional(),
+  push_period_reminder: z.boolean().optional(),
+  push_fertile_window: z.boolean().optional(),
+  push_log_reminder: z.boolean().optional(),
+  notify_hour: z.union([z.string(), z.number()]).transform(Number).optional(),
+  notify_days_before: z.union([z.string(), z.number()]).transform(Number).optional(),
 });
 
 export const pushSubscriptionSchema = z.object({

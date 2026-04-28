@@ -79,3 +79,64 @@ export async function PUT(
 
   return NextResponse.json({ dailyLog: updated });
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Response> {
+  try {
+    const { id } = await params;
+
+    // 1. Validate UUID
+    const uuidSchema = z.string().uuid();
+    if (!uuidSchema.safeParse(id).success) {
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
+    }
+
+    // 2. Authenticate
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // 3. Rate limit
+    const { success } = await apiLimiter.limit(user.id);
+    if (!success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
+    // 4. Ownership check — verify the log belongs to this user
+    const adminSupabase = createAdminClient();
+    const { data: existing, error: fetchError } = await adminSupabase
+      .from('daily_logs')
+      .select('user_id')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !existing) {
+      return NextResponse.json({ error: 'Log not found' }, { status: 404 });
+    }
+
+    if (existing.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // 5. Delete
+    const { error: deleteError } = await adminSupabase
+      .from('daily_logs')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
+
+    if (deleteError) {
+      console.error('Delete error:', deleteError);
+      return NextResponse.json({ error: 'Failed to delete log' }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: 'Log deleted', id });
+  } catch (error) {
+    console.error('DELETE /api/history/[id] error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

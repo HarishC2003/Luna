@@ -64,7 +64,7 @@ export default function AdminOverviewPage() {
                 <span className={`px-2 py-0.5 rounded-full text-xs font-bold mr-2 ${log.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                   {log.event_type}
                 </span>
-                <span className="text-gray-600 font-mono text-xs">{log.user_id.split('-')[0]}</span>
+                <span className="text-gray-600 font-mono text-xs">{log.user_id?.split('-')[0] || 'Unknown'}</span>
               </div>
               <span className="text-xs text-gray-400">{new Date(log.created_at).toLocaleTimeString()}</span>
             </div>

@@ -1,6 +1,8 @@
 import { ChatMessage } from '@/types/chat';
 import { TypingIndicator } from './TypingIndicator';
 import { CrisisResourceCard } from './CrisisResourceCard';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export function ChatBubble({ message, isOwn }: { message: ChatMessage, isOwn: boolean }) {
   const isLuna = !isOwn;
@@ -25,10 +27,30 @@ export function ChatBubble({ message, isOwn }: { message: ChatMessage, isOwn: bo
          >
            {message.isStreaming && !message.content ? (
              <TypingIndicator />
+           ) : message.failed && !message.content ? (
+             <div className="text-gray-400 italic text-sm">Couldn&apos;t generate a response.</div>
            ) : (
-             <div className="whitespace-pre-wrap break-words">
-               {message.content}
-               {message.isStreaming && <span className="inline-block w-1.5 h-4 ml-1 bg-[#E85D9A] animate-pulse align-middle" />}
+             <div className="break-words">
+               <ReactMarkdown 
+                 remarkPlugins={[remarkGfm]}
+                 components={{
+                   table: ({...props}) => <div className="overflow-x-auto my-2"><table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg text-sm" {...props} /></div>,
+                   th: ({...props}) => <th className="px-3 py-2 bg-gray-50 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200" {...props} />,
+                   td: ({...props}) => <td className="px-3 py-2 text-sm border-t border-gray-200 text-gray-700" {...props} />,
+                   a: ({...props}) => <a className="text-[#E85D9A] underline hover:text-[#D93F7D]" {...props} />,
+                   ul: ({...props}) => <ul className="list-disc pl-5 space-y-1 my-2" {...props} />,
+                   ol: ({...props}) => <ol className="list-decimal pl-5 space-y-1 my-2" {...props} />,
+                   li: ({...props}) => <li className="text-sm" {...props} />,
+                   p: ({...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                   strong: ({...props}) => <strong className="font-bold text-inherit" {...props} />,
+                   h1: ({...props}) => <h1 className="text-xl font-bold mb-2 mt-4" {...props} />,
+                   h2: ({...props}) => <h2 className="text-lg font-bold mb-2 mt-4" {...props} />,
+                   h3: ({...props}) => <h3 className="text-md font-bold mb-2 mt-3" {...props} />,
+                   code: ({...props}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono text-pink-600" {...props} />
+                 }}
+               >
+                 {message.content + (message.isStreaming ? ' █' : '')}
+               </ReactMarkdown>
              </div>
            )}
 

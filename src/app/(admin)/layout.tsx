@@ -1,19 +1,31 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
 import { useEffect, useState } from 'react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const handleLogout = async () => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
 
   useEffect(() => {
     fetch('/api/auth/me')
       .then(res => res.json())
       .then(data => {
-        if (data && data.profile && data.profile.role === 'admin') {
+        if (data && data.user && data.user.role === 'admin') {
           setIsAdmin(true);
         } else {
           window.location.href = '/dashboard';
@@ -50,10 +62,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             )
           })}
         </nav>
-        <div className="w-full px-4 mt-auto">
+        <div className="w-full px-4 mt-auto flex flex-col gap-2">
           <Link href="/dashboard" className="block text-center px-4 py-3 border border-white/20 rounded-xl text-white/50 hover:bg-white/10 transition-colors">
             Back to app
           </Link>
+          <button onClick={handleLogout} className="block w-full text-center px-4 py-3 border border-red-500/30 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors">
+            Log Out
+          </button>
         </div>
       </aside>
       

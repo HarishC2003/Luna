@@ -1,5 +1,5 @@
 import webpush from 'web-push';
-import { Resend } from 'resend';
+import { sendEmail } from '../email/client';
 import { createAdminClient } from '../supabase/admin';
 
 if (process.env.VAPID_PRIVATE_KEY && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
@@ -17,20 +17,18 @@ export async function sendEmailNotification(
   templatePayload: { subject: string; html: string; text: string }
 ): Promise<boolean> {
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy');
     const admin = createAdminClient();
     const { data: profile } = await admin.from('profiles').select('email').eq('id', userId).single();
     if (!profile?.email) return false;
 
-    const res = await resend.emails.send({
-      from: 'Luna <notifications@lunawellness.app>',
+    const res = await sendEmail({
       to: profile.email,
       subject: templatePayload.subject,
       html: templatePayload.html,
       text: templatePayload.text,
     });
 
-    if (res.error) throw new Error(res.error.message);
+    if (!res.success) throw new Error(String(res.error));
 
     await admin.from('notification_log').insert({
       user_id: userId,

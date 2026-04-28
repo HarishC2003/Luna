@@ -4,10 +4,24 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { InstallBanner } from '@/components/pwa/InstallBanner';
+import { useState, useEffect } from 'react';
+import Dock from '@/components/ui/Dock';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.user?.role === 'admin') {
+          setIsAdmin(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleLogout = async () => {
     const supabase = createBrowserClient(
@@ -30,7 +44,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen font-sans" style={{ background: '#FDF8FA' }}>
       <div className="mx-auto pt-4 px-4 md:px-8 pb-[100px] relative w-full max-w-[480px] md:max-w-5xl">
-        <div className="flex justify-end w-full mb-2">
+        <div className="flex justify-end w-full mb-2 gap-2">
+          {isAdmin && (
+            <Link href="/admin" className="flex items-center gap-1.5 text-xs font-bold text-white hover:text-white transition-colors px-3 py-1.5 bg-[#4A1B3C] hover:bg-[#3A142F] rounded-full shadow-sm">
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+              Admin Panel
+            </Link>
+          )}
           <button onClick={handleLogout} className="flex items-center gap-1.5 text-xs font-bold text-[#4A1B3C]/60 hover:text-[#E85D9A] transition-colors px-3 py-1.5 bg-white/60 hover:bg-white rounded-full shadow-sm backdrop-blur-sm">
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
             Log Out
@@ -40,22 +60,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t mx-auto z-40 w-full max-w-[480px] md:max-w-5xl" style={{ borderColor: '#F0E8EC', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="flex h-[64px] relative w-full">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link key={item.name} href={item.href} className="w-[20%] flex flex-col items-center justify-center relative group">
-                {isActive && (
-                  <div className="absolute top-0 w-4 h-[3px] bg-[#E85D9A] rounded-full" />
-                )}
-                <div className={`flex flex-col items-center gap-[4px] mt-1 ${isActive ? 'text-[#E85D9A]' : 'text-[#9E7A8A]'}`}>
-                  {item.icon}
-                  <span className={`text-[10px] ${isActive ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
-                </div>
-              </Link>
-            )
-          })}
+      <nav className="fixed bottom-0 left-0 right-0 pointer-events-none mx-auto z-40 w-full max-w-[480px] md:max-w-5xl" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="pointer-events-auto">
+          <Dock 
+            items={navItems.map(item => ({
+              icon: item.icon,
+              label: item.name,
+              onClick: () => router.push(item.href),
+              className: pathname === item.href ? 'text-[#E85D9A]' : 'text-[#9E7A8A]'
+            }))}
+            panelHeight={68}
+            baseItemSize={50}
+            magnification={70}
+          />
         </div>
       </nav>
     </div>

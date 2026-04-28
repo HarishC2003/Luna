@@ -41,6 +41,8 @@ export interface UserHealthContext {
     confidence: number;
   } | null;
   notes: string[];
+  historicalCycles: { start: string; end: string | null; length: number | null; avgFlow: string | null }[];
+  allLogs: { date: string; mood: string | null; energy: number | null; symptoms: string[]; flow: string | null }[];
 }
 
 // Simple in-memory cache
@@ -59,29 +61,30 @@ export async function buildUserHealthContext(userId: string): Promise<UserHealth
   }
 
   const supabase = createAdminClient();
-  const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const oneYearAgo = new Date(now - 365 * 24 * 60 * 60 * 1000).toISOString();
 
   const [
     { data: predictionData },
     { data: onboardingData },
-    { data: recentLogsData },
-    { data: thirtyDayLogsData },
+    { data: dailyLogsData },
     { data: cycleLogsData }
   ] = await Promise.all([
     supabase.from('cycle_predictions').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('onboarding_data').select('*').eq('user_id', userId).maybeSingle(),
-    supabase.from('daily_logs').select('*').eq('user_id', userId).gte('log_date', sevenDaysAgo).order('log_date', { ascending: false }),
-    supabase.from('daily_logs').select('symptoms').eq('user_id', userId).gte('log_date', thirtyDaysAgo),
-    supabase.from('cycle_logs').select('*').eq('user_id', userId).order('period_start', { ascending: false }).limit(6)
+    supabase.from('daily_logs').select('*').eq('user_id', userId).gte('log_date', oneYearAgo).order('log_date', { ascending: false }),
+    supabase.from('cycle_logs').select('*').eq('user_id', userId).order('period_start', { ascending: false })
   ]);
 
-  const recentLogs = recentLogsData || [];
+  const allDailyLogs = dailyLogsData || [];
   const cycleLogs = cycleLogsData || [];
-  const thirtyDayLogs = thirtyDayLogsData || [];
 
   const todayDate = new Date();
   todayDate.setHours(0, 0, 0, 0);
+  const sevenDaysAgoTime = todayDate.getTime() - 7 * 24 * 60 * 60 * 1000;
+  const thirtyDaysAgoTime = todayDate.getTime() - 30 * 24 * 60 * 60 * 1000;
+
+  const recentLogs = allDailyLogs.filter(l => new Date(l.log_date).getTime() >= sevenDaysAgoTime);
+  const thirtyDayLogs = allDailyLogs.filter(l => new Date(l.log_date).getTime() >= thirtyDaysAgoTime);
 
   const recentSymptoms: UserHealthContext['recentSymptoms'] = [];
   const recentMoods: UserHealthContext['recentMoods'] = [];
@@ -165,7 +168,20 @@ export async function buildUserHealthContext(userId: string): Promise<UserHealth
       ovulationDate: predictionData.ovulation_date,
       confidence: predictionData.confidence
     } : null,
-    notes: notes.slice(0, 3)
+    notes: notes.slice(0, 3),
+    historicalCycles: cycleLogs.map(c => ({
+      start: c.period_start,
+      end: c.period_end,
+      length: c.cycle_length,
+      avgFlow: c.avg_flow
+    })),
+    allLogs: allDailyLogs.map(l => ({
+      date: l.log_date,
+      mood: l.mood,
+      energy: l.energy,
+      symptoms: l.symptoms || [],
+      flow: l.flow
+    }))
   };
 
   contextCache.set(userId, { data: context, timestamp: now });
@@ -214,6 +230,8 @@ export function formatContextForPrompt(ctx: UserHealthContext): string {
     fertileStr = `FERTILE WINDOW: ${formatDate(ctx.currentPrediction.fertileStart)}–${formatDate(ctx.currentPrediction.fertileEnd)}. Ovulation: ${formatDate(ctx.currentPrediction.ovulationDate)}.`;
   }
 
-  // Ensure < 200 words roughly
-  return [todayStr, symptomsStr, moodStr, cycleStr, medStr, fertileStr].filter(Boolean).join('\n');
+  // Include comprehensive history
+  const historyStr = `HISTORICAL CYCLES: ${JSON.stringify(ctx.historicalCycles)}. DAILY LOGS (1 YEAR): ${JSON.stringify(ctx.allLogs)}.`;
+
+  return [todayStr, symptomsStr, moodStr, cycleStr, medStr, fertileStr, historyStr].filter(Boolean).join('\n');
 }

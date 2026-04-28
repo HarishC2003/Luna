@@ -2,12 +2,13 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { chatLimiter, getRealIP } from '@/lib/rate-limit/limiter';
 import { sanitizeChatInput, stripPII } from '@/lib/chat/pii-stripper';
 import { detectCrisis } from '@/lib/chat/crisis-detector';
 import { buildSystemPrompt } from '@/lib/chat/system-prompt';
 import { buildUserHealthContext, formatContextForPrompt } from '@/lib/chat/context-builder';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export const maxDuration = 60;
 
@@ -16,8 +17,8 @@ const chatSchema = z.object({
   history: z.array(z.object({
     role: z.enum(['user', 'assistant']).transform(v => v === 'assistant' ? 'model' : 'user'),
     content: z.string().max(4000)
-  })).max(10), // capped to max last 10 turns
-  sessionId: z.string().uuid()
+  })).max(10),
+  sessionId: z.string().uuid().optional()
 });
 
 export async function POST(request: Request) {
@@ -107,14 +108,13 @@ export async function POST(request: Request) {
     const { cleaned } = stripPII(sanitizedMsg);
     
     // Fetch and build context
-    let formattedContext = '';
+    let formattedContext: unknown = null;
     try {
       const userContext = await buildUserHealthContext(user.id);
       formattedContext = formatContextForPrompt(userContext);
     } catch (ctxErr) {
       console.error('Context Building Error:', ctxErr);
-      // Fallback to empty context so chat doesn't fully break
-      formattedContext = "No history available.";
+      // Fallback to null context so chat doesn't fully break
     }
 
     const systemPrompt = buildSystemPrompt(formattedContext);
@@ -127,8 +127,20 @@ export async function POST(request: Request) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Updated to recommended model
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', systemInstruction: systemPrompt });
+    const logHealthDataTool = {
+      name: 'log_health_data',
+      description: 'Log the user\'s daily health data to the database for today. Use this when the user says they are experiencing symptoms, a specific mood, or starting their period.',
+      parameters: {
+        type: SchemaType.OBJECT,
+        properties: {
+          mood: { type: SchemaType.STRING, description: "Mood: great, good, okay, low, or terrible" } as any,
+          energy: { type: SchemaType.INTEGER, description: "Energy level from 1 to 5" } as any,
+          flow: { type: SchemaType.STRING, description: "Flow: none, spotting, light, medium, or heavy" } as any,
+          symptoms: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } as any, description: "Array of symptoms like cramps, headache, etc." } as any,
+          notes: { type: SchemaType.STRING, description: "Any extra notes" } as any
+        }
+      }
+    };
 
     // Ensure roles are user or model
     const geminiHistory = history.map(h => ({
@@ -154,32 +166,182 @@ export async function POST(request: Request) {
        validHistory.push({ role: 'model', parts: [{ text: 'Okay, tell me more.' }] });
     }
 
+    const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
+    const MAX_RETRIES = 2;
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const createModelAndChat = async () => {
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        for (const modelName of MODELS) {
+          const model = genAI.getGenerativeModel({ 
+            model: modelName, 
+            systemInstruction: systemPrompt,
+            tools: [{ functionDeclarations: [logHealthDataTool] }]
+          });
+          const chatSession = model.startChat({ history: validHistory });
+          try {
+            const result = await chatSession.sendMessageStream(cleaned);
+            return { chatSession, result };
+          } catch (err: unknown) {
+            const status = (err as { status?: number }).status;
+            if (status === 503 || status === 429) {
+              console.warn(`[Chat] ${modelName} unavailable (${status}), attempt ${attempt + 1}/${MAX_RETRIES + 1}`);
+              continue;
+            }
+            throw err;
+          }
+        }
+        // All models failed this round — wait before retrying
+        if (attempt < MAX_RETRIES) {
+          const delay = (attempt + 1) * 2000; // 2s, 4s
+          console.warn(`[Chat] All models busy, retrying in ${delay}ms...`);
+          await sleep(delay);
+        }
+      }
+      throw new Error('All AI models are currently unavailable. Please try again shortly.');
+    };
+
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          const chatSession = model.startChat({
-            history: validHistory,
-          });
-          const result = await chatSession.sendMessageStream(cleaned);
+          const { chatSession, result } = await createModelAndChat();
+          
+          let hasToolCall = false;
+          let callName = '';
+          let callArgs: Record<string, unknown> = {};
+          let fullAssistantContent = '';
+
           for await (const chunk of result.stream) {
-             const text = chunk.text();
-             if (text) {
-                const payload = `data: ${JSON.stringify({ type: 'delta', text })}\n\n`;
-                controller.enqueue(encoder.encode(payload));
+             const calls = chunk.functionCalls && chunk.functionCalls();
+             if (calls && calls.length > 0) {
+                hasToolCall = true;
+                callName = calls[0].name;
+                callArgs = calls[0].args as Record<string, unknown>;
+                break;
+             }
+             
+             try {
+               const text = chunk.text();
+               if (text) {
+                  fullAssistantContent += text;
+                  const payload = `data: ${JSON.stringify({ type: 'delta', text })}\n\n`;
+                  controller.enqueue(encoder.encode(payload));
+               }
+             } catch (_e) {
+               // Ignore if no text
              }
           }
+
+          if (hasToolCall && callName === 'log_health_data') {
+             // Let the user know we are doing an action
+             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text: '\n\n*Logging your data...*\n\n' })}\n\n`));
+             
+             const supabaseAdmin = createServerClient(
+               process.env.NEXT_PUBLIC_SUPABASE_URL!,
+               process.env.SUPABASE_SERVICE_ROLE_KEY!,
+               { cookies: { getAll() { return []; }, setAll() {} } }
+             );
+             
+             const today = new Date().toISOString().split('T')[0];
+             const { error: dbErr } = await supabaseAdmin.from('daily_logs').upsert({
+                user_id: user.id,
+                log_date: today,
+                mood: callArgs.mood,
+                energy: callArgs.energy,
+                flow: callArgs.flow,
+                symptoms: callArgs.symptoms || [],
+                notes: callArgs.notes
+             }, { onConflict: 'user_id, log_date' });
+
+             const functionResult = await chatSession.sendMessageStream([{
+               functionResponse: {
+                 name: callName,
+                 response: dbErr ? { success: false, error: dbErr.message } : { success: true, message: 'Logged successfully' }
+               }
+             }]);
+
+             for await (const chunk of functionResult.stream) {
+                try {
+                  const text = chunk.text();
+                  if (text) {
+                    fullAssistantContent += text;
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text })}\n\n`));
+                  }
+                } catch (_e) {}
+             }
+          }
+
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+
+          // --- Persist messages to database ---
+          try {
+            const dbAdmin = createAdminClient();
+            let finalSessionId = sessionId;
+
+            // Create session if none provided
+            if (!finalSessionId) {
+              const autoTitle = rawMessage.slice(0, 70) + (rawMessage.length > 70 ? '...' : '');
+              const { data: newSession } = await dbAdmin
+                .from('chat_sessions')
+                .insert({ user_id: user.id, title: autoTitle })
+                .select('id')
+                .single();
+              if (newSession) finalSessionId = newSession.id;
+            } else {
+              // Update session timestamp and auto-title if it is still 'New Chat'
+              const { data: existingSession } = await dbAdmin
+                .from('chat_sessions')
+                .select('title')
+                .eq('id', finalSessionId)
+                .eq('user_id', user.id)
+                .maybeSingle();
+
+              if (existingSession) {
+                const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+                if (existingSession.title === 'New Chat') {
+                  updates.title = rawMessage.slice(0, 70) + (rawMessage.length > 70 ? '...' : '');
+                }
+                await dbAdmin.from('chat_sessions').update(updates).eq('id', finalSessionId);
+              }
+            }
+
+            if (finalSessionId) {
+              // Collect full assistant text
+              let fullAssistant = '';
+              // We accumulated text in the stream above, but we need it here too.
+              // Re-read from the chunks we already sent isn't possible, so we track it.
+              // The fullAssistantContent variable is set below via closure.
+              fullAssistant = fullAssistantContent;
+
+              await dbAdmin.from('chat_messages').insert([
+                { session_id: finalSessionId, user_id: user.id, role: 'user', content: rawMessage },
+                { session_id: finalSessionId, user_id: user.id, role: 'assistant', content: fullAssistant, is_crisis: false }
+              ]);
+
+              // Send session ID to client so it can track it
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'session_id', sessionId: finalSessionId })}\n\n`));
+            }
+          } catch (dbErr) {
+            console.error('[chat/message] Failed to persist messages:', dbErr);
+            // Don't break the chat if DB save fails
+          }
         } catch (error: unknown) {
           if (error instanceof Error && error.name === 'AbortError') {
              // client disconnect
           } else {
-             console.error('Gemini Stream Error:', error);
+             console.error('Chat API Error:', error);
              const isQuotaError = error instanceof Error && error.message.includes('quota');
              const message = isQuotaError 
                ? 'Chat is temporarily unavailable. Please try again in a few minutes.' 
-               : 'Something went wrong. Please try again.';
+               : (error instanceof Error ? error.message : 'Unknown error');
              
-             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message })}\n\n`));
+             controller.enqueue(
+               encoder.encode(`data: ${JSON.stringify({ 
+                 type: 'error', 
+                 message: 'Something went wrong. Please try again.',
+                 debug: process.env.NODE_ENV === 'development' ? message : undefined 
+               })}\n\n`)
+             );
           }
         } finally {
           controller.close();

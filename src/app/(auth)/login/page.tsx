@@ -27,7 +27,11 @@ export default function LoginPage() {
         setError(data.error || 'Login failed');
         setPassword(''); // Clear password on failure
       } else {
-        window.location.href = '/dashboard';
+        if (data.user?.role === 'admin') {
+          window.location.href = '/admin';
+        } else {
+          window.location.href = '/dashboard';
+        }
       }
     } catch {
       setError('An unexpected error occurred. Please try again.');

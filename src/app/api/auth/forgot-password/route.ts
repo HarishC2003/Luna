@@ -3,7 +3,7 @@ import { forgotPasswordSchema } from '@/lib/validations/auth';
 import { passwordLimiter, getRealIP } from '@/lib/rate-limit/limiter';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { generateSecureToken, hashToken } from '@/lib/auth/password';
-import { resend } from '@/lib/email/client';
+import { sendEmail } from '@/lib/email/client';
 import { passwordResetEmail } from '@/lib/email/templates';
 
 export async function POST(request: Request) {
@@ -35,8 +35,7 @@ export async function POST(request: Request) {
       });
 
       const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`;
-      await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL!,
+      await sendEmail({
         to: email,
         subject: 'Reset your Luna password',
         html: passwordResetEmail({ displayName: user.display_name || 'there', resetUrl }),

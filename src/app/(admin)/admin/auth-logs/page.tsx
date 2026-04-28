@@ -56,7 +56,7 @@ export default function AuthLogsPage() {
                     {l.event_type}
                   </span>
                 </td>
-                <td className="p-4 font-mono text-xs">{l.user_id.split('-')[0]}</td>
+                <td className="p-4 font-mono text-xs">{l.user_id?.split('-')[0] || 'Unknown'}</td>
                 <td className="p-4 text-sm">{l.ip_address}</td>
               </tr>
             ))}

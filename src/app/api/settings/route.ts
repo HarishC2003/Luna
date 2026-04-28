@@ -55,16 +55,16 @@ export async function PATCH(request: Request) {
     const admin = createAdminClient();
 
     const upsertData: Record<string, unknown> = { user_id: user.id };
-    if (pd.emailPeriodReminder !== undefined) upsertData.email_period_reminder = pd.emailPeriodReminder;
-    if (pd.emailFertileWindow !== undefined) upsertData.email_fertile_window = pd.emailFertileWindow;
-    if (pd.emailLogStreak !== undefined) upsertData.email_log_streak = pd.emailLogStreak;
-    if (pd.emailWeeklyInsights !== undefined) upsertData.email_weekly_insights = pd.emailWeeklyInsights;
-    if (pd.emailTips !== undefined) upsertData.email_tips = pd.emailTips;
-    if (pd.pushPeriodReminder !== undefined) upsertData.push_period_reminder = pd.pushPeriodReminder;
-    if (pd.pushFertileWindow !== undefined) upsertData.push_fertile_window = pd.pushFertileWindow;
-    if (pd.pushLogReminder !== undefined) upsertData.push_log_reminder = pd.pushLogReminder;
-    if (pd.notifyHour !== undefined) upsertData.notify_hour = pd.notifyHour;
-    if (pd.notifyDaysBefore !== undefined) upsertData.notify_days_before = pd.notifyDaysBefore;
+    if (pd.email_period_reminder !== undefined) upsertData.email_period_reminder = pd.email_period_reminder;
+    if (pd.email_fertile_window !== undefined) upsertData.email_fertile_window = pd.email_fertile_window;
+    if (pd.email_log_streak !== undefined) upsertData.email_log_streak = pd.email_log_streak;
+    if (pd.email_weekly_insights !== undefined) upsertData.email_weekly_insights = pd.email_weekly_insights;
+    if (pd.email_tips !== undefined) upsertData.email_tips = pd.email_tips;
+    if (pd.push_period_reminder !== undefined) upsertData.push_period_reminder = pd.push_period_reminder;
+    if (pd.push_fertile_window !== undefined) upsertData.push_fertile_window = pd.push_fertile_window;
+    if (pd.push_log_reminder !== undefined) upsertData.push_log_reminder = pd.push_log_reminder;
+    if (pd.notify_hour !== undefined) upsertData.notify_hour = pd.notify_hour;
+    if (pd.notify_days_before !== undefined) upsertData.notify_days_before = pd.notify_days_before;
 
     const { data, error } = await admin.from('notification_settings').upsert(upsertData, { onConflict: 'user_id' }).select().single();
     if (error) throw error;
