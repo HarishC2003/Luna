@@ -54,4 +54,12 @@ export const dailyLogSchema = z.object({
   symptoms: z.array(z.enum(['cramps', 'headache', 'bloating', 'breast_tenderness', 'fatigue', 'acne', 'back_pain', 'nausea', 'mood_swings', 'insomnia'])).max(10).optional().nullable(),
   notes: z.string().max(300).refine((val) => val === null || val === '' || stripHtml(val), 'HTML tags not allowed').optional().nullable(),
   waterGlasses: z.number().int().min(0).max(20).optional().nullable(),
+  sleep_quality: z.number().int().min(1).max(5).optional().nullable(),
+  stress_level: z.number().int().min(1).max(5).optional().nullable(),
+  exercise: z.boolean().optional().nullable(),
+  exercise_type: z.enum(['walking', 'yoga', 'gym', 'none']).optional().nullable(),
+  slept_well: z.boolean().optional().nullable(),
+  hydration_goal: z.boolean().optional().nullable(),
+  moved_body: z.boolean().optional().nullable(),
+  image_url: z.string().url().optional().nullable(),
 });

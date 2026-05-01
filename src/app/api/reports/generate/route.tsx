@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import ReactPDF from '@react-pdf/renderer';
+import { pdf } from '@react-pdf/renderer';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { reportLimiter } from '@/lib/rate-limit/limiter';
@@ -106,9 +106,10 @@ export async function POST(request: Request) {
       insights: insightsArr
     };
     
-    // 4. Generate PDF
+    // 4. Generate PDF using react-pdf v4 API
     const template = getReportTemplate(templateData);
-    const pdfBuffer = await ReactPDF.renderToBuffer(template);
+    const pdfInstance = pdf(template);
+    const pdfBuffer = await pdfInstance.toBuffer();
 
     // 5. Log generation request
     const expiresAt = new Date(currentTimestamp + 48 * 60 * 60 * 1000).toISOString();

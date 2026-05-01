@@ -6,12 +6,17 @@ import Link from 'next/link';
 import { PhaseStatusCard } from '@/components/cycle/PhaseStatusCard';
 import { CalendarGrid } from '@/components/cycle/CalendarGrid';
 import { InsightCard } from '@/components/cycle/InsightCard';
-import { DailyLogModal } from '@/components/cycle/DailyLogModal';
+import { DailyFeelingsModal } from '@/components/cycle/DailyFeelingsModal';
+import { PeriodLogModal } from '@/components/cycle/PeriodLogModal';
 import { CheckInCard } from '@/components/cycle/CheckInCard';
-import { HydrationWidget } from '@/components/hydration/HydrationWidget';
+
 import { StreakWidget } from '@/components/streaks/StreakWidget';
 import { MilestoneCelebration } from '@/components/streaks/MilestoneCelebration';
 import { TodayLogQuickCard } from '@/components/cycle/TodayLogQuickCard';
+import WelcomePopup from '@/components/dashboard/WelcomePopup';
+import { WellnessTracker } from '@/components/dashboard/WellnessTracker';
+import { QuickMoodLogger } from '@/components/dashboard/QuickMoodLogger';
+import { DailyAffirmation } from '@/components/dashboard/DailyAffirmation';
 import { Prediction, CycleLog, DailyLog, Insight } from '@/types/cycle';
 
 interface DashboardData {
@@ -36,7 +41,8 @@ export default function DashboardClient() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isDailyModelOpen, setDailyModelOpen] = useState(false);
+  const [isDailyFeelingsModalOpen, setDailyFeelingsModalOpen] = useState(false);
+  const [isPeriodModalOpen, setPeriodModalOpen] = useState(false);
   const [earnedBadgeKeys, setEarnedBadgeKeys] = useState<string[]>([]);
   const [isFabMenuOpen, setFabMenuOpen] = useState(false);
   const fabTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -60,8 +66,8 @@ export default function DashboardClient() {
   }, [router]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchDashboard();
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
+    void fetchDashboard();
   }, [fetchDashboard]);
 
   // FAB Long Press logic
@@ -72,7 +78,7 @@ export default function DashboardClient() {
   };
   const handleFabUp = () => {
     if (fabTimerRef.current) clearTimeout(fabTimerRef.current);
-    if (!isFabMenuOpen) setDailyModelOpen(true);
+    if (!isFabMenuOpen) setDailyFeelingsModalOpen(true);
   };
 
   if (loading) {
@@ -90,6 +96,7 @@ export default function DashboardClient() {
   const today = new Date();
   const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
   const initials = data.displayName ? data.displayName.charAt(0).toUpperCase() : 'U';
+  const isOnPeriod = data.prediction?.currentPhase === 'menstrual';
 
   return (
     <div className="flex flex-col gap-[24px]">
@@ -100,6 +107,8 @@ export default function DashboardClient() {
           onDismiss={() => setEarnedBadgeKeys([])} 
         />
       )}
+
+      <WelcomePopup />
 
       {/* Top Greeting Bar */}
       <div className="flex items-center justify-between mb-2">
@@ -113,6 +122,8 @@ export default function DashboardClient() {
           </div>
         </Link>
       </div>
+
+      <DailyAffirmation phase={data.prediction?.currentPhase || 'unknown'} />
 
       <CheckInCard onAnswered={fetchDashboard} />
 
@@ -148,7 +159,7 @@ export default function DashboardClient() {
             <div className="mt-[8px]">
               <div className="flex justify-between items-end mb-[12px]">
                 <h3 className="text-[16px] font-semibold text-[#1A0A12]">For you</h3>
-                <span className="text-[12px] text-[#E85D9A] font-medium cursor-pointer">See all</span>
+                <Link href="/insights" className="text-[12px] text-[#E85D9A] font-medium cursor-pointer hover:underline">See all</Link>
               </div>
               <div className="flex gap-[16px] overflow-x-auto pb-[16px] snap-x hide-scrollbar pointer-events-auto -mx-[16px] px-[16px] md:mx-0 md:px-0">
                 {data.insights.map((insight: Insight) => (
@@ -161,11 +172,26 @@ export default function DashboardClient() {
 
         {/* Right Column (Daily Logging & Widgets) */}
         <div className="md:col-span-5 lg:col-span-4 flex flex-col gap-[16px]">
-          {/* Today's Log Quick-Card */}
-          <TodayLogQuickCard todayLog={data.todayLog || null} onOpenLog={() => setDailyModelOpen(true)} />
+          {/* Quick Mood Logger */}
+          <QuickMoodLogger onLogged={fetchDashboard} />
 
-          {/* Hydration Tracker */}
-          <HydrationWidget phase={data.prediction?.currentPhase || 'unknown'} />
+          {/* Today's Log Quick-Card */}
+          <TodayLogQuickCard 
+            todayLog={data.todayLog || null} 
+            isOnPeriod={isOnPeriod}
+            onLogDaily={() => setDailyFeelingsModalOpen(true)}
+            onLogPeriod={() => setPeriodModalOpen(true)}
+          />
+
+          {/* Daily Wellness Tracker */}
+          <WellnessTracker 
+            initialData={data.todayLog ? { 
+            hydration_goal: !!data.todayLog.hydration_goal, 
+            slept_well: !!data.todayLog.slept_well, 
+            moved_body: !!data.todayLog.moved_body 
+          } : undefined} 
+            onUpdate={fetchDashboard} 
+          />
 
           {/* Streak Widget */}
           <StreakWidget allLogs={data.allLogs} />
@@ -177,9 +203,8 @@ export default function DashboardClient() {
         <div className="absolute bottom-0 right-[20px] pointer-events-auto flex flex-col items-end gap-2">
           {isFabMenuOpen && (
             <div className="flex flex-col gap-2 mb-2 animate-fade-in items-end">
-              <button onClick={() => { setFabMenuOpen(false); setDailyModelOpen(true); }} className="bg-white text-[#1A0A12] text-[12px] font-semibold px-4 py-2 rounded-full shadow-[0_4px_12px_rgba(232,93,154,0.15)] transition-transform active:scale-95">Log mood</button>
-              <button onClick={() => { setFabMenuOpen(false); setDailyModelOpen(true); }} className="bg-white text-[#1A0A12] text-[12px] font-semibold px-4 py-2 rounded-full shadow-[0_4px_12px_rgba(232,93,154,0.15)] transition-transform active:scale-95">Log symptoms</button>
-              <button onClick={() => { setFabMenuOpen(false); setDailyModelOpen(true); }} className="bg-white text-[#1A0A12] text-[12px] font-semibold px-4 py-2 rounded-full shadow-[0_4px_12px_rgba(232,93,154,0.15)] transition-transform active:scale-95">Log period</button>
+              <button onClick={() => { setFabMenuOpen(false); setDailyFeelingsModalOpen(true); }} className="bg-white text-[#1A0A12] text-[12px] font-semibold px-4 py-2 rounded-full shadow-[0_4px_12px_rgba(232,93,154,0.15)] transition-transform active:scale-95">Log today</button>
+              <button onClick={() => { setFabMenuOpen(false); setPeriodModalOpen(true); }} className="bg-white text-[#1A0A12] text-[12px] font-semibold px-4 py-2 rounded-full shadow-[0_4px_12px_rgba(232,93,154,0.15)] transition-transform active:scale-95">Log period</button>
             </div>
           )}
           <button 
@@ -193,17 +218,27 @@ export default function DashboardClient() {
         </div>
       </div>
 
-      <DailyLogModal 
-        isOpen={isDailyModelOpen} 
-        onClose={() => setDailyModelOpen(false)} 
+      <DailyFeelingsModal 
+        isOpen={isDailyFeelingsModalOpen} 
+        onClose={() => setDailyFeelingsModalOpen(false)} 
         onSuccess={(newBadges?: string[]) => { 
-          setDailyModelOpen(false); 
+          setDailyFeelingsModalOpen(false); 
           if (newBadges && newBadges.length > 0) {
             setEarnedBadgeKeys(newBadges);
           }
           fetchDashboard(); 
         }}
         initialData={data.todayLog}
+      />
+
+      <PeriodLogModal 
+        isOpen={isPeriodModalOpen} 
+        onClose={() => setPeriodModalOpen(false)} 
+        onSuccess={() => { 
+          setPeriodModalOpen(false); 
+          fetchDashboard(); 
+        }}
+        initialData={data.recentCycles ? data.recentCycles[0] : undefined}
       />
     </div>
   );

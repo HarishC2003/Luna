@@ -5,7 +5,7 @@ import { useChat } from '@/hooks/useChat';
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { SuggestionChips } from '@/components/chat/SuggestionChips';
-import { DailyLogModal } from '@/components/cycle/DailyLogModal';
+import { DailyFeelingsModal } from '@/components/cycle/DailyFeelingsModal';
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -252,13 +252,14 @@ export default function ChatPage() {
           </p>
         </div>
 
-        <DailyLogModal
+        <DailyFeelingsModal 
           isOpen={showLogModal}
           onClose={() => setShowLogModal(false)}
           onSuccess={() => {
             setShowLogModal(false);
             refreshContext();
           }}
+          initialData={{}}
         />
       </div>
     </div>

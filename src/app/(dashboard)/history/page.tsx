@@ -5,7 +5,7 @@ import { DailyLog } from '@/types/cycle';
 import { MoodBar } from '@/components/cycle/MoodBar';
 import { FlowBadge } from '@/components/cycle/FlowBadge';
 import { SymptomChips } from '@/components/cycle/SymptomChips';
-import { DailyLogModal } from '@/components/cycle/DailyLogModal';
+import { DailyFeelingsModal } from '@/components/cycle/DailyFeelingsModal';
 
 export default function HistoryPage() {
   const [logs, setLogs] = useState<DailyLog[]>([]);
@@ -162,7 +162,7 @@ export default function HistoryPage() {
         )}
       </div>
 
-      <DailyLogModal 
+      <DailyFeelingsModal 
         isOpen={!!editingLog} 
         onClose={() => setEditingLog(null)} 
         initialData={editingLog || undefined}

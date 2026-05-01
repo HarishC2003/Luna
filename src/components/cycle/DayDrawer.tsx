@@ -11,13 +11,12 @@ interface Props {
   onClose: () => void;
   dailyLog: DailyLog | null;
   cycleLog: CycleLog | null;
-  onEditDaily: (date: string, log?: DailyLog) => void;
+  onEditDaily: () => void;
   onEditCycle: (log: CycleLog) => void;
 }
 
 export function DayDrawer({ date, isOpen, onClose, dailyLog, cycleLog, onEditDaily, onEditCycle }: Props) {
   if (!isOpen) return null;
-  const dateStr = date.toISOString().split('T')[0];
 
   return (
     <div className="fixed inset-y-0 right-0 z-50 w-full md:w-[400px] bg-white shadow-[-10px_0_30px_rgba(74,27,60,0.1)] flex flex-col transform transition-transform animate-slide-in">
@@ -69,7 +68,7 @@ export function DayDrawer({ date, isOpen, onClose, dailyLog, cycleLog, onEditDai
         <section>
           <div className="flex justify-between items-end mb-4">
             <h3 className="text-sm font-semibold text-[#4A1B3C] uppercase tracking-wider">Daily Log</h3>
-            <button onClick={() => onEditDaily(dateStr, dailyLog || undefined)} className="text-xs font-semibold text-[#E85D9A] hover:underline">
+            <button onClick={() => onEditDaily()} className="text-xs font-semibold text-[#E85D9A] hover:underline">
               {dailyLog ? 'Edit' : 'Add Log'}
             </button>
           </div>

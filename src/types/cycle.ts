@@ -37,8 +37,56 @@ export interface DailyLog {
   symptoms: Symptom[];
   notes: string | null;
   water_glasses: number;
+  sleep_quality?: number | null;
+  stress_level?: number | null;
+  exercise?: boolean | null;
+  exercise_type?: 'walking' | 'yoga' | 'gym' | 'none' | null;
+  slept_well?: boolean | null;
+  hydration_goal?: boolean | null;
+  moved_body?: boolean | null;
+  image_url?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface MedicationLog {
+  id: string;
+  user_id: string;
+  log_date: string;
+  medication_name: string;
+  taken: boolean;
+  taken_at: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PartnerLink {
+  id: string;
+  user_id: string;
+  token: string;
+  created_at: string;
+}
+
+export interface Pattern {
+  id: string;
+  type: 'correlation' | 'trigger' | 'trend' | 'cycle_phase' | 'warning';
+  title: string;
+  description: string;
+  confidence: number;
+  actionable: boolean;
+  recommendation?: string;
+  data?: Record<string, unknown>;
+}
+
+export interface WelcomeData {
+  displayName: string;
+  dayOfCycle: number;
+  phase: string;
+  phaseDescription: string;
+  quickTip: string;
+  emoji: string;
+  greeting: string;
 }
 
 export interface CyclePrediction {

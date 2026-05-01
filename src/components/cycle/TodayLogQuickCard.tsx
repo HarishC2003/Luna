@@ -4,14 +4,16 @@ import { DailyLog } from '@/types/cycle';
 
 interface Props {
   todayLog: DailyLog | null;
-  onOpenLog: () => void;
+  isOnPeriod: boolean;
+  onLogDaily: () => void;
+  onLogPeriod: () => void;
 }
 
-export function TodayLogQuickCard({ todayLog, onOpenLog }: Props) {
-  if (!todayLog) {
+export function TodayLogQuickCard({ todayLog, isOnPeriod, onLogDaily, onLogPeriod }: Props) {
+  if (!todayLog && !isOnPeriod) {
     return (
       <div 
-        onClick={onOpenLog}
+        onClick={onLogDaily}
         className="w-full bg-white rounded-[20px] p-[16px] shadow-[0_2px_12px_rgba(232,93,154,0.08)] border-[0.5px] border-[#E85D9A]/10 flex items-center justify-between cursor-pointer transition-transform active:scale-[0.98]"
       >
         <div className="flex items-center gap-[12px]">
@@ -25,7 +27,7 @@ export function TodayLogQuickCard({ todayLog, onOpenLog }: Props) {
           </div>
           <div>
             <h3 className="text-[14px] font-semibold text-[#1A0A12]">Log today</h3>
-            <p className="text-[12px] text-[#9E7A8A]">Track mood, symptoms & flow</p>
+            <p className="text-[12px] text-[#9E7A8A]">Track mood, energy & sleep</p>
           </div>
         </div>
         <button className="w-[32px] h-[32px] rounded-full bg-[#E85D9A] text-white flex items-center justify-center pointer-events-none">
@@ -41,57 +43,60 @@ export function TodayLogQuickCard({ todayLog, onOpenLog }: Props) {
   // Helper to format mood
   const getMoodEmoji = (mood?: string | null) => {
     switch (mood) {
-      case 'happy': return '😊';
-      case 'sad': return '😔';
-      case 'anxious': return '😰';
-      case 'angry': return '😠';
-      case 'calm': return '😌';
-      case 'tired': return '😴';
+      case 'great': return '✨';
+      case 'good': return '😊';
+      case 'okay': return '😐';
+      case 'low': return '😔';
+      case 'terrible': return '😫';
       default: return '😐';
     }
   };
 
-  const getFlowLevel = (flow?: string | null) => {
-    switch (flow) {
-      case 'light': return 'Light flow';
-      case 'medium': return 'Medium flow';
-      case 'heavy': return 'Heavy flow';
-      default: return 'No flow';
-    }
-  };
-
   return (
-    <div 
-      onClick={onOpenLog}
-      className="w-full bg-white rounded-[20px] p-[16px] shadow-[0_2px_12px_rgba(232,93,154,0.08)] border-[0.5px] border-[#E85D9A]/10 relative cursor-pointer transition-transform active:scale-[0.98]"
-    >
-      <div className="flex gap-[8px] flex-wrap pr-[40px]">
-        {todayLog.mood && (
-          <div className="px-[12px] py-[6px] rounded-[100px] bg-[#FFF0F4] text-[#72243E] text-[12px] font-medium flex items-center gap-[4px]">
-            <span>{getMoodEmoji(todayLog.mood)}</span>
-            <span className="capitalize">{todayLog.mood}</span>
-          </div>
-        )}
-        {todayLog.energy && (
-          <div className="px-[12px] py-[6px] rounded-[100px] bg-[#FEF6E7] text-[#BA7517] text-[12px] font-medium flex items-center gap-[4px]">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-            </svg>
-            <span>{todayLog.energy}/5 Energy</span>
-          </div>
-        )}
-        {todayLog.flow && todayLog.flow !== 'none' && (
-          <div className="px-[12px] py-[6px] rounded-[100px] bg-[#E8F8F2] text-[#085041] text-[12px] font-medium flex items-center gap-[4px]">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
-            </svg>
-            <span>{getFlowLevel(todayLog.flow)}</span>
-          </div>
-        )}
+    <div className="flex flex-col gap-2">
+      {/* Daily Log Card */}
+      <div 
+        onClick={onLogDaily}
+        className="w-full bg-white rounded-[20px] p-[16px] shadow-[0_2px_12px_rgba(232,93,154,0.08)] border-[0.5px] border-[#E85D9A]/10 relative cursor-pointer transition-transform active:scale-[0.98]"
+      >
+        <div className="flex gap-[8px] flex-wrap pr-[40px]">
+          {todayLog?.mood ? (
+            <div className="px-[12px] py-[6px] rounded-[100px] bg-[#FFF0F4] text-[#72243E] text-[12px] font-medium flex items-center gap-[4px]">
+              <span>{getMoodEmoji(todayLog.mood)}</span>
+              <span className="capitalize">{todayLog.mood}</span>
+            </div>
+          ) : (
+            <span className="text-sm font-medium text-gray-500">Log feelings for today</span>
+          )}
+          {todayLog?.energy && (
+            <div className="px-[12px] py-[6px] rounded-[100px] bg-[#FEF6E7] text-[#BA7517] text-[12px] font-medium flex items-center gap-[4px]">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span>{todayLog.energy}/5 Energy</span>
+            </div>
+          )}
+        </div>
+        <div className="absolute bottom-[16px] right-[16px] text-[12px] text-[#9E7A8A]">
+          {todayLog ? 'Edit' : 'Add'}
+        </div>
       </div>
-      <div className="absolute bottom-[16px] right-[16px] text-[12px] text-[#9E7A8A]">
-        Edit
-      </div>
+
+      {/* Period Log Card (Only visible if on period) */}
+      {isOnPeriod && (
+        <div 
+          onClick={onLogPeriod}
+          className="w-full bg-red-50 rounded-[20px] p-[16px] shadow-[0_2px_12px_rgba(239,68,68,0.08)] border-[0.5px] border-red-200 relative cursor-pointer transition-transform active:scale-[0.98]"
+        >
+          <div className="flex gap-[8px] flex-wrap pr-[40px] items-center">
+            <span className="text-xl">🩸</span>
+            <span className="text-sm font-semibold text-red-800">You&apos;re on your period</span>
+          </div>
+          <div className="absolute bottom-[16px] right-[16px] text-[12px] font-medium text-red-600 bg-red-100 px-3 py-1 rounded-full">
+            Edit Details
+          </div>
+        </div>
+      )}
     </div>
   );
 }

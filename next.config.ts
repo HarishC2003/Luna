@@ -20,7 +20,9 @@ const withPWA = withPWAInit({
   ]
 });
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  serverExternalPackages: ['@react-pdf/renderer'],
+};
 
 import { withSentryConfig } from '@sentry/nextjs';
 

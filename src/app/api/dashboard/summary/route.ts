@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { apiLimiter } from '@/lib/rate-limit/limiter';
 import { computePrediction, getPhaseDescription } from '@/lib/cycle/predictor';
 import { generateInsights } from '@/lib/cycle/insights';
+import { analyzePatterns } from '@/lib/insights/pattern-analyzer';
 
 export async function GET() {
   const supabase = await createClient();
@@ -60,8 +61,22 @@ export async function GET() {
       }
   }
 
-  const allInsights = generateInsights(recentCyclesRes.data || [], allLogsRes.data || []);
-  const topInsights = allInsights.slice(0, 3);
+  const [allInsights, realPatterns] = await Promise.all([
+    generateInsights(recentCyclesRes.data || [], allLogsRes.data || []),
+    analyzePatterns(user.id)
+  ]);
+
+  // Map Pattern[] to Insight[] for the UI
+  const patternInsights = realPatterns.map(p => ({
+    id: p.id,
+    type: 'pattern',
+    title: p.title,
+    body: p.description,
+    priority: p.confidence * 10
+  }));
+
+  const combinedInsights = [...patternInsights, ...allInsights];
+  const topInsights = combinedInsights.slice(0, 3);
 
   // calculate streak
   let streakDays = 0;

@@ -10,6 +10,15 @@ export function CheckInCard({ onAnswered }: { onAnswered: () => void }) {
   const [showLogged, setShowLogged] = useState(false);
 
   useEffect(() => {
+    const hour = new Date().getHours();
+    
+    // Only show check-in after 6 PM (18:00)
+    if (hour < 18) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
+      setLoading(false);
+      return;
+    }
+
     fetch('/api/checkin/today')
       .then(res => res.json())
       .then(json => {

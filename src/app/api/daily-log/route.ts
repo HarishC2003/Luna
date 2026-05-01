@@ -31,9 +31,21 @@ export async function POST(request: Request) {
         symptoms: result.symptoms || [],
         notes: result.notes || null,
     };
-    if (result.waterGlasses !== undefined && result.waterGlasses !== null) {
-        insertData.water_glasses = result.waterGlasses;
-    }
+    if (result.waterGlasses !== undefined && result.waterGlasses !== null) insertData.water_glasses = result.waterGlasses;
+    if (result.sleep_quality !== undefined && result.sleep_quality !== null) insertData.sleep_quality = result.sleep_quality;
+    if (result.stress_level !== undefined && result.stress_level !== null) insertData.stress_level = result.stress_level;
+    if (result.exercise !== undefined && result.exercise !== null) insertData.exercise = result.exercise;
+    if (result.exercise_type !== undefined && result.exercise_type !== null) insertData.exercise_type = result.exercise_type;
+    if (result.slept_well !== undefined && result.slept_well !== null) insertData.slept_well = result.slept_well;
+    if (result.hydration_goal !== undefined && result.hydration_goal !== null) insertData.hydration_goal = result.hydration_goal;
+    if (result.moved_body !== undefined && result.moved_body !== null) insertData.moved_body = result.moved_body;
+    if (result.image_url !== undefined && result.image_url !== null) insertData.image_url = result.image_url;
+
+    // Optional columns from migration 008 — may not exist yet in the DB
+    const optionalColumns = [
+      'water_glasses', 'sleep_quality', 'stress_level', 'exercise',
+      'exercise_type', 'slept_well', 'hydration_goal', 'moved_body', 'image_url'
+    ];
 
     let newLog;
     const { data: firstAttemptData, error } = await admin.from('daily_logs').upsert(
@@ -42,9 +54,13 @@ export async function POST(request: Request) {
     ).select().single();
 
     if (error) {
-        if (error.code === '42703') { // undefined_column
-            console.warn('[daily-log] water_glasses column missing. Falling back without it.');
-            delete insertData.water_glasses;
+        // PGRST204 = PostgREST schema-cache miss, 42703 = Postgres undefined_column
+        if (error.code === 'PGRST204' || error.code === '42703') {
+            console.warn(`[daily-log] Column missing (${error.code}): ${error.message}. Retrying without optional columns.`);
+            // Strip every optional column and retry with core fields only
+            for (const col of optionalColumns) {
+              delete insertData[col];
+            }
             const { data: fallbackData, error: fallbackError } = await admin.from('daily_logs').upsert(
                 insertData,
                 { onConflict: 'user_id,log_date' }

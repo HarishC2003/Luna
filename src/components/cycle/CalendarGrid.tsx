@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Prediction, CycleLog, DailyLog } from '@/types/cycle';
 import { DayDrawer } from './DayDrawer';
-import { DailyLogModal } from './DailyLogModal';
 import { CycleLogModal } from './CycleLogModal';
 
 interface Props {
@@ -16,10 +15,6 @@ interface Props {
 export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  
-  const [isDailyModelOpen, setDailyModelOpen] = useState(false);
-  const [selectedDailyData, setSelectedDailyData] = useState<DailyLog | undefined>();
-  const [selectedDateStr, setSelectedDateStr] = useState<string>('');
 
   const [isCycleModalOpen, setCycleModalOpen] = useState(false);
   const [selectedCycleData, setSelectedCycleData] = useState<CycleLog | undefined>();
@@ -76,12 +71,6 @@ export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
 
   const handleDayClick = (date: Date) => {
     setSelectedDate(date);
-  };
-
-  const handleEditDaily = (dateStr: string, log?: DailyLog) => {
-    setSelectedDateStr(dateStr);
-    setSelectedDailyData(log);
-    setDailyModelOpen(true);
   };
 
   const handleEditCycle = (log: CycleLog) => {
@@ -167,19 +156,11 @@ export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
             onClose={() => setSelectedDate(null)} 
             dailyLog={selectedDaily}
             cycleLog={selectedCycle}
-            onEditDaily={handleEditDaily}
+            onEditDaily={() => setSelectedDate(null)}
             onEditCycle={handleEditCycle}
           />
         </>
       )}
-
-      <DailyLogModal 
-        isOpen={isDailyModelOpen} 
-        onClose={() => setDailyModelOpen(false)} 
-        onSuccess={() => { setDailyModelOpen(false); onRefresh(); }}
-        selectedDate={selectedDateStr}
-        initialData={selectedDailyData}
-      />
 
       <CycleLogModal
         isOpen={isCycleModalOpen}

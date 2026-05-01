@@ -12,7 +12,7 @@ export function generateCheckinQuestion(context: UserHealthContext): CheckInQues
 
   if (yesterdayMood && yesterdayMood.energy && yesterdayMood.energy <= 2) {
     return {
-      question: "Better than yesterday?",
+      question: "Was your energy better today?",
       logField: 'energy',
       options: ['Much better', 'Same', 'Worse']
     };
@@ -20,22 +20,22 @@ export function generateCheckinQuestion(context: UserHealthContext): CheckInQues
 
   if (!isLate && daysUntilNextPeriod !== null && daysUntilNextPeriod <= 1) {
     return {
-      question: "Preparing for your period?",
-      logField: 'mood',
-      options: ['Yes, ready', 'Not yet', 'Need tips']
+      question: "Did your period start today?",
+      logField: 'flow',
+      options: ['Yes, spotting', 'Yes, light', 'Not yet']
     };
   }
 
   if (phase === 'menstrual') {
     if (dayOfCycle === 1 || dayOfCycle === 2) {
       return {
-        question: "How are your cramps?",
+        question: "How were your cramps today?",
         logField: 'symptoms',
         options: ['None', 'Mild', 'Moderate', 'Severe']
       };
     }
     return {
-      question: "How's your flow today?",
+      question: "How was your flow today?",
       logField: 'flow',
       options: ['Spotting', 'Light', 'Medium', 'Heavy']
     };
@@ -43,7 +43,7 @@ export function generateCheckinQuestion(context: UserHealthContext): CheckInQues
 
   if (phase === 'follicular') {
     return {
-      question: "How's your energy today?",
+      question: "How was your energy overall today?",
       logField: 'energy',
       options: ['Low', 'Medium', 'High', 'Very high']
     };
@@ -51,7 +51,7 @@ export function generateCheckinQuestion(context: UserHealthContext): CheckInQues
 
   if (phase === 'ovulatory') {
     return {
-      question: "How are you feeling socially?",
+      question: "How did you feel socially today?",
       logField: 'mood',
       options: ['Withdrawn', 'Okay', 'Social', 'Great']
     };
@@ -60,20 +60,20 @@ export function generateCheckinQuestion(context: UserHealthContext): CheckInQues
   if (phase === 'luteal') {
     if (dayOfCycle && dayOfCycle >= 22) {
       return {
-        question: "Any PMS symptoms today?",
+        question: "Notice any PMS symptoms today?",
         logField: 'symptoms',
         options: ['None', 'Bloating', 'Cramps', 'Mood swings']
       };
     }
     return {
-      question: "How's your mood today?",
+      question: "How was your mood today?",
       logField: 'mood',
       options: ['Terrible', 'Low', 'Okay', 'Good', 'Great']
     };
   }
 
   return {
-    question: "How are you feeling today?",
+    question: "How did you feel overall today?",
     logField: 'mood',
     options: ['Terrible', 'Low', 'Okay', 'Good', 'Great']
   };

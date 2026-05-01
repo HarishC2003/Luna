@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Mood, FlowIntensity, Symptom, DailyLog } from '@/types/cycle';
+import { Mood, Symptom, DailyLog } from '@/types/cycle';
 
 interface Props {
   isOpen: boolean;
@@ -19,22 +19,23 @@ const MOODS: { val: Mood, icon: string, label: string }[] = [
   { val: 'terrible', icon: '😫', label: 'Terrible' },
 ];
 
-const FLOWS: FlowIntensity[] = ['none', 'spotting', 'light', 'medium', 'heavy'];
 const SYMPTOMS: Symptom[] = ['cramps', 'headache', 'bloating', 'breast_tenderness', 'fatigue', 'acne', 'back_pain', 'nausea', 'mood_swings', 'insomnia'];
+const EXERCISE_TYPES = ['walking', 'yoga', 'gym', 'none'] as const;
 
-export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initialData }: Props) {
+export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, initialData }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [todayStr] = useState(() => new Date().toISOString().split('T')[0]);
-  const [date, setDate] = useState(() => selectedDate || (initialData?.log_date ? initialData.log_date.split('T')[0] : new Date().toISOString().split('T')[0]));
+  const [date, setDate] = useState(() => selectedDate || (initialData?.log_date ? initialData.log_date.split('T')[0] : todayStr));
   const [mood, setMood] = useState<Mood | ''>(() => initialData?.mood || '');
   const [energy, setEnergy] = useState<number | ''>(() => initialData?.energy || '');
-  const [flow, setFlow] = useState<FlowIntensity | ''>(() => initialData?.flow || '');
+  const [sleepQuality, setSleepQuality] = useState<number | ''>(() => initialData?.sleep_quality || '');
+  const [stressLevel, setStressLevel] = useState<number | ''>(() => initialData?.stress_level || '');
+  const [exercise, setExercise] = useState<boolean>(() => !!initialData?.exercise);
+  const [exerciseType, setExerciseType] = useState<string>(() => initialData?.exercise_type || 'none');
   const [symptoms, setSymptoms] = useState<Symptom[]>(() => initialData?.symptoms || []);
   const [notes, setNotes] = useState(() => initialData?.notes || '');
-
-
 
   if (!isOpen) return null;
 
@@ -52,14 +53,13 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
     setError(null);
 
     try {
-      const payload: Record<string, unknown> = { logDate: date };
+      const payload: Record<string, unknown> = { logDate: date, flow: 'none' };
       if (mood) payload.mood = mood;
       if (energy) payload.energy = energy;
-      if (flow) {
-        payload.flow = flow;
-      } else {
-        payload.flow = 'none';
-      }
+      if (sleepQuality) payload.sleep_quality = sleepQuality;
+      if (stressLevel) payload.stress_level = stressLevel;
+      payload.exercise = exercise;
+      if (exercise) payload.exercise_type = exerciseType;
       if (symptoms.length) payload.symptoms = symptoms;
       if (notes) payload.notes = notes;
 
@@ -89,12 +89,12 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
       <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
         <div className="px-6 py-4 border-b border-[#E85D9A]/10 bg-[#FDF8F9]">
           <div className="flex justify-between items-center mb-1">
-            <h2 className="text-xl font-bold text-[#4A1B3C]">Log your day</h2>
+            <h2 className="text-xl font-bold text-[#4A1B3C]">Log your feelings</h2>
             <button onClick={onClose} className="p-2 hover:bg-[#E85D9A]/10 rounded-full text-[#4A1B3C] transition-colors">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
-          <p className="text-sm font-medium text-[#9E7A8A]">Log any or all: Mood · Energy · Symptoms · Flow</p>
+          <p className="text-sm font-medium text-[#9E7A8A]">Track your mood, energy, sleep and symptoms.</p>
         </div>
 
         <div className="overflow-y-auto flex-1 p-6">
@@ -104,17 +104,6 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
             <div>
               <label className="block text-sm font-semibold text-[#4A1B3C] mb-2 uppercase tracking-wide">Date</label>
               <input type="date" value={date} onChange={e => setDate(e.target.value)} max={todayStr} required className="w-full px-4 py-3 rounded-xl border border-[#E85D9A]/20 focus:border-[#E85D9A] focus:ring-2 focus:ring-[#E85D9A]/20 outline-none text-[#4A1B3C]" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-[#4A1B3C] mb-3 uppercase tracking-wide">Flow</label>
-              <div className="flex flex-wrap gap-2">
-                {FLOWS.map(f => (
-                  <button key={f} type="button" onClick={() => setFlow(flow === f ? '' : f)} className={`px-4 py-2 rounded-xl text-sm font-medium capitalize border transition-all ${flow === f ? 'bg-[#E85D9A] text-white border-[#E85D9A] shadow-md' : 'bg-white text-[#4A1B3C] border-[#E85D9A]/20 hover:border-[#E85D9A]'}`}>
-                    {f}
-                  </button>
-                ))}
-              </div>
             </div>
 
             <div>
@@ -129,14 +118,41 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-[#4A1B3C] mb-3 uppercase tracking-wide">Energy</label>
+                <div className="flex gap-1 flex-wrap">
+                  {[1,2,3,4,5].map(num => (
+                    <button key={num} type="button" onClick={() => setEnergy(energy === num ? '' : num)} className={`w-10 h-10 rounded-xl flex items-center justify-center text-md transition-all ${energy === num ? 'bg-amber-400 text-white shadow-md transform scale-110' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
+                      ⚡
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-[#4A1B3C] mb-3 uppercase tracking-wide">Sleep</label>
+                <div className="flex gap-1 flex-wrap">
+                  {[1,2,3,4,5].map(num => (
+                    <button key={num} type="button" onClick={() => setSleepQuality(sleepQuality === num ? '' : num)} className={`w-10 h-10 rounded-xl flex items-center justify-center text-md transition-all ${sleepQuality === num ? 'bg-indigo-500 text-white shadow-md transform scale-110' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
+                      🌙
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div>
-              <label className="block text-sm font-semibold text-[#4A1B3C] mb-3 uppercase tracking-wide">Energy Level</label>
-              <div className="flex gap-2">
+              <label className="block text-sm font-semibold text-[#4A1B3C] mb-3 uppercase tracking-wide">Stress Level</label>
+              <div className="flex gap-1">
                 {[1,2,3,4,5].map(num => (
-                  <button key={num} type="button" onClick={() => setEnergy(energy === num ? '' : num)} className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg transition-all ${energy === num ? 'bg-amber-400 text-white shadow-lg transform scale-110' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
-                    ⚡
+                  <button key={num} type="button" onClick={() => setStressLevel(stressLevel === num ? '' : num)} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${stressLevel === num ? 'bg-red-500 text-white shadow-md transform scale-105' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
+                    {num}
                   </button>
                 ))}
+              </div>
+              <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
+                <span>Low</span>
+                <span>High</span>
               </div>
             </div>
 
@@ -152,8 +168,29 @@ export function DailyLogModal({ isOpen, onClose, onSuccess, selectedDate, initia
             </div>
 
             <div>
+              <label className="block text-sm font-semibold text-[#4A1B3C] mb-3 uppercase tracking-wide">Exercise</label>
+              <div className="flex items-center gap-4 mb-3">
+                <button type="button" onClick={() => setExercise(!exercise)} className={`w-14 h-8 rounded-full transition-colors relative ${exercise ? 'bg-green-500' : 'bg-gray-200'}`}>
+                  <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-transform ${exercise ? 'left-7' : 'left-1'}`} />
+                </button>
+                <span className="text-sm font-medium text-gray-600">{exercise ? 'Yes, I exercised!' : 'Not today'}</span>
+              </div>
+              
+              {exercise && (
+                <div className="flex flex-wrap gap-2 animate-in slide-in-from-top-2">
+                  {EXERCISE_TYPES.map(type => (
+                    <button key={type} type="button" onClick={() => setExerciseType(type)} className={`px-4 py-2 rounded-xl text-sm font-medium capitalize border transition-all ${exerciseType === type ? 'bg-green-500 text-white border-green-500 shadow-md' : 'bg-white text-[#4A1B3C] border-gray-200 hover:border-gray-300'}`}>
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
               <label className="block text-sm font-semibold text-[#4A1B3C] mb-2 uppercase tracking-wide">Journal Notes</label>
               <textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={300} rows={3} placeholder="How was your day?" className="w-full px-4 py-3 rounded-xl border border-[#E85D9A]/20 focus:border-[#E85D9A] focus:ring-2 focus:ring-[#E85D9A]/20 outline-none text-[#4A1B3C] resize-none" />
+              {/* Photo upload will be handled natively by device or a separate component */}
             </div>
           </form>
         </div>
