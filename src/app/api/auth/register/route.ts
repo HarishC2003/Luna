@@ -3,7 +3,7 @@ import { registerSchema } from '@/lib/validations/auth';
 import { registerLimiter, getRealIP } from '@/lib/rate-limit/limiter';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { generateSecureToken, hashToken } from '@/lib/auth/password';
-import { sendEmail } from '@/lib/email/client';
+import { sendEmail } from '@/lib/email/gmail-sender';
 import { verificationEmail } from '@/lib/email/templates';
 
 export async function POST(request: Request) {
@@ -68,16 +68,16 @@ export async function POST(request: Request) {
     const { html, text } = verificationEmail({ displayName, verifyUrl });
 
     try {
-      const result = await sendEmail({
+      const emailSent = await sendEmail({
         to: email,
         subject: 'Verify your Luna account',
         html,
         text
       });
-      console.log('Email send result:', result);
+      console.log('Email send result:', emailSent);
       
-      if (!result.success) {
-        console.error('Email send failed:', result.error);
+      if (!emailSent) {
+        console.error('Email send failed');
         // We still return 201 so the user gets created, but they might need to use the terminal link to verify
       }
     } catch (emailError) {

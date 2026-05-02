@@ -1,5 +1,5 @@
 import webpush from 'web-push';
-import { sendEmail } from '../email/client';
+import { sendEmail } from '../email/gmail-sender';
 import { createAdminClient } from '../supabase/admin';
 
 if (process.env.VAPID_PRIVATE_KEY && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
@@ -28,7 +28,7 @@ export async function sendEmailNotification(
       text: templatePayload.text,
     });
 
-    if (!res.success) throw new Error(String(res.error));
+    if (!res) throw new Error('Failed to send email via Gmail');
 
     await admin.from('notification_log').insert({
       user_id: userId,

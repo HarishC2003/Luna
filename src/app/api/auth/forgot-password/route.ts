@@ -3,7 +3,7 @@ import { forgotPasswordSchema } from '@/lib/validations/auth';
 import { passwordLimiter, getRealIP } from '@/lib/rate-limit/limiter';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { generateSecureToken, hashToken } from '@/lib/auth/password';
-import { sendEmail } from '@/lib/email/client';
+import { sendEmail } from '@/lib/email/gmail-sender';
 import { passwordResetEmail } from '@/lib/email/templates';
 
 export async function POST(request: Request) {

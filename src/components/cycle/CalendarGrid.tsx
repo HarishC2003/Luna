@@ -36,36 +36,51 @@ export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
   const today = new Date();
   today.setHours(0,0,0,0);
 
+  const toLocalString = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const toLocalDate = (dateVal: string | Date) => {
+    // API returns ISO strings, but type definition says Date.
+    const dateStr = typeof dateVal === 'string' ? dateVal : String(dateVal);
+    const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+
   const isPeriodDay = (date: Date) => {
     return cycles.some(c => {
-      const s = new Date(c.period_start);
+      const s = toLocalDate(c.period_start);
       // default 5 days if ended not logged
-      const e = c.period_end ? new Date(c.period_end) : new Date(s.getTime() + (5 * 24 * 3600 * 1000));
+      const e = c.period_end ? toLocalDate(c.period_end) : new Date(s.getFullYear(), s.getMonth(), s.getDate() + 5);
       return date >= s && date <= e;
     });
   };
 
   const isPredictedPeriod = (date: Date) => {
     if (!prediction) return false;
-    const s = new Date(prediction.predictedStart);
-    const e = new Date(prediction.predictedEnd);
+    const s = toLocalDate(prediction.predictedStart);
+    const e = toLocalDate(prediction.predictedEnd);
     return date >= s && date <= e;
   };
 
   const isFertile = (date: Date) => {
     if (!prediction) return false;
-    const s = new Date(prediction.fertileStart);
-    const e = new Date(prediction.fertileEnd);
+    const s = toLocalDate(prediction.fertileStart);
+    const e = toLocalDate(prediction.fertileEnd);
     return date >= s && date <= e;
   };
 
   const isOvulation = (date: Date) => {
-    if (!prediction) return false;
-    return date.getTime() === new Date(prediction.ovulationDate).getTime();
+    if (!prediction || !prediction.ovulationDate) return false;
+    const ov = toLocalDate(prediction.ovulationDate);
+    return date.getTime() === ov.getTime();
   };
 
   const hasLog = (date: Date) => {
-    const dStr = date.toISOString().split('T')[0];
+    const dStr = toLocalString(date);
     return logs.some(l => l.log_date === dStr);
   };
 
@@ -113,8 +128,8 @@ export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
     );
   };
 
-  const selectedDaily = selectedDate ? logs.find(l => l.log_date === selectedDate.toISOString().split('T')[0]) || null : null;
-  const selectedCycle = selectedDate ? cycles.find(c => c.period_start === selectedDate.toISOString().split('T')[0]) || null : null;
+  const selectedDaily = selectedDate ? logs.find(l => l.log_date === toLocalString(selectedDate)) || null : null;
+  const selectedCycle = selectedDate ? cycles.find(c => c.period_start === toLocalString(selectedDate)) || null : null;
 
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-[#E85D9A]/10 overflow-hidden">

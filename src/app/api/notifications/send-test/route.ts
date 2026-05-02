@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { sendEmail } from '@/lib/email/client';
+import { sendEmail } from '@/lib/email/gmail-sender';
 import { periodReminderEmail } from '@/lib/email/templates';
 
 export async function POST(request: Request) {
@@ -29,16 +29,16 @@ export async function POST(request: Request) {
       appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://lunalife.app',
     });
 
-    const result = await sendEmail({
+    const emailSent = await sendEmail({
       to: user.email,
       subject: 'Luna: Your period is approaching',
       html,
       text
     });
 
-    if (!result.success) {
-      console.error('Test notification send error:', result.error);
-      return NextResponse.json({ sent: false, error: result.error });
+    if (!emailSent) {
+      console.error('Test notification send error');
+      return NextResponse.json({ sent: false, error: 'Failed to send' });
     }
 
     return NextResponse.json({ sent: true, message: 'Test notification sent' });

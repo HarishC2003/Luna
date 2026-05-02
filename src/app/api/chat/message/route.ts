@@ -13,12 +13,12 @@ import { createAdminClient } from '@/lib/supabase/admin';
 export const maxDuration = 60;
 
 const chatSchema = z.object({
-  message: z.string().min(1).max(2000),
+  message: z.string().min(1).max(10000),
   history: z.array(z.object({
     role: z.enum(['user', 'assistant']).transform(v => v === 'assistant' ? 'model' : 'user'),
-    content: z.string().max(4000)
-  })).max(10),
-  sessionId: z.string().uuid().optional()
+    content: z.string().max(100000)
+  })).max(50),
+  sessionId: z.string().optional()
 });
 
 export async function POST(request: Request) {
