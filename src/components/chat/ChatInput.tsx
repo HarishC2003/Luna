@@ -29,7 +29,7 @@ export function ChatInput({ onSend, isLoading, disabled }: { onSend: (text: stri
   }, [text]);
 
   return (
-    <div className="relative bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex items-end">
+    <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl border border-pink-100/50 shadow-[0_8px_30px_rgba(232,93,154,0.08)] overflow-hidden flex items-end focus-within:ring-2 focus-within:ring-[#E85D9A]/20 focus-within:border-[#E85D9A]/50 transition-all duration-300">
       <textarea
         ref={textareaRef}
         value={text}
@@ -37,25 +37,25 @@ export function ChatInput({ onSend, isLoading, disabled }: { onSend: (text: stri
         onKeyDown={handleKeyDown}
         placeholder="Message Luna..."
         disabled={disabled || isLoading}
-        className="flex-1 max-h-[120px] p-4 bg-transparent resize-none focus:outline-none disabled:opacity-50 text-[15px]"
+        className="flex-1 max-h-[120px] p-4 px-5 bg-transparent resize-none focus:outline-none disabled:opacity-50 text-[15px] text-[#4A1B3C] placeholder:text-[#4A1B3C]/30 font-medium"
         rows={1}
       />
       <button
         onClick={handleSend}
         disabled={disabled || isLoading || !text.trim()}
-        className="p-3 m-1 rounded-xl bg-[#E85D9A] text-white disabled:opacity-50 disabled:bg-gray-300 transition-colors"
+        className="p-3 m-2 rounded-2xl bg-gradient-to-tr from-[#E85D9A] to-[#D93F7D] text-white disabled:opacity-50 disabled:from-gray-300 disabled:to-gray-400 transition-all shadow-md shadow-pink-500/20 transform active:scale-95 flex items-center justify-center"
       >
         {isLoading ? (
-          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
         ) : (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          <svg className="w-5 h-5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
           </svg>
         )}
       </button>
 
       {text.length > 1800 && (
-         <div className="absolute top-1 right-14 text-xs text-gray-400">
+         <div className="absolute top-2 right-16 text-[10px] font-bold text-pink-400 bg-white/80 px-2 py-0.5 rounded-full backdrop-blur-sm">
            {text.length}/2000
          </div>
       )}

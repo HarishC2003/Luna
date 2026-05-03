@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'profile'|'notifications'|'privacy'|'account'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile'|'notifications'|'account'>('profile');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
@@ -35,34 +35,19 @@ export default function ProfilePage() {
   }
 
   interface PrivacySummary {
-    cycleLogs?: number;
-    dailyLogs?: number;
-    chatFeedback?: number;
     pendingDeletion?: boolean;
     pendingDeletionAt?: string;
-  }
-
-  interface Report {
-    download_url: string;
-    created_at: string;
   }
 
   // Profile Data
   const [profile, setProfile] = useState<UserProfile>({});
   // Settings Data
   const [settings, setSettings] = useState<UserSettings>({});
-  // Privacy Summary
+  // Privacy Summary (only for account deletion status)
   const [privacy, setPrivacy] = useState<PrivacySummary>({});
 
   const { isSupported, isSubscribed, subscribe, unsubscribe, isLoading: pushLoading } = usePushNotifications();
-  const [exportUrl, setExportUrl] = useState<string | null>(null);
-  const [exporting, setExporting] = useState(false);
   const [deletionPhrase, setDeletionPhrase] = useState('');
-  const [reportMonth, setReportMonth] = useState(new Date().getMonth() + 1);
-  const [reportYear, setReportYear] = useState(new Date().getFullYear());
-  const [reportGenerating, setReportGenerating] = useState(false);
-  const [reportUrl, setReportUrl] = useState<string | null>(null);
-  const [recentReports, setRecentReports] = useState<Report[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -91,25 +76,10 @@ export default function ProfilePage() {
     }
   }, []);
 
-  const fetchReports = useCallback(async () => {
-    try {
-      const res = await fetch('/api/privacy/reports'); // I need to create this simple list API or fetch from elsewhere
-      const data = await res.json();
-      setRecentReports(data.reports || []);
-    } catch (_e) {
-      console.error(_e);
-    }
-  }, []);
-
   useEffect(() => {
     /* eslint-disable-next-line react-hooks/set-state-in-effect */
     void fetchData();
   }, [fetchData]);
-
-  useEffect(() => {
-    /* eslint-disable-next-line react-hooks/set-state-in-effect */
-    if (activeTab === 'privacy') void fetchReports();
-  }, [activeTab, fetchReports]);
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,48 +129,6 @@ export default function ProfilePage() {
       setTimeout(() => setError(''), 3000);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      const res = await fetch('/api/privacy/export', { method: 'POST' });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Export failed');
-      }
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      setExportUrl(url);
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Export failed');
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const handleGenerateReport = async () => {
-    setReportGenerating(true);
-    setReportUrl(null);
-    try {
-      const res = await fetch('/api/reports/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ month: reportMonth, year: reportYear })
-      });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Report generation failed');
-      }
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      setReportUrl(url);
-      fetchReports();
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Report generation failed');
-    } finally {
-      setReportGenerating(false);
     }
   };
 
@@ -309,8 +237,8 @@ export default function ProfilePage() {
       
       {/* Tab Nav */}
       <div className="flex border-b border-[#E85D9A]/20 mb-8 overflow-x-auto hide-scrollbar">
-        {['profile', 'notifications', 'privacy', 'account'].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab as 'profile'|'notifications'|'privacy'|'account')} className={`px-6 py-3 font-semibold uppercase tracking-wider text-sm transition-colors whitespace-nowrap ${activeTab === tab ? 'text-[#E85D9A] border-b-2 border-[#E85D9A]' : 'text-[#4A1B3C]/50 hover:text-[#E85D9A]/70'}`}>
+        {['profile', 'notifications', 'account'].map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab as 'profile'|'notifications'|'account')} className={`px-6 py-3 font-semibold uppercase tracking-wider text-sm transition-colors whitespace-nowrap ${activeTab === tab ? 'text-[#E85D9A] border-b-2 border-[#E85D9A]' : 'text-[#4A1B3C]/50 hover:text-[#E85D9A]/70'}`}>
             {tab}
           </button>
         ))}
@@ -404,106 +332,6 @@ export default function ProfilePage() {
 
           <button type="submit" disabled={saving} className="mt-4 px-8 py-3 bg-[#E85D9A] text-white font-bold rounded-xl shadow-md w-full sm:w-auto">Save Settings</button>
         </form>
-      )}
-
-      {activeTab === 'privacy' && (
-        <div className="space-y-6 animate-fade-in bg-white p-6 rounded-3xl shadow-sm border border-[#E85D9A]/10">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-gray-50 p-4 rounded-xl text-center"><div className="text-2xl font-black text-[#E85D9A]">{privacy.cycleLogs || 0}</div><div className="text-xs font-bold text-[#4A1B3C] uppercase text-opacity-50 mt-1">Cycles</div></div>
-            <div className="bg-gray-50 p-4 rounded-xl text-center"><div className="text-2xl font-black text-[#E85D9A]">{privacy.dailyLogs || 0}</div><div className="text-xs font-bold text-[#4A1B3C] uppercase text-opacity-50 mt-1">Logs</div></div>
-            <div className="bg-gray-50 p-4 rounded-xl text-center"><div className="text-2xl font-black text-[#E85D9A]">{privacy.chatFeedback || 0}</div><div className="text-xs font-bold text-[#4A1B3C] uppercase text-opacity-50 mt-1">Feedback</div></div>
-          </div>
-
-          <div className="pt-8 border-t border-[#E85D9A]/10">
-            <h3 className="text-xl font-bold text-[#4A1B3C] mb-2">Monthly Cycle Report</h3>
-            <p className="text-[#4A1B3C]/70 text-sm mb-6">Generate a detailed, doctor-ready PDF summary of your health data for any month.</p>
-            
-            <div className="flex flex-wrap gap-4 mb-6">
-              <div className="flex-1 min-w-[140px]">
-                <label className="block text-[10px] font-bold text-[#4A1B3C]/50 uppercase mb-1.5 ml-1">Month</label>
-                <select 
-                  value={reportMonth} 
-                  onChange={e => setReportMonth(parseInt(e.target.value))}
-                  className="w-full p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C] font-semibold focus:border-[#E85D9A] outline-none"
-                >
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <option key={i + 1} value={i + 1}>{new Date(2025, i).toLocaleString('default', { month: 'long' })}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1 min-w-[100px]">
-                <label className="block text-[10px] font-bold text-[#4A1B3C]/50 uppercase mb-1.5 ml-1">Year</label>
-                <select 
-                  value={reportYear} 
-                  onChange={e => setReportYear(parseInt(e.target.value))}
-                  className="w-full p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C] font-semibold focus:border-[#E85D9A] outline-none"
-                >
-                  {[0, 1].map(offset => (
-                    <option key={offset} value={new Date().getFullYear() - offset}>{new Date().getFullYear() - offset}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {reportGenerating ? (
-              <div className="w-full p-6 text-center space-y-4">
-                <div className="flex justify-center flex-col items-center">
-                  <div className="w-12 h-12 border-4 border-[#E85D9A]/20 border-t-[#E85D9A] rounded-full animate-spin mb-4" />
-                  <p className="text-[#E85D9A] font-bold animate-pulse">Preparing your report...</p>
-                </div>
-              </div>
-            ) : reportUrl ? (
-              <div className="space-y-4">
-                <a href={reportUrl} className="flex items-center justify-center gap-2 w-full bg-emerald-500 text-white font-bold py-4 rounded-xl shadow-lg transform transition-transform active:scale-95" download>
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                  Download Report
-                </a>
-                <button onClick={() => setReportUrl(null)} className="w-full text-center text-[#4A1B3C]/40 text-xs font-bold uppercase hover:text-[#E85D9A]">Generate another</button>
-              </div>
-            ) : (
-              <button 
-                onClick={handleGenerateReport} 
-                className="w-full bg-[#E85D9A] hover:bg-[#d44d88] text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95"
-              >
-                Generate PDF Report
-              </button>
-            )}
-
-            {recentReports.filter(rep => rep.download_url && rep.download_url !== 'direct_download').length > 0 && (
-              <div className="mt-8">
-                <h4 className="text-[10px] font-black text-[#4A1B3C]/30 uppercase tracking-[0.2em] mb-4">Past 3 Months</h4>
-                <div className="space-y-3">
-                  {recentReports.filter(rep => rep.download_url && rep.download_url !== 'direct_download').slice(0, 3).map((rep, idx) => (
-                    <a key={idx} href={rep.download_url} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-[#E85D9A]/20 transition-all group">
-                       <div className="flex items-center gap-3">
-                         <div className="w-8 h-8 rounded-lg bg-[#E85D9A]/10 flex items-center justify-center text-[#E85D9A]">
-                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                         </div>
-                         <div>
-                           <p className="text-sm font-bold text-[#4A1B3C]">Cycle Report</p>
-                           <p className="text-[10px] text-[#4A1B3C]/50">{new Date(rep.created_at || '').toLocaleDateString([], { month: 'short', year: 'numeric' })}</p>
-                         </div>
-                       </div>
-                       <div className="text-[#E85D9A] opacity-0 group-hover:opacity-100 transition-opacity">
-                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                       </div>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="pt-8 mt-8 border-t border-[#E85D9A]/10">
-              <h3 className="text-xl font-bold text-[#4A1B3C] mb-2">Export Data</h3>
-              <p className="text-[#4A1B3C]/70 text-sm mb-4">Download a complete JSON trace of all parameters safely logged within your account.</p>
-              {exportUrl ? (
-                <a href={exportUrl} className="block text-center w-full bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-md" download>Download Export.json</a>
-              ) : (
-                <button onClick={handleExport} disabled={exporting} className="w-full sm:w-auto px-8 py-3 bg-[#4A1B3C] text-white font-bold rounded-xl shadow-md disabled:opacity-50">{exporting ? 'Generating...' : 'Generate New Export'}</button>
-              )}
-            </div>
-          </div>
-        </div>
       )}
 
       {activeTab === 'account' && (

@@ -10,10 +10,12 @@ import { DailyFeelingsModal } from '@/components/cycle/DailyFeelingsModal';
 import { PeriodLogModal } from '@/components/cycle/PeriodLogModal';
 import { CheckInCard } from '@/components/cycle/CheckInCard';
 
+
 import { StreakWidget } from '@/components/streaks/StreakWidget';
 import { MilestoneCelebration } from '@/components/streaks/MilestoneCelebration';
 import { TodayLogQuickCard } from '@/components/cycle/TodayLogQuickCard';
 import WelcomePopup from '@/components/dashboard/WelcomePopup';
+import UpcomingSymptomAlerts from '@/components/predictions/UpcomingSymptomAlerts';
 import { WellnessTracker } from '@/components/dashboard/WellnessTracker';
 import { QuickMoodLogger } from '@/components/dashboard/QuickMoodLogger';
 import { DailyAffirmation } from '@/components/dashboard/DailyAffirmation';
@@ -29,13 +31,7 @@ interface DashboardData {
   displayName?: string;
 }
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  if (hour < 21) return 'Good evening';
-  return 'Good night';
-}
+
 
 export default function DashboardClient() {
   const router = useRouter();
@@ -93,9 +89,7 @@ export default function DashboardClient() {
 
   if (!data) return null;
 
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
-  const initials = data.displayName ? data.displayName.charAt(0).toUpperCase() : 'U';
+
   const isOnPeriod = data.prediction?.currentPhase === 'menstrual';
 
   return (
@@ -109,19 +103,8 @@ export default function DashboardClient() {
       )}
 
       <WelcomePopup />
-
-      {/* Top Greeting Bar */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex flex-col gap-1 items-start">
-          <h1 className="text-[16px] font-medium text-[#1A0A12]">{getGreeting()}, {data.displayName || 'User'}</h1>
-          <p className="text-[12px] text-[#9E7A8A] font-medium">{dateStr}</p>
-        </div>
-        <Link href="/profile">
-          <div className="w-[36px] h-[36px] rounded-full bg-[#E85D9A] text-white flex items-center justify-center text-[14px] font-bold shadow-sm">
-            {initials}
-          </div>
-        </Link>
-      </div>
+      
+      <UpcomingSymptomAlerts />
 
       <DailyAffirmation phase={data.prediction?.currentPhase || 'unknown'} />
 
@@ -153,6 +136,7 @@ export default function DashboardClient() {
             logs={data.allLogs ?? []}
             onRefresh={fetchDashboard}
           />
+
 
           {/* Insights Strip */}
           {data.insights && data.insights.length > 0 && (

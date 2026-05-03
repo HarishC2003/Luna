@@ -4,12 +4,32 @@ import { useEffect, useState, useCallback } from 'react';
 import { CycleLog } from '@/types/cycle';
 import { CycleLogModal } from '@/components/cycle/CycleLogModal';
 import { FlowBadge } from '@/components/cycle/FlowBadge';
+import CycleComparisonTimeline from '@/components/cycles/CycleComparisonTimeline';
+import InsightsReportModal from '@/components/reports/InsightsReportModal';
+
+interface InsightsReportData {
+  cycleNumber: number;
+  cycleLength: number;
+  periodLength: number;
+  avgMood: number;
+  avgEnergy: number;
+  topSymptoms: string[];
+  moodTrend: string;
+  energyTrend: string;
+  patternsDiscovered: string[];
+  recommendations: string[];
+}
 
 export default function CyclesPage() {
   const [cycles, setCycles] = useState<CycleLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedCycle, setSelectedCycle] = useState<CycleLog | undefined>();
+
+  // AI Insights Report state
+  const [showInsightsReport, setShowInsightsReport] = useState(false);
+  const [insightsReport, setInsightsReport] = useState<InsightsReportData | null>(null);
+  const [generatingInsights, setGeneratingInsights] = useState(false);
 
   const fetchCycles = useCallback(async () => {
     try {
@@ -33,6 +53,24 @@ export default function CyclesPage() {
     setModalOpen(true);
   };
 
+  const handleGenerateInsightsReport = async () => {
+    setGeneratingInsights(true);
+    try {
+      const res = await fetch('/api/reports/insights', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setInsightsReport(data.report);
+        setShowInsightsReport(true);
+      } else {
+        alert(data.error || 'Failed to generate report');
+      }
+    } catch (_err) {
+      alert('Failed to generate report');
+    } finally {
+      setGeneratingInsights(false);
+    }
+  };
+
   const completedCycles = cycles.filter(c => c.cycle_length);
   const avgCycle = completedCycles.length ? Math.round(completedCycles.reduce((a,b) => a + b.cycle_length!, 0) / completedCycles.length) : 0;
   
@@ -50,12 +88,31 @@ export default function CyclesPage() {
     <div className="space-y-8 pb-10">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-extrabold text-[#4A1B3C]">Cycle History</h1>
-        <button 
-          onClick={() => openLogModal()} 
-          className="bg-[#E85D9A] hover:bg-[#d44d88] text-white px-5 py-2.5 rounded-xl font-bold shadow-md transition-all text-sm tracking-wide"
-        >
-          + Log Period
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={handleGenerateInsightsReport}
+            disabled={generatingInsights}
+            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:shadow-lg transition-all text-sm tracking-wide disabled:opacity-50 active:scale-95 flex items-center gap-2"
+          >
+            {generatingInsights ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                AI Insights
+              </>
+            )}
+          </button>
+          <button 
+            onClick={() => openLogModal()} 
+            className="bg-[#E85D9A] hover:bg-[#d44d88] text-white px-5 py-2.5 rounded-xl font-bold shadow-md transition-all text-sm tracking-wide"
+          >
+            + Log Period
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -72,7 +129,16 @@ export default function CyclesPage() {
         ))}
       </div>
 
+      {/* Cycle Comparison Timeline */}
+      <div className="bg-white rounded-3xl shadow-sm border border-[#E85D9A]/10 p-6">
+        <CycleComparisonTimeline />
+      </div>
+
+      {/* Cycle History List */}
       <div className="bg-white rounded-3xl shadow-sm border border-[#E85D9A]/10 overflow-hidden">
+        <div className="px-6 py-4 border-b border-[#E85D9A]/10">
+          <h2 className="text-lg font-extrabold text-[#4A1B3C]">All Cycles</h2>
+        </div>
         {loading ? (
           <div className="p-8 text-center text-gray-400">Loading history...</div>
         ) : cycles.length === 0 ? (
@@ -110,6 +176,13 @@ export default function CyclesPage() {
         onSuccess={() => { setModalOpen(false); fetchCycles(); }} 
         initialData={selectedCycle} 
       />
+
+      {showInsightsReport && insightsReport && (
+        <InsightsReportModal
+          report={insightsReport}
+          onClose={() => setShowInsightsReport(false)}
+        />
+      )}
     </div>
   );
 }

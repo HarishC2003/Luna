@@ -134,28 +134,36 @@ export default function ChatPage() {
       </div>
 
       {/* ─── Main Chat Area ─── */}
-      <div className="flex flex-col flex-1 bg-[#FDF8F9] min-w-0">
+      <div className="flex flex-col flex-1 bg-gradient-to-br from-pink-50/50 via-[#FDF8F9] to-purple-50/50 min-w-0 relative">
+        {/* Subtle decorative background blur */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-pink-300/10 blur-[80px]" />
+          <div className="absolute top-[60%] -right-[10%] w-[40%] h-[40%] rounded-full bg-purple-300/10 blur-[80px]" />
+        </div>
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-[#E85D9A]/10 shadow-sm z-10 sticky top-0">
-          <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-between px-6 py-4 bg-white/60 backdrop-blur-xl border-b border-[#E85D9A]/10 shadow-[0_4px_30px_rgba(0,0,0,0.02)] z-10 sticky top-0">
+          <div className="flex items-center space-x-4">
             {/* Hamburger for mobile */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-1.5 text-gray-500 hover:text-[#4A1B3C] rounded-lg hover:bg-gray-100 md:hidden"
+              className="p-2 text-[#4A1B3C]/70 hover:text-[#E85D9A] rounded-xl hover:bg-white/50 transition-colors md:hidden"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#E85D9A] to-[#D93F7D] text-white flex items-center justify-center font-bold shadow-sm text-lg">
-              L
+            <div className="relative">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#E85D9A] via-[#D93F7D] to-[#FF8FA3] text-white flex items-center justify-center font-black shadow-lg shadow-pink-500/30 text-lg ring-2 ring-white">
+                L
+              </div>
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
             </div>
             <div>
-              <h1 className="font-bold text-[#4A1B3C]">Luna AI</h1>
-              <p className="text-xs text-[#E85D9A] font-medium">Your health companion</p>
+              <h1 className="font-extrabold text-[#4A1B3C] text-lg leading-tight tracking-tight">Luna AI</h1>
+              <p className="text-[11px] text-[#E85D9A] font-bold uppercase tracking-wider">Your Health Companion</p>
             </div>
           </div>
           <button
             onClick={handleClearHistory}
-            className="p-2 text-gray-400 hover:text-[#4A1B3C] rounded-full hover:bg-gray-100 transition-colors"
+            className="p-2.5 text-[#4A1B3C]/40 hover:text-red-500 rounded-full hover:bg-red-50 transition-all duration-300"
             title="Delete conversation"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -163,7 +171,7 @@ export default function ChatPage() {
         </div>
 
         {contextPill && (
-          <div className="bg-[#E85D9A]/5 px-4 py-2 text-center text-xs text-[#4A1B3C]/80 font-medium border-b border-[#E85D9A]/10">
+          <div className="bg-white/40 backdrop-blur-sm border-b border-pink-100/50 px-4 py-2 text-center text-[11px] uppercase tracking-widest font-black text-[#E85D9A] shadow-[0_2px_10px_rgba(232,93,154,0.05)] relative z-0">
             ✨ {contextPill}
           </div>
         )}
@@ -190,7 +198,7 @@ export default function ChatPage() {
         )}
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 scroll-smooth z-0 relative hide-scrollbar">
           {messages.map((msg) => (
             <div key={msg.id}>
               <ChatBubble message={msg} isOwn={msg.role === 'user'} />
@@ -227,29 +235,31 @@ export default function ChatPage() {
         </div>
 
         {/* Input area */}
-        <div className="p-4 bg-transparent">
+        <div className="p-4 sm:p-6 bg-gradient-to-t from-[#FDF8F9] via-[#FDF8F9]/90 to-transparent z-10 relative mt-auto">
           {messages.length === 1 && suggestions.length > 0 && (
-            <div className="mb-2">
+            <div className="mb-3 animate-fade-in-up">
               <SuggestionChips suggestions={suggestions} onSelect={sendMessage} />
             </div>
           )}
           {messages.length === 1 && (
-            <div className="flex gap-2 overflow-x-auto no-scrollbar mb-3 pb-1">
+            <div className="flex gap-2.5 overflow-x-auto hide-scrollbar mb-4 pb-2 animate-fade-in-up">
               {["What should I eat today?", "Why do I feel this way?", "When is my period?"].map((q) => (
                 <button
                   key={q}
                   onClick={() => sendMessage(q)}
-                  className="whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-[#4A1B3C]/10 text-[#4A1B3C] shadow-sm hover:border-[#E85D9A] hover:text-[#E85D9A] transition-colors"
+                  className="whitespace-nowrap px-4 py-2 rounded-2xl text-[13px] font-bold bg-white/80 backdrop-blur-md border border-pink-100 text-[#4A1B3C]/80 shadow-[0_2px_10px_rgba(232,93,154,0.05)] hover:border-[#E85D9A]/50 hover:text-[#E85D9A] hover:bg-pink-50/50 hover:shadow-[0_4px_15px_rgba(232,93,154,0.1)] transition-all transform hover:-translate-y-0.5 active:translate-y-0"
                 >
                   {q}
                 </button>
               ))}
             </div>
           )}
-          <ChatInput onSend={sendMessage} isLoading={isLoading} />
-          <p className="text-[10px] text-center text-gray-400 mt-2 leading-tight px-4">
-            Your conversations are saved privately. Luna uses your cycle data to personalise responses.
-          </p>
+          <div className="max-w-4xl mx-auto drop-shadow-xl">
+            <ChatInput onSend={sendMessage} isLoading={isLoading} />
+            <p className="text-[10px] text-center text-[#4A1B3C]/40 mt-3 font-medium uppercase tracking-wider">
+              Luna uses your cycle data to personalise responses.
+            </p>
+          </div>
         </div>
 
         <DailyFeelingsModal 

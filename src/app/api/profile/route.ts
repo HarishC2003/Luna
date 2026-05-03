@@ -27,7 +27,9 @@ export async function GET(_request: Request) {
       goals: onboardRes.data?.goals || [],
       avgCycleLength: onboardRes.data?.avg_cycle_length || null,
       avgPeriodLength: onboardRes.data?.avg_period_length || null,
-      onboardingCompleted: onboardRes.data?.completed || false
+      onboardingCompleted: onboardRes.data?.completed || false,
+      partner_share_enabled: profileRes.data?.partner_share_enabled || false,
+      partner_share_token: profileRes.data?.partner_share_token || null
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';

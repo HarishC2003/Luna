@@ -5,6 +5,7 @@ import { buildUserHealthContext } from '../chat/context-builder';
 import { generateCheckinQuestion } from '../checkin/question-generator';
 import { computePrediction } from '../cycle/predictor';
 import { getDailyWaterGoal } from '../hydration/goal';
+import { predictUpcomingSymptoms } from '../predictions/symptom-predictor';
 
 export async function runDailyNotifications(): Promise<{ sent: number; failed: number }> {
   let sent = 0;
@@ -165,6 +166,45 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
               url: '/dashboard'
             });
             if (res) { sent++; } else { failed++; }
+          }
+        }
+      }
+
+      // Symptom prediction alerts
+      if (settings.email_tips || settings.push_log_reminder) {
+        const predictions = await predictUpcomingSymptoms(userId);
+        
+        for (const prediction of predictions) {
+          if (prediction.daysUntil === 1) {
+            const safeSymptomStr = prediction.symptom.replace(/[^a-zA-Z0-9]/g, '_');
+            const notifType = `symptom_alert_${safeSymptomStr}`;
+
+            const { data: symptomLogs } = await admin.from('notification_log')
+              .select('id').eq('user_id', userId).eq('notification_type', notifType)
+              .gte('sent_at', new Date(new Date().setHours(0,0,0,0)).toISOString());
+            
+            if (!symptomLogs || symptomLogs.length === 0) {
+              if (settings.email_tips) {
+                const res = await sendEmailNotification(userId, notifType, {
+                  subject: `Heads up from Luna: ${prediction.symptom} predicted tomorrow`,
+                  html: `
+                    <h2>Heads up from Luna</h2>
+                    <p>${prediction.symptom} is predicted to start tomorrow based on your pattern.</p>
+                    <p>${prediction.preparationTip}</p>
+                  `,
+                  text: `${prediction.symptom} predicted tomorrow. ${prediction.preparationTip}`
+                });
+                if (res) { sent++; } else { failed++; }
+              }
+              if (settings.push_log_reminder) {
+                const res = await sendPushNotification(userId, notifType, {
+                  title: 'Heads up from Luna',
+                  body: `${prediction.symptom} is predicted tomorrow. ${prediction.preparationTip}`,
+                  url: '/dashboard'
+                });
+                if (res) { sent++; } else { failed++; }
+              }
+            }
           }
         }
       }

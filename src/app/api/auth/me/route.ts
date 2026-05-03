@@ -5,14 +5,14 @@ import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function GET() {
   const supabaseServer = await createClient();
-  const { data: { session } } = await supabaseServer.auth.getSession();
+  const { data: { user }, error: authError } = await supabaseServer.auth.getUser();
   
-  if (!session) {
+  if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   // Rate limiting by user id since they are authenticated
-  const { success } = await apiLimiter.limit(session.user.id);
+  const { success } = await apiLimiter.limit(user.id);
   if (!success) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': '60' } });
   }
@@ -22,7 +22,7 @@ export async function GET() {
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('id, email, display_name, role, email_verified_at, onboarding_completed')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single();
 
     if (!profile) {
