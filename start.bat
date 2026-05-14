@@ -7,5 +7,8 @@ echo ==================================================
 echo Starting Next.js Development Server...
 start "Next.js Frontend & API" cmd /c "npm run dev"
 
+echo ==================================================
+echo  Site will be available at: http://localhost:3000
+echo ==================================================
 echo All services are starting up in separate windows!
 echo You can safely close this main window.
