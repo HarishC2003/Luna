@@ -24,8 +24,15 @@ export default function PrivacyPage() {
   const [privacy, setPrivacy] = useState<PrivacySummary>({});
   const [exportUrl, setExportUrl] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [reportType, setReportType] = useState<'month' | 'range'>('month');
   const [reportMonth, setReportMonth] = useState(new Date().getMonth() + 1);
   const [reportYear, setReportYear] = useState(new Date().getFullYear());
+  const [reportStartDate, setReportStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [reportEndDate, setReportEndDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [reportGenerating, setReportGenerating] = useState(false);
   const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [recentReports, setRecentReports] = useState<Report[]>([]);
@@ -121,10 +128,14 @@ export default function PrivacyPage() {
     setReportGenerating(true);
     setReportUrl(null);
     try {
+      const payload = reportType === 'month' 
+        ? { month: reportMonth, year: reportYear }
+        : { startDate: reportStartDate, endDate: reportEndDate };
+        
       const res = await fetch('/api/reports/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ month: reportMonth, year: reportYear })
+        body: JSON.stringify(payload)
       });
       if (!res.ok) {
         const errData = await res.json();
@@ -162,35 +173,63 @@ export default function PrivacyPage() {
         </div>
 
         <div className="pt-8 border-t border-[#E85D9A]/10">
-          <h3 className="text-xl font-bold text-[#4A1B3C] mb-2">Monthly Cycle PDF Report</h3>
-          <p className="text-[#4A1B3C]/70 text-sm mb-6">Generate a detailed, doctor-ready PDF summary of your health data for any month.</p>
+          <h3 className="text-xl font-bold text-[#4A1B3C] mb-2">Cycle PDF Report</h3>
+          <p className="text-[#4A1B3C]/70 text-sm mb-6">Generate a detailed, doctor-ready PDF summary of your health data for any month or custom date range.</p>
           
-          <div className="flex flex-wrap gap-4 mb-6">
-            <div className="flex-1 min-w-[140px]">
-              <label className="block text-[10px] font-bold text-[#4A1B3C]/50 uppercase mb-1.5 ml-1">Month</label>
-              <select 
-                value={reportMonth} 
-                onChange={e => setReportMonth(parseInt(e.target.value))}
-                className="w-full p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C] font-semibold focus:border-[#E85D9A] outline-none"
-              >
-                {Array.from({ length: 12 }, (_, i) => (
-                  <option key={i + 1} value={i + 1}>{new Date(2025, i).toLocaleString('default', { month: 'long' })}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1 min-w-[100px]">
-              <label className="block text-[10px] font-bold text-[#4A1B3C]/50 uppercase mb-1.5 ml-1">Year</label>
-              <select 
-                value={reportYear} 
-                onChange={e => setReportYear(parseInt(e.target.value))}
-                className="w-full p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C] font-semibold focus:border-[#E85D9A] outline-none"
-              >
-                {[0, 1].map(offset => (
-                  <option key={offset} value={new Date().getFullYear() - offset}>{new Date().getFullYear() - offset}</option>
-                ))}
-              </select>
-            </div>
+          <div className="flex bg-gray-100 p-1 rounded-xl mb-6 w-full max-w-sm">
+            <button onClick={() => setReportType('month')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${reportType === 'month' ? 'bg-white text-[#E85D9A] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>By Month</button>
+            <button onClick={() => setReportType('range')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${reportType === 'range' ? 'bg-white text-[#E85D9A] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Custom Range</button>
           </div>
+
+          {reportType === 'month' ? (
+            <div className="flex flex-wrap gap-4 mb-6">
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-[10px] font-bold text-[#4A1B3C]/50 uppercase mb-1.5 ml-1">Month</label>
+                <select 
+                  value={reportMonth} 
+                  onChange={e => setReportMonth(parseInt(e.target.value))}
+                  className="w-full p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C] font-semibold focus:border-[#E85D9A] outline-none"
+                >
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>{new Date(2025, i).toLocaleString('default', { month: 'long' })}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 min-w-[100px]">
+                <label className="block text-[10px] font-bold text-[#4A1B3C]/50 uppercase mb-1.5 ml-1">Year</label>
+                <select 
+                  value={reportYear} 
+                  onChange={e => setReportYear(parseInt(e.target.value))}
+                  className="w-full p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C] font-semibold focus:border-[#E85D9A] outline-none"
+                >
+                  {[0, 1].map(offset => (
+                    <option key={offset} value={new Date().getFullYear() - offset}>{new Date().getFullYear() - offset}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-4 mb-6">
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-[10px] font-bold text-[#4A1B3C]/50 uppercase mb-1.5 ml-1">Start Date</label>
+                <input 
+                  type="date"
+                  value={reportStartDate} 
+                  onChange={e => setReportStartDate(e.target.value)}
+                  className="w-full p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C] font-semibold focus:border-[#E85D9A] outline-none"
+                />
+              </div>
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-[10px] font-bold text-[#4A1B3C]/50 uppercase mb-1.5 ml-1">End Date</label>
+                <input 
+                  type="date"
+                  value={reportEndDate} 
+                  onChange={e => setReportEndDate(e.target.value)}
+                  className="w-full p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C] font-semibold focus:border-[#E85D9A] outline-none"
+                />
+              </div>
+            </div>
+          )}
 
           {reportGenerating ? (
             <div className="w-full p-6 text-center space-y-4">
@@ -246,30 +285,39 @@ export default function PrivacyPage() {
               Share a read-only view of your cycle insights with a partner. They&apos;ll see your current phase and helpful tips — not your raw health data or notes.
             </p>
             
-            <label className="flex items-center gap-3 cursor-pointer mb-4">
-              <input
-                type="checkbox"
-                checked={partnerEnabled}
-                onChange={handleTogglePartnerShare}
-                className="w-5 h-5 accent-[#E85D9A]"
-              />
-              <span className="text-sm font-medium text-[#4A1B3C]">Enable partner sharing</span>
-            </label>
+            <div className="flex items-center justify-between bg-[#FDF8FA] p-4 rounded-2xl border border-[#E85D9A]/10 mb-4 hover:border-[#E85D9A]/30 transition-colors cursor-pointer" onClick={handleTogglePartnerShare}>
+              <span className="text-[15px] font-bold text-[#4A1B3C]">Enable Partner Link</span>
+              <button
+                type="button"
+                className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  partnerEnabled ? 'bg-gradient-to-r from-[#E85D9A] to-[#D93F7D] shadow-inner' : 'bg-gray-200'
+                }`}
+                role="switch"
+                aria-checked={partnerEnabled}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    partnerEnabled ? 'translate-x-8' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
 
             {partnerEnabled && partnerToken && (
               <div className="p-4 bg-[#E85D9A]/5 rounded-xl border border-[#E85D9A]/20">
                 <div className="text-sm font-bold text-[#4A1B3C] mb-2">Share this link with your partner:</div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={`${typeof window !== 'undefined' ? window.location.origin : ''}/partner/${partnerToken}`}
                     readOnly
-                    className="flex-1 px-4 py-2 text-sm bg-white border border-[#E85D9A]/20 rounded-lg outline-none text-[#4A1B3C]"
+                    className="flex-1 px-4 py-2.5 text-sm bg-white border border-[#E85D9A]/20 rounded-lg outline-none text-[#4A1B3C] w-full"
                   />
                   <button
                     type="button"
                     onClick={copyPartnerLink}
-                    className="px-6 py-2 bg-[#E85D9A] text-white font-bold text-sm rounded-lg hover:bg-[#d44d88] transition-colors whitespace-nowrap"
+                    className="w-full sm:w-auto px-6 py-2.5 bg-[#E85D9A] text-white font-bold text-sm rounded-lg hover:bg-[#d44d88] transition-colors whitespace-nowrap shadow-sm active:scale-95"
                   >
                     {copySuccess ? 'Copied!' : 'Copy Link'}
                   </button>

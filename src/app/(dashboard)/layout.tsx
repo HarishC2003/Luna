@@ -98,6 +98,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Link>
             )}
 
+            {/* Insights Quick Button */}
+            <Link
+              href="/insights"
+              className="flex items-center gap-1.5 text-xs font-bold text-[#E85D9A] hover:text-white transition-colors px-4 py-2 bg-white hover:bg-[#E85D9A] rounded-full shadow-md border border-[#E85D9A]/20 active:scale-95 group"
+              title="Insights"
+            >
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="text-[#E85D9A] group-hover:text-white transition-colors"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              Insights
+            </Link>
+
             {/* User Avatar Badge */}
             <div className="relative" ref={menuRef}>
               <button

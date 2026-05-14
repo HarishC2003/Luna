@@ -39,6 +39,7 @@ export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, i
   const [exerciseType, setExerciseType] = useState<string>(() => initialData?.exercise_type || 'none');
   const [symptoms, setSymptoms] = useState<Symptom[]>(() => initialData?.symptoms || []);
   const [notes, setNotes] = useState(() => initialData?.notes || '');
+  const [waterGlasses, setWaterGlasses] = useState<number | ''>(() => (initialData as Record<string, unknown>)?.water_glasses as number ?? '');
 
   const toggleSymptom = (s: Symptom) => {
     if (symptoms.includes(s)) {
@@ -59,6 +60,7 @@ export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, i
       if (energy) payload.energy = energy;
       if (sleepQuality) payload.sleep_quality = sleepQuality;
       if (stressLevel) payload.stress_level = stressLevel;
+      if (waterGlasses !== '') payload.waterGlasses = waterGlasses;
       payload.exercise = exercise;
       if (exercise) payload.exercise_type = exerciseType;
       if (symptoms.length) payload.symptoms = symptoms;
@@ -178,6 +180,21 @@ export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, i
               ))}
             </div>
           )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[#4A1B3C] mb-3 uppercase tracking-wide">Hydration</label>
+          <div className="flex items-center gap-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+            <span className="text-2xl">💧</span>
+            <div className="flex-1">
+              <span className="text-sm font-medium text-[#4A1B3C] block mb-1">Glasses of Water</span>
+              <div className="flex gap-2 items-center">
+                <button type="button" onClick={() => setWaterGlasses(Math.max(0, (Number(waterGlasses) || 0) - 1))} className="w-8 h-8 rounded-full bg-white text-blue-500 font-bold shadow-sm active:scale-95 hover:bg-blue-50 transition-colors">-</button>
+                <span className="w-8 text-center font-bold text-lg text-blue-600">{waterGlasses || 0}</span>
+                <button type="button" onClick={() => setWaterGlasses((Number(waterGlasses) || 0) + 1)} className="w-8 h-8 rounded-full bg-white text-blue-500 font-bold shadow-sm active:scale-95 hover:bg-blue-50 transition-colors">+</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div>

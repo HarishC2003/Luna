@@ -58,8 +58,14 @@ export function DayDrawer({ date, isOpen, onClose, dailyLog, cycleLog, onEditDai
               )}
             </div>
           ) : (
-             <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 text-center">
-              <p className="text-sm text-[#4A1B3C]/70 mb-3">No period started on this date.</p>
+             <div 
+                onClick={() => onEditCycle({ period_start: date.toISOString().split('T')[0] } as CycleLog)}
+                className="p-6 rounded-2xl bg-white border border-[#E85D9A]/20 text-center cursor-pointer hover:bg-rose-50 transition-colors shadow-sm active:scale-95 group"
+             >
+              <div className="w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-2 text-rose-500 group-hover:bg-rose-200 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>
+              </div>
+              <p className="text-sm font-semibold text-[#4A1B3C] group-hover:text-rose-600 transition-colors">Log Period Start</p>
              </div>
           )}
         </section>
@@ -82,11 +88,14 @@ export function DayDrawer({ date, isOpen, onClose, dailyLog, cycleLog, onEditDai
               {dailyLog.notes && <div className="p-4 rounded-xl bg-[#FDF8F9]"><span className="text-xs opacity-50 uppercase block mb-1">Notes</span><p className="text-sm text-[#4A1B3C] italic">&quot;{dailyLog.notes}&quot;</p></div>}
             </div>
           ) : (
-            <div className="p-8 rounded-2xl bg-[#FDF8F9] border border-[#E85D9A]/20 text-center">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 text-[#E85D9A]">
+            <div 
+              onClick={onEditDaily}
+              className="p-8 rounded-2xl bg-white border border-[#E85D9A]/20 text-center cursor-pointer hover:bg-[#FDF8F9] transition-all shadow-sm active:scale-95 group"
+            >
+              <div className="w-12 h-12 bg-pink-50 rounded-full flex items-center justify-center mx-auto mb-3 text-[#E85D9A] group-hover:bg-[#E85D9A] group-hover:text-white transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>
               </div>
-              <p className="text-sm text-[#4A1B3C]/70">No data logged for today.</p>
+              <p className="text-sm font-semibold text-[#4A1B3C] group-hover:text-[#E85D9A] transition-colors">Log Feelings for Today</p>
             </div>
           )}
         </section>

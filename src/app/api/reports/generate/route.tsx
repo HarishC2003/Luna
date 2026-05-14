@@ -46,19 +46,33 @@ export async function POST(request: Request) {
   if (!success) return NextResponse.json({ error: 'You have reached the limit of 2 reports per day. Please try again tomorrow.' }, { status: 429 });
 
   try {
-    const { month, year } = await request.json();
+    const { month, year, startDate: reqStartDate, endDate: reqEndDate } = await request.json();
     const currentTimestamp = Date.now();
-    
-    // Validate
     const currentYear = new Date(currentTimestamp).getFullYear();
-    if (!month || month < 1 || month > 12) return NextResponse.json({ error: 'Invalid month' }, { status: 400 });
-    if (!year || (year !== currentYear && year !== currentYear - 1)) return NextResponse.json({ error: 'Invalid year' }, { status: 400 });
+    
+    let startDate: string;
+    let endDate: string;
+    let monthName: string;
+    let displayYear: number;
+
+    if (reqStartDate && reqEndDate) {
+      startDate = new Date(reqStartDate).toISOString().split('T')[0];
+      endDate = new Date(reqEndDate).toISOString().split('T')[0];
+      const s = new Date(startDate);
+      const e = new Date(endDate);
+      if (s > e) return NextResponse.json({ error: 'Start date must be before end date' }, { status: 400 });
+      monthName = `${s.toLocaleDateString('default', { month: 'short' })} - ${e.toLocaleDateString('default', { month: 'short' })}`;
+      displayYear = e.getFullYear();
+    } else {
+      if (!month || month < 1 || month > 12) return NextResponse.json({ error: 'Invalid month' }, { status: 400 });
+      if (!year || (year !== currentYear && year !== currentYear - 1)) return NextResponse.json({ error: 'Invalid year' }, { status: 400 });
+      startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
+      endDate = new Date(year, month, 0).toISOString().split('T')[0];
+      monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
+      displayYear = year;
+    }
 
     const admin = createAdminClient();
-
-    // 2. Fetch Data
-    const startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
-    const endDate = new Date(year, month, 0).toISOString().split('T')[0];
     const thirtyDaysAgo = new Date(currentTimestamp - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     const [profileRes, recentCyclesRes, dailyLogsRes, last30LogsRes, onboardRes] = await Promise.all([
@@ -93,12 +107,10 @@ export async function POST(request: Request) {
       streak
     };
 
-    const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' });
-
     const templateData = {
       userName: profileRes.data?.display_name || user.email || 'User',
       monthName,
-      year,
+      year: displayYear,
       generatedAt: new Date(currentTimestamp).toLocaleDateString(),
       cycles: recentCyclesRes.data || [],
       logs: logs.slice(0, 31),
@@ -126,7 +138,7 @@ export async function POST(request: Request) {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="Luna_Cycle_Report_${year}_${month}.pdf"`
+        'Content-Disposition': `attachment; filename="Luna_Cycle_Report_${displayYear}_${monthName.replace(/\s+/g, '_')}.pdf"`
       }
     });
 

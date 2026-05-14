@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Prediction, CycleLog, DailyLog } from '@/types/cycle';
 import { DayDrawer } from './DayDrawer';
 import { CycleLogModal } from './CycleLogModal';
+import { DailyFeelingsModal } from './DailyFeelingsModal';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
   prediction: Prediction | null;
@@ -18,6 +20,9 @@ export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
 
   const [isCycleModalOpen, setCycleModalOpen] = useState(false);
   const [selectedCycleData, setSelectedCycleData] = useState<CycleLog | undefined>();
+
+  const [isDailyModalOpen, setDailyModalOpen] = useState(false);
+  const [selectedDailyData, setSelectedDailyData] = useState<Partial<DailyLog> | undefined>();
 
   // Calendar math
   const year = currentMonth.getFullYear();
@@ -44,7 +49,6 @@ export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
   };
 
   const toLocalDate = (dateVal: string | Date) => {
-    // API returns ISO strings, but type definition says Date.
     const dateStr = typeof dateVal === 'string' ? dateVal : String(dateVal);
     const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
     return new Date(y, m - 1, d);
@@ -53,7 +57,6 @@ export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
   const isPeriodDay = (date: Date) => {
     return cycles.some(c => {
       const s = toLocalDate(c.period_start);
-      // default 5 days if ended not logged
       const e = c.period_end ? toLocalDate(c.period_end) : new Date(s.getFullYear(), s.getMonth(), s.getDate() + 5);
       return date >= s && date <= e;
     });
@@ -93,85 +96,126 @@ export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
     setCycleModalOpen(true);
   };
 
-  const getDayContent = (date: Date) => {
-    let classes = "h-14 sm:h-20 w-full border border-gray-100 p-1 sm:p-2 relative group cursor-pointer transition-colors ";
-    const dTime = date.getTime();
+  const handleEditDaily = (date: Date, existingLog: DailyLog | null) => {
+    setSelectedDailyData(existingLog || { log_date: toLocalString(date) });
+    setDailyModalOpen(true);
+  };
 
-    if (dTime === today.getTime()) {
-      classes += " ring-2 ring-[#E85D9A] ring-inset ";
+  const getDayContent = (date: Date) => {
+    const isToday = date.getTime() === today.getTime();
+    const isPd = isPeriodDay(date);
+    const isPredPd = isPredictedPeriod(date);
+    const isFert = isFertile(date);
+
+    let bgClass = "bg-white/60 hover:bg-white";
+    let borderClass = "border-transparent";
+    let textClass = "text-[#4A1B3C]";
+
+    if (isPd) {
+      bgClass = "bg-rose-100 hover:bg-rose-200";
+      textClass = "text-rose-900 font-bold";
+    } else if (isPredPd) {
+      bgClass = "bg-white hover:bg-rose-50";
+      borderClass = "border-rose-300 border-dashed border-2";
+    } else if (isFert) {
+      bgClass = "bg-teal-50 hover:bg-teal-100";
+      textClass = "text-teal-900";
     }
 
-    if (isPeriodDay(date)) {
-      classes += " bg-rose-200 hover:bg-rose-300 ";
-    } else if (isPredictedPeriod(date)) {
-      classes += " bg-white border-dashed border-2 border-rose-300 hover:bg-rose-50 ";
-    } else if (isFertile(date)) {
-      classes += " bg-teal-50 hover:bg-teal-100 ";
-    } else {
-      classes += " bg-white hover:bg-gray-50 ";
+    if (isToday) {
+      borderClass = "border-[#E85D9A] border-2 shadow-[0_0_15px_rgba(232,93,154,0.3)]";
+      textClass += " font-black";
     }
 
     return (
-      <div key={date.toString()} onClick={() => handleDayClick(date)} className={classes}>
-        <span className={`text-sm sm:text-base font-medium ${isPeriodDay(date) ? 'text-rose-900' : 'text-[#4A1B3C]'}`}>
+      <motion.div 
+        whileHover={{ scale: 1.05, zIndex: 10 }}
+        whileTap={{ scale: 0.95 }}
+        key={date.toString()} 
+        onClick={() => handleDayClick(date)} 
+        className={`h-14 sm:h-20 w-full rounded-2xl p-1.5 sm:p-2 relative cursor-pointer transition-all ${bgClass} ${borderClass}`}
+      >
+        <span className={`text-sm sm:text-lg ${textClass}`}>
           {date.getDate()}
         </span>
         
         {isOvulation(date) && (
-          <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-teal-500" title="Predicted Ovulation" />
+          <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.8)]" title="Predicted Ovulation" />
         )}
         
         {hasLog(date) && (
-          <div className="absolute bottom-2 right-2 w-1.5 h-1.5 rounded-full bg-[#4A1B3C]" title="Log exists" />
+          <div className="absolute bottom-2 right-2 flex gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#E85D9A] shadow-sm" title="Log exists" />
+          </div>
         )}
-      </div>
+      </motion.div>
     );
   };
 
   const selectedDaily = selectedDate ? logs.find(l => l.log_date === toLocalString(selectedDate)) || null : null;
-  const selectedCycle = selectedDate ? cycles.find(c => c.period_start === toLocalString(selectedDate)) || null : null;
+  const selectedCycle = selectedDate ? cycles.find(c => {
+    const s = toLocalDate(c.period_start);
+    const e = c.period_end ? toLocalDate(c.period_end) : new Date(s.getFullYear(), s.getMonth(), s.getDate() + 5);
+    return selectedDate >= s && selectedDate <= e;
+  }) || null : null;
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-[#E85D9A]/10 overflow-hidden">
-      <div className="p-6 flex justify-between items-center bg-[#FDF8F9] border-b border-[#E85D9A]/10">
-        <h3 className="text-xl font-bold text-[#4A1B3C]">
+    <div className="bg-white/80 backdrop-blur-md rounded-[2rem] shadow-lg border border-[#E85D9A]/10 overflow-hidden">
+      <div className="p-6 flex justify-between items-center bg-gradient-to-r from-[#FDF8F9] to-white border-b border-[#E85D9A]/10">
+        <h3 className="text-2xl font-extrabold text-[#4A1B3C]">
           {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
         </h3>
         <div className="flex gap-2">
-          <button onClick={prevMonth} className="p-2 rounded-xl bg-white border shadow-sm hover:bg-gray-50">&larr;</button>
-          <button onClick={nextMonth} className="p-2 rounded-xl bg-white border shadow-sm hover:bg-gray-50">&rarr;</button>
+          <button onClick={prevMonth} className="p-2.5 rounded-xl bg-white border border-[#E85D9A]/20 shadow-sm hover:bg-pink-50 text-[#E85D9A] transition-colors active:scale-95">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button onClick={nextMonth} className="p-2.5 rounded-xl bg-white border border-[#E85D9A]/20 shadow-sm hover:bg-pink-50 text-[#E85D9A] transition-colors active:scale-95">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
+          </button>
         </div>
       </div>
 
-      <div className="p-4 sm:p-6">
-        <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-center text-xs sm:text-sm font-semibold text-[#4A1B3C]/50 uppercase tracking-widest">
+      <div className="p-4 sm:p-6 bg-gray-50/50">
+        <div className="grid grid-cols-7 gap-1 sm:gap-3 mb-3 text-center text-xs sm:text-xs font-black text-[#4A1B3C]/40 uppercase tracking-widest">
           {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => <div key={d}>{d}</div>)}
         </div>
         
-        <div className="grid grid-cols-7 gap-1 sm:gap-2">
-          {days.map((date, i) => (
-            date === null ? <div key={`empty-${i}`} className="h-14 sm:h-20" /> : getDayContent(date)
-          ))}
+        <div className="grid grid-cols-7 gap-2 sm:gap-3">
+          <AnimatePresence mode="popLayout">
+            {days.map((date, i) => (
+              date === null 
+                ? <div key={`empty-${i}`} className="h-14 sm:h-20 rounded-2xl bg-black/5" /> 
+                : <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.01 }}
+                    key={date.toString()}
+                  >
+                    {getDayContent(date)}
+                  </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
 
-      <div className="p-4 sm:p-6 bg-gray-50 border-t flex flex-wrap gap-4 text-xs font-medium text-[#4A1B3C]/70">
-        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-rose-200 rounded-sm"></div> Logged Period</div>
-        <div className="flex items-center gap-2"><div className="w-3 h-3 border-dashed border border-rose-300 rounded-sm"></div> Predicted Period</div>
-        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-teal-50 rounded-sm"></div> Fertile Window</div>
-        <div className="flex items-center gap-2"><div className="w-2 h-2 bg-teal-500 rounded-full"></div> Ovulation</div>
+      <div className="p-5 sm:p-6 bg-white border-t border-[#E85D9A]/10 flex flex-wrap gap-5 text-xs font-bold text-[#4A1B3C]/70">
+        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-rose-200 rounded-md shadow-sm"></div> Logged Period</div>
+        <div className="flex items-center gap-2"><div className="w-4 h-4 border-dashed border-2 border-rose-300 rounded-md"></div> Predicted Period</div>
+        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-teal-100 rounded-md shadow-sm"></div> Fertile Window</div>
+        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-teal-400 rounded-full shadow-[0_0_8px_rgba(45,212,191,0.8)]"></div> Ovulation</div>
+        <div className="flex items-center gap-2"><div className="w-2 h-2 bg-[#E85D9A] rounded-full"></div> Logged Data</div>
       </div>
 
       {selectedDate && (
         <>
-          <div className="fixed inset-0 bg-black/20 z-40" onClick={() => setSelectedDate(null)} />
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity" onClick={() => setSelectedDate(null)} />
           <DayDrawer 
             date={selectedDate} 
             isOpen={true} 
             onClose={() => setSelectedDate(null)} 
             dailyLog={selectedDaily}
             cycleLog={selectedCycle}
-            onEditDaily={() => setSelectedDate(null)}
+            onEditDaily={() => { setSelectedDate(null); handleEditDaily(selectedDate, selectedDaily); }}
             onEditCycle={handleEditCycle}
           />
         </>
@@ -182,6 +226,13 @@ export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
         onClose={() => setCycleModalOpen(false)}
         onSuccess={() => { setCycleModalOpen(false); onRefresh(); }}
         initialData={selectedCycleData}
+      />
+
+      <DailyFeelingsModal
+        isOpen={isDailyModalOpen}
+        onClose={() => setDailyModalOpen(false)}
+        onSuccess={() => { setDailyModalOpen(false); onRefresh(); }}
+        initialData={selectedDailyData}
       />
     </div>
   );

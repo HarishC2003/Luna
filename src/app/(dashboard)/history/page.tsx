@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { DailyLog } from '@/types/cycle';
 import { MoodBar } from '@/components/cycle/MoodBar';
+import { MoodGraph } from '@/components/cycle/MoodGraph';
 import { FlowBadge } from '@/components/cycle/FlowBadge';
 import { SymptomChips } from '@/components/cycle/SymptomChips';
 import { DailyFeelingsModal } from '@/components/cycle/DailyFeelingsModal';
@@ -68,16 +69,7 @@ export default function HistoryPage() {
     }
   };
 
-  const moodScore = (mood: string | null) => {
-    switch(mood) {
-        case 'great': return 5;
-        case 'good': return 4;
-        case 'okay': return 3;
-        case 'low': return 2;
-        case 'terrible': return 1;
-        default: return 0;
-    }
-  };
+
 
   const chartData = logs.filter(l => l.mood).slice(0, 7).reverse();
 
@@ -88,19 +80,7 @@ export default function HistoryPage() {
       {chartData.length > 0 && (
         <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#E85D9A]/10">
             <h3 className="text-sm font-bold text-[#4A1B3C]/50 uppercase tracking-widest mb-6">Mood Trend (Last 7 Logs)</h3>
-            <div className="flex justify-between items-end h-32 gap-2">
-                {chartData.map(log => {
-                    const h = (moodScore(log.mood!) / 5) * 100;
-                    return (
-                        <div key={log.id} className="flex-1 h-full flex flex-col justify-end items-center gap-2 group">
-                            <div className="w-full relative h-[80%] flex items-end">
-                                <div className="w-full rounded-t-lg bg-[#E85D9A] transition-all group-hover:bg-[#d44d88] opacity-80" style={{ height: `${h}%` }}></div>
-                            </div>
-                            <span className="text-[10px] font-semibold text-[#4A1B3C]/50 whitespace-nowrap">{new Date(log.log_date).toLocaleDateString(undefined, { weekday: 'short' })}</span>
-                        </div>
-                    );
-                })}
-            </div>
+            <MoodGraph logs={chartData} />
         </div>
       )}
 

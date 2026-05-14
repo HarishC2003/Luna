@@ -56,7 +56,7 @@ export default function WelcomePopup() {
             {data.greeting}, {data.displayName}!
           </h2>
           <div className="inline-block px-4 py-2 rounded-full bg-purple-100 text-purple-800 text-sm font-medium mb-4 capitalize">
-            Day {data.dayOfCycle} • {data.phase}
+            {data.phase === 'unknown' ? 'Unknown Phase' : `Day ${data.dayOfCycle} • ${data.phase}`}
           </div>
           <p className="text-[#4A3040] mb-6">
             {data.phaseDescription}
