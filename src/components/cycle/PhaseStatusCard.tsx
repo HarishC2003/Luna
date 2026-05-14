@@ -10,11 +10,11 @@ interface Props {
 }
 
 const PHASE_THEMES = {
-  menstrual: { bg: 'bg-[#FFF0F4]', accent: 'bg-[#E85D9A]', text: 'text-[#72243E]', fill: '#E85D9A' },
-  follicular: { bg: 'bg-[#F0EDFE]', accent: 'bg-[#7F77DD]', text: 'text-[#3C3489]', fill: '#7F77DD' },
-  ovulatory: { bg: 'bg-[#E8F8F2]', accent: 'bg-[#1D9E75]', text: 'text-[#085041]', fill: '#1D9E75' },
-  luteal: { bg: 'bg-[#FEF6E7]', accent: 'bg-[#BA7517]', text: 'text-[#633806]', fill: '#BA7517' },
-  unknown: { bg: 'bg-gray-100', accent: 'bg-gray-400', text: 'text-gray-700', fill: '#9ca3af' },
+  menstrual: { bg: 'linear-gradient(135deg, #FFF0F4 0%, #FBEAF0 100%)', accent: '#E85D9A', text: 'text-[#72243E]', fill: '#E85D9A' },
+  follicular: { bg: 'linear-gradient(135deg, #F0EDFE 0%, #E6E3FC 100%)', accent: '#7F77DD', text: 'text-[#3C3489]', fill: '#7F77DD' },
+  ovulatory: { bg: 'linear-gradient(135deg, #E8F8F2 0%, #D4F1E8 100%)', accent: '#1D9E75', text: 'text-[#085041]', fill: '#1D9E75' },
+  luteal: { bg: 'linear-gradient(135deg, #FEF6E7 0%, #FAEEDA 100%)', accent: '#BA7517', text: 'text-[#633806]', fill: '#BA7517' },
+  unknown: { bg: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)', accent: '#9CA3AF', text: 'text-gray-700', fill: '#9ca3af' },
 };
 
 const PHASE_ICONS = {
@@ -33,10 +33,35 @@ const PHASE_SUBTITLES = {
   unknown: "Log your period to see your phase.",
 };
 
-export function PhaseStatusCard({ phase, daysUntilNext, dayOfCycle, avgCycleLength = 28, avgPeriodLength = 5 }: Props) {
+export function PhaseStatusCard({ phase, daysUntilNext, dayOfCycle, avgCycleLength = 28 }: Props) {
   const [mounted, setMounted] = useState(false);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setMounted(true), []);
+  const [displayDays, setDisplayDays] = useState(0);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+    let start = 0;
+    const end = Math.max(0, daysUntilNext);
+    const duration = 800;
+    const increment = end / (duration / 16);
+    
+    if (end === 0) {
+      setDisplayDays(0);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setDisplayDays(end);
+        clearInterval(timer);
+      } else {
+        setDisplayDays(Math.floor(start));
+      }
+    }, 16);
+
+    return () => clearInterval(timer);
+  }, [daysUntilNext]);
 
   const theme = PHASE_THEMES[phase] || PHASE_THEMES.unknown;
   const icon = PHASE_ICONS[phase] || PHASE_ICONS.unknown;
@@ -45,84 +70,94 @@ export function PhaseStatusCard({ phase, daysUntilNext, dayOfCycle, avgCycleLeng
   const totalDots = Math.min(avgCycleLength, 28);
   const cycleDots = Array.from({ length: totalDots }).map((_, i) => i + 1);
 
-  // For timeline
-  const periodP = (avgPeriodLength / avgCycleLength) * 100;
-  const follicularP = ((14 - avgPeriodLength) / avgCycleLength) * 100; // Roughly 14 days before ovulation
-  const ovulatoryP = (3 / avgCycleLength) * 100; // 3 days
-  const lutealP = 100 - (periodP + follicularP + ovulatoryP);
-
-  const getTimelineSegmentClass = (segmentPhase: CyclePhase) => {
-    if (phase === segmentPhase) return `${theme.accent} h-[6px] rounded-full`;
-    // simplistic past/future determination based on ordered phases
-    const order = { menstrual: 1, follicular: 2, ovulatory: 3, luteal: 4, unknown: 0 };
-    if (order[segmentPhase] < order[phase]) return `${theme.accent} opacity-40 h-[4px] rounded-full`;
-    return `bg-gray-300 opacity-20 h-[4px] rounded-full`;
-  };
-
   return (
-    <div className={`w-full rounded-[20px] p-[20px] pb-[16px] ${theme.bg} ${theme.text} transform transition-all duration-400 opacity-0 translate-y-3 ${mounted ? '!opacity-100 !translate-y-0' : ''}`}>
-      {/* Top Row */}
-      <div className="flex justify-between items-start mb-6">
-        <div className="flex-1">
-          <div className="inline-flex items-center gap-[6px] bg-white/40 px-[10px] py-[4px] rounded-[100px]">
-            {icon}
-            <span className="text-[11px] font-semibold uppercase tracking-[0.08em]">{phase}</span>
-          </div>
-          <h2 className="text-[24px] font-bold mt-[8px] capitalize">{phase}</h2>
-          <p className="text-[13px] font-normal opacity-70 truncate mt-[2px]">{subtitle}</p>
-        </div>
+    <div 
+      className="w-full rounded-[20px] p-[24px] pb-[20px] relative overflow-hidden transition-all duration-500 shadow-sm"
+      style={{ background: theme.bg }}
+    >
+      {/* Subtle animated overlay */}
+      <div 
+        className="absolute inset-0 opacity-30 pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4) 0%, transparent 70%)',
+          animation: 'pulse 4s ease-in-out infinite',
+        }}
+      />
 
-        <div className="w-[72px] h-[72px] bg-white rounded-full flex flex-col items-center justify-center shrink-0 ml-4 shadow-sm">
-          <div className={`text-[28px] font-bold leading-none ${daysUntilNext <= 0 ? 'text-red-500' : `text-[${theme.fill}]`}`}>
-            {daysUntilNext <= 0 ? '!' : daysUntilNext}
+      <div className={`relative z-10 ${theme.text}`}>
+        {/* Top Row */}
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex-1 animate-fade-in" style={{ animationDelay: '100ms' }}>
+            <div className="inline-flex items-center gap-[6px] bg-white/40 backdrop-blur-sm px-[10px] py-[4px] rounded-[100px] animate-slide-up">
+              {icon}
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em]">{phase}</span>
+            </div>
+            <h2 className="text-[28px] font-bold mt-[8px] capitalize">{phase}</h2>
+            <p className="text-[13px] font-medium opacity-80 truncate mt-[2px]">{subtitle}</p>
           </div>
-          <div className={`text-[9px] font-semibold uppercase tracking-wider mt-1 ${daysUntilNext <= 0 ? 'text-red-500' : 'opacity-70'}`}>
-            {daysUntilNext <= 0 ? 'LATE' : (phase === 'menstrual' ? 'DAYS LEFT' : 'DAYS UNTIL')}
-          </div>
-        </div>
-      </div>
 
-      {/* Middle Row (Dots) */}
-      <div className="mb-6">
-        <div className="flex items-center gap-[4px] overflow-x-auto hide-scrollbar py-2">
-          {cycleDots.map((d, i) => {
-            const isPast = d < dayOfCycle;
-            const isCurrent = d === dayOfCycle;
-            return (
-              <div 
-                key={d} 
-                className={`shrink-0 transition-all duration-300 ${
-                  isCurrent 
-                    ? `w-[10px] h-[10px] bg-white rounded-full border-[2px] border-[${theme.fill}]` 
-                    : `w-[6px] h-[6px] rounded-full ${isPast ? theme.accent : `${theme.accent} opacity-20`}`
-                }`}
-                style={{
-                  transitionDelay: mounted ? `${i * 20}ms` : '0ms',
-                  transform: mounted ? 'scale(1)' : 'scale(0.5)',
-                  opacity: mounted ? 1 : 0
-                }}
+          <div className="relative w-20 h-20 shrink-0 ml-4 flex items-center justify-center animate-scale-bounce">
+            {/* Circular progress background */}
+            <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none">
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                stroke="rgba(255,255,255,0.4)"
+                strokeWidth="6"
               />
-            );
-          })}
-          {avgCycleLength > 28 && <span className="text-[10px] opacity-50 ml-1">...</span>}
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                stroke={theme.fill}
+                strokeWidth="6"
+                strokeDasharray="283 283"
+                strokeDashoffset={daysUntilNext <= 0 ? 0 : 283 - ((displayDays / 28) * 283)}
+                className="transition-all duration-1000 ease-out"
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="w-[60px] h-[60px] bg-white rounded-full flex flex-col items-center justify-center shadow-sm z-10">
+              <div className="text-[22px] font-bold leading-none" style={{ color: daysUntilNext <= 0 ? '#EF4444' : theme.fill }}>
+                {daysUntilNext <= 0 ? '!' : displayDays}
+              </div>
+              <div className="text-[8px] font-bold uppercase tracking-wider mt-0.5" style={{ color: daysUntilNext <= 0 ? '#EF4444' : 'rgba(0,0,0,0.4)' }}>
+                {daysUntilNext <= 0 ? 'LATE' : (phase === 'menstrual' ? 'LEFT' : 'UNTIL')}
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="text-center text-[11px] text-[#9E7A8A] mt-2 font-medium">
-          Day {dayOfCycle > 0 ? dayOfCycle : '?'} of {avgCycleLength}
-        </div>
-      </div>
 
-      {/* Bottom Row (Timeline) */}
-      <div className="w-full">
-        <div className="flex items-center gap-[4px] h-[6px]">
-          <div className={getTimelineSegmentClass('menstrual')} style={{ width: `${Math.max(5, periodP)}%` }} />
-          <div className={getTimelineSegmentClass('follicular')} style={{ width: `${Math.max(10, follicularP)}%` }} />
-          <div className={getTimelineSegmentClass('ovulatory')} style={{ width: `${Math.max(5, ovulatoryP)}%` }} />
-          <div className={getTimelineSegmentClass('luteal')} style={{ width: `${Math.max(10, lutealP)}%` }} />
-        </div>
-        <div className="flex justify-between items-center text-[10px] text-[#9E7A8A] mt-2 font-medium">
-          <span>Day 1</span>
-          <span>Ovulation ~Day {Math.round(avgCycleLength - 14)}</span>
-          <span>Day {avgCycleLength}</span>
+        {/* Middle Row (Dots) */}
+        <div className="mb-2">
+          <div className="flex items-center gap-[4px] overflow-x-auto hide-scrollbar py-2">
+            {cycleDots.map((d, i) => {
+              const isPast = d < dayOfCycle;
+              const isCurrent = d === dayOfCycle;
+              return (
+                <div 
+                  key={d} 
+                  className={`shrink-0 transition-all duration-300 ${
+                    isCurrent 
+                      ? `w-[10px] h-[10px] bg-white rounded-full border-[2px] shadow-sm` 
+                      : `w-[6px] h-[6px] rounded-full`
+                  }`}
+                  style={{
+                    backgroundColor: isCurrent ? 'white' : (isPast ? theme.fill : 'rgba(255,255,255,0.4)'),
+                    borderColor: isCurrent ? theme.fill : 'transparent',
+                    animation: mounted ? `fadeIn 0.3s ease-out ${i * 20}ms both` : 'none',
+                  }}
+                />
+              );
+            })}
+            {avgCycleLength > 28 && <span className="text-[10px] opacity-50 ml-1">...</span>}
+          </div>
+          <div className="text-center text-[11px] mt-1 font-medium opacity-70">
+            Day {dayOfCycle > 0 ? dayOfCycle : '?'} of {avgCycleLength}
+          </div>
         </div>
       </div>
     </div>

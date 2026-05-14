@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useToast } from '@/components/ui/Toast';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function PrivacyPage() {
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
 
   interface PrivacySummary {
@@ -107,8 +110,9 @@ export default function PrivacyPage() {
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       setExportUrl(url);
+      showToast('success', 'Export generated successfully');
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Export failed');
+      showToast('error', err instanceof Error ? err.message : 'Export failed');
     } finally {
       setExporting(false);
     }
@@ -131,8 +135,9 @@ export default function PrivacyPage() {
       const url = window.URL.createObjectURL(blob);
       setReportUrl(url);
       fetchReports();
+      showToast('success', 'Report generated successfully');
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Report generation failed');
+      showToast('error', err instanceof Error ? err.message : 'Report generation failed');
     } finally {
       setReportGenerating(false);
     }
@@ -140,9 +145,9 @@ export default function PrivacyPage() {
 
   if (loading) return (
     <div className="max-w-3xl mx-auto pb-10 space-y-4 pt-8 px-6">
-      <div className="h-12 bg-gray-200 rounded animate-pulse" />
-      <div className="h-12 bg-gray-200 rounded animate-pulse" />
-      <div className="h-12 bg-gray-200 rounded animate-pulse" />
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-12 w-full" />
     </div>
   );
 

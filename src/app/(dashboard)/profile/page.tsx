@@ -4,9 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/Toast';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'profile'|'notifications'|'account'>('profile');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -133,7 +136,10 @@ export default function ProfilePage() {
   };
 
   const handleDeleteAccount = async () => {
-    if (deletionPhrase !== 'delete my account') return alert('Type exactly: delete my account');
+    if (deletionPhrase !== 'delete my account') {
+      showToast('error', 'Type exactly: delete my account');
+      return;
+    }
     try {
       const res = await fetch('/api/privacy/account', {
         method: 'DELETE',
@@ -141,12 +147,12 @@ export default function ProfilePage() {
         body: JSON.stringify({ confirmPhrase: deletionPhrase })
       });
       if (!res.ok) throw new Error((await res.json()).error);
-      alert('Account scheduled for deletion.');
+      showToast('success', 'Account scheduled for deletion.');
       const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
       await supabase.auth.signOut();
       router.push('/login');
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Failed to schedule deletion.');
+      showToast('error', err instanceof Error ? err.message : 'Failed to schedule deletion.');
     }
   };
 
@@ -188,9 +194,9 @@ export default function ProfilePage() {
   const handleTestPush = async () => {
     try {
       await fetch('/api/notifications/test', { method: 'POST' });
-      alert('Test sent!');
+      showToast('success', 'Test sent!');
     } catch (_err) {
-      alert('Failed to send test push.');
+      showToast('error', 'Failed to send test push.');
     }
   };
 
@@ -214,9 +220,9 @@ export default function ProfilePage() {
 
   if (loading) return (
     <div className="max-w-3xl mx-auto pb-10 space-y-4 pt-8 px-6">
-      <div className="h-12 bg-gray-200 rounded animate-pulse" />
-      <div className="h-12 bg-gray-200 rounded animate-pulse" />
-      <div className="h-12 bg-gray-200 rounded animate-pulse" />
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-12 w-full" />
     </div>
   );
 

@@ -12,6 +12,9 @@ interface Props {
 
 const FLOWS: FlowIntensity[] = ['spotting', 'light', 'medium', 'heavy'];
 
+import Modal from '@/components/ui/Modal';
+import Button from '@/components/ui/Button';
+
 export function PeriodLogModal({ isOpen, onClose, onSuccess, initialData }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,8 +24,6 @@ export function PeriodLogModal({ isOpen, onClose, onSuccess, initialData }: Prop
   const [endDate, setEndDate] = useState(() => initialData?.period_end || '');
   const [flow, setFlow] = useState<FlowIntensity | ''>(() => initialData?.avg_flow || '');
   const [notes, setNotes] = useState(() => initialData?.notes || '');
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,59 +60,47 @@ export function PeriodLogModal({ isOpen, onClose, onSuccess, initialData }: Prop
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#4A1B3C]/40 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="px-6 py-4 border-b border-red-500/10 bg-red-50">
-          <div className="flex justify-between items-center mb-1">
-            <h2 className="text-xl font-bold text-red-900">Log Period</h2>
-            <button onClick={onClose} className="p-2 hover:bg-red-200/50 rounded-full text-red-900 transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
-          <p className="text-sm font-medium text-red-700">Track your flow and period dates.</p>
-        </div>
-
-        <div className="p-6">
-          {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm">{error}</div>}
-          
-          <form id="periodForm" onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-red-900 mb-2 uppercase tracking-wide">Start Date</label>
-                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} max={todayStr} required className="w-full px-4 py-3 rounded-xl border border-red-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none text-red-900" />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-red-900 mb-2 uppercase tracking-wide">End Date</label>
-                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} max={todayStr} className="w-full px-4 py-3 rounded-xl border border-red-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none text-red-900" />
-                <p className="text-[10px] text-red-600 mt-1">Leave blank if still ongoing</p>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-red-900 mb-3 uppercase tracking-wide">Flow Intensity</label>
-              <div className="flex flex-wrap gap-2">
-                {FLOWS.map(f => (
-                  <button key={f} type="button" onClick={() => setFlow(flow === f ? '' : f)} className={`px-4 py-2 rounded-xl text-sm font-medium capitalize border transition-all ${flow === f ? 'bg-red-500 text-white border-red-500 shadow-md' : 'bg-white text-red-900 border-red-200 hover:border-red-300'}`}>
-                    {f}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-red-900 mb-2 uppercase tracking-wide">Notes</label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={500} rows={3} placeholder="Any specific period notes..." className="w-full px-4 py-3 rounded-xl border border-red-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none text-red-900 resize-none" />
-            </div>
-          </form>
-        </div>
-        
-        <div className="px-6 py-4 border-t border-red-100 bg-gray-50 flex justify-end gap-3">
-          <button type="button" onClick={onClose} className="px-6 py-2 rounded-xl text-red-900 hover:bg-gray-200 font-medium transition-colors">Cancel</button>
-          <button type="submit" form="periodForm" disabled={loading} className="px-8 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md disabled:opacity-50 transition-all flex items-center justify-center">
-            {loading ? 'Saving...' : 'Save Period'}
-          </button>
-        </div>
+    <Modal isOpen={isOpen} onClose={onClose} title="Log Period">
+      <div className="mb-6 -mt-2">
+        <p className="text-sm font-medium text-gray-500">Track your flow and period dates.</p>
       </div>
-    </div>
+      
+      {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm animate-fade-in">{error}</div>}
+      
+      <form id="periodForm" onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">Start Date</label>
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} max={todayStr} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#E85D9A] focus:ring-2 focus:ring-pink-100 outline-none text-gray-900 transition-colors" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">End Date</label>
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} max={todayStr} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#E85D9A] focus:ring-2 focus:ring-pink-100 outline-none text-gray-900 transition-colors" />
+            <p className="text-[10px] text-gray-500 mt-1">Leave blank if still ongoing</p>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Flow Intensity</label>
+          <div className="flex flex-wrap gap-2">
+            {FLOWS.map(f => (
+              <button key={f} type="button" onClick={() => setFlow(flow === f ? '' : f)} className={`px-4 py-2 rounded-xl text-sm font-medium capitalize border transition-all active:scale-95 ${flow === f ? 'bg-gradient-to-r from-[#E85D9A] to-[#D93F7D] text-white border-transparent shadow-md animate-scale-bounce' : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'}`}>
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">Notes</label>
+          <textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={500} rows={3} placeholder="Any specific period notes..." className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#E85D9A] focus:ring-2 focus:ring-pink-100 outline-none text-gray-900 resize-none transition-colors" />
+        </div>
+
+        <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 mt-6">
+          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary" loading={loading}>Save Period</Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

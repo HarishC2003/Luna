@@ -186,19 +186,28 @@ export default function DashboardClient() {
       <div className="fixed bottom-[80px] left-0 right-0 mx-auto pointer-events-none z-40 w-full max-w-[480px] md:max-w-5xl">
         <div className="absolute bottom-0 right-[20px] pointer-events-auto flex flex-col items-end gap-2">
           {isFabMenuOpen && (
-            <div className="flex flex-col gap-2 mb-2 animate-fade-in items-end">
-              <button onClick={() => { setFabMenuOpen(false); setDailyFeelingsModalOpen(true); }} className="bg-white text-[#1A0A12] text-[12px] font-semibold px-4 py-2 rounded-full shadow-[0_4px_12px_rgba(232,93,154,0.15)] transition-transform active:scale-95">Log today</button>
-              <button onClick={() => { setFabMenuOpen(false); setPeriodModalOpen(true); }} className="bg-white text-[#1A0A12] text-[12px] font-semibold px-4 py-2 rounded-full shadow-[0_4px_12px_rgba(232,93,154,0.15)] transition-transform active:scale-95">Log period</button>
+            <div className="flex flex-col gap-3 mb-2 items-end stagger-children">
+              <button onClick={() => { setFabMenuOpen(false); setDailyFeelingsModalOpen(true); }} className="bg-white text-[#1A0A12] text-[13px] font-bold px-5 py-3 rounded-2xl shadow-[0_4px_20px_rgba(232,93,154,0.15)] transition-all hover:bg-gray-50 active:scale-95 animate-slide-up" style={{ animationDelay: '0ms' }}>
+                Log feelings
+              </button>
+              <button onClick={() => { setFabMenuOpen(false); setPeriodModalOpen(true); }} className="bg-white text-[#1A0A12] text-[13px] font-bold px-5 py-3 rounded-2xl shadow-[0_4px_20px_rgba(232,93,154,0.15)] transition-all hover:bg-gray-50 active:scale-95 animate-slide-up" style={{ animationDelay: '50ms' }}>
+                Log period
+              </button>
             </div>
           )}
-          <button 
-            onPointerDown={handleFabDown}
-            onPointerUp={handleFabUp}
-            onPointerLeave={() => { if (fabTimerRef.current) clearTimeout(fabTimerRef.current); }}
-            className={`w-[52px] h-[52px] bg-[#E85D9A] text-white rounded-full shadow-[0_4px_16px_rgba(232,93,154,0.35)] flex items-center justify-center transition-all duration-150 ease-out hover:scale-[1.08] active:scale-[0.95] ${isFabMenuOpen ? 'rotate-45' : ''}`}
-          >
-            <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
-          </button>
+          <div className="relative">
+            {/* Pulse ring */}
+            <div className={`absolute inset-0 bg-[#E85D9A] rounded-full opacity-30 ${!isFabMenuOpen && 'animate-pulse-ring'}`} />
+            
+            <button 
+              onPointerDown={handleFabDown}
+              onPointerUp={handleFabUp}
+              onPointerLeave={() => { if (fabTimerRef.current) clearTimeout(fabTimerRef.current); }}
+              className={`relative z-10 w-[60px] h-[60px] bg-gradient-to-tr from-[#E85D9A] to-[#D93F7D] text-white rounded-full shadow-[0_4px_20px_rgba(232,93,154,0.4)] flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-105 active:scale-95 ${isFabMenuOpen ? 'rotate-[135deg] bg-gradient-to-tr from-gray-700 to-gray-900 shadow-md' : ''}`}
+            >
+              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
+            </button>
+          </div>
         </div>
       </div>
 

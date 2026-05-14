@@ -6,8 +6,13 @@ import { MoodBar } from '@/components/cycle/MoodBar';
 import { FlowBadge } from '@/components/cycle/FlowBadge';
 import { SymptomChips } from '@/components/cycle/SymptomChips';
 import { DailyFeelingsModal } from '@/components/cycle/DailyFeelingsModal';
+import { useToast } from '@/components/ui/Toast';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { BookOpen } from 'lucide-react';
 
 export default function HistoryPage() {
+  const { showToast } = useToast();
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingLog, setEditingLog] = useState<DailyLog | null>(null);
@@ -54,11 +59,12 @@ export default function HistoryPage() {
       if (res.ok) {
         setLogs(logs.filter(l => l.id !== id));
         setIsDeleting(null);
+        showToast('success', 'Log deleted successfully');
       } else {
-        alert('Failed to delete log');
+        showToast('error', 'Failed to delete log');
       }
     } catch (_e) {
-      alert('An error occurred');
+      showToast('error', 'An error occurred');
     }
   };
 
@@ -76,7 +82,7 @@ export default function HistoryPage() {
   const chartData = logs.filter(l => l.mood).slice(0, 7).reverse();
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-8 pb-10 animate-fade-in stagger-children">
       <h1 className="text-3xl font-extrabold text-[#4A1B3C]">Daily History</h1>
 
       {chartData.length > 0 && (
@@ -100,9 +106,17 @@ export default function HistoryPage() {
 
       <div className="bg-white rounded-3xl shadow-sm border border-[#E85D9A]/10 overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Loading history...</div>
+          <div className="p-8 space-y-4">
+            <Skeleton className="h-20 w-full rounded-2xl" />
+            <Skeleton className="h-20 w-full rounded-2xl" />
+            <Skeleton className="h-20 w-full rounded-2xl" />
+          </div>
         ) : logs.length === 0 ? (
-          <div className="p-12 text-center text-[#4A1B3C]/70">No daily logs found in the last 30 days.</div>
+          <EmptyState
+            icon={<BookOpen className="text-[#E85D9A]" size={24} />}
+            title="No history yet"
+            description="You haven't logged any daily feelings in the last 30 days."
+          />
         ) : (
           <div className="divide-y divide-[#E85D9A]/10">
             {logs.map(log => (
