@@ -7,7 +7,6 @@ import { FlowBadge } from '@/components/cycle/FlowBadge';
 import CycleComparisonTimeline from '@/components/cycles/CycleComparisonTimeline';
 import InsightsReportModal from '@/components/reports/InsightsReportModal';
 import { useToast } from '@/components/ui/Toast';
-import { useToast } from '@/components/ui/Toast';
 import Button from '@/components/ui/Button';
 import { Sparkles } from 'lucide-react';
 
