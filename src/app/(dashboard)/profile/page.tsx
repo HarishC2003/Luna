@@ -314,9 +314,14 @@ export default function ProfilePage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
                <label className="block text-sm font-semibold text-[#4A1B3C] mb-2 uppercase tracking-wide">Days Before</label>
-               <select value={settings.notify_days_before || 2} onChange={e => setSettings({...settings, notify_days_before: e.target.value})} className="w-full p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C]">
-                  {[1,2,3,4,5].map(d => <option key={d} value={d}>{d} days</option>)}
-               </select>
+                <select 
+                  value={settings.notify_days_before !== undefined ? settings.notify_days_before : 2} 
+                  onChange={e => setSettings({...settings, notify_days_before: Number(e.target.value)})} 
+                  className="w-full p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C]"
+                >
+                   <option value={0}>Everyday</option>
+                   {[1,2,3,4,5].map(d => <option key={d} value={d}>{d} days</option>)}
+                </select>
             </div>
             <div>
                <label className="block text-sm font-semibold text-[#4A1B3C] mb-2 uppercase tracking-wide">Time of day</label>
