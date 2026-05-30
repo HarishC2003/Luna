@@ -9,7 +9,11 @@ export interface NotificationSettings {
   push_period_reminder: boolean;
   push_fertile_window: boolean;
   push_log_reminder: boolean;
+  push_hydration_reminder: boolean;
   notify_hour: number;
+  notify_minute: number;
+  hydration_notify_hour: number;
+  hydration_notify_minute: number;
   notify_days_before: number;
   created_at: string;
   updated_at: string;

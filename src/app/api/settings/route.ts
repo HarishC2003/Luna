@@ -25,7 +25,11 @@ export async function GET(_request: Request) {
       push_period_reminder: false,
       push_fertile_window: false,
       push_log_reminder: false,
+      push_hydration_reminder: false,
       notify_hour: 8,
+      notify_minute: 0,
+      hydration_notify_hour: 14,
+      hydration_notify_minute: 0,
       notify_days_before: 2
     });
   } catch (error: unknown) {
@@ -63,7 +67,11 @@ export async function PATCH(request: Request) {
     if (pd.push_period_reminder !== undefined) upsertData.push_period_reminder = pd.push_period_reminder;
     if (pd.push_fertile_window !== undefined) upsertData.push_fertile_window = pd.push_fertile_window;
     if (pd.push_log_reminder !== undefined) upsertData.push_log_reminder = pd.push_log_reminder;
+    if (pd.push_hydration_reminder !== undefined) upsertData.push_hydration_reminder = pd.push_hydration_reminder;
     if (pd.notify_hour !== undefined) upsertData.notify_hour = pd.notify_hour;
+    if (pd.notify_minute !== undefined) upsertData.notify_minute = pd.notify_minute;
+    if (pd.hydration_notify_hour !== undefined) upsertData.hydration_notify_hour = pd.hydration_notify_hour;
+    if (pd.hydration_notify_minute !== undefined) upsertData.hydration_notify_minute = pd.hydration_notify_minute;
     if (pd.notify_days_before !== undefined) upsertData.notify_days_before = pd.notify_days_before;
 
     const { data, error } = await admin.from('notification_settings').upsert(upsertData, { onConflict: 'user_id' }).select().single();

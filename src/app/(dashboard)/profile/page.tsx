@@ -34,7 +34,11 @@ export default function ProfilePage() {
     push_period_reminder?: boolean;
     push_fertile_window?: boolean;
     push_log_reminder?: boolean;
+    push_hydration_reminder?: boolean;
     notify_hour?: number | string;
+    notify_minute?: number | string;
+    hydration_notify_hour?: number | string;
+    hydration_notify_minute?: number | string;
     notify_days_before?: number | string;
   }
 
@@ -301,7 +305,7 @@ export default function ProfilePage() {
             {isSubscribed && (
               <div className="space-y-3 mt-4">
                 <button type="button" onClick={handleTestPush} className="w-full p-2 border border-dashed border-[#E85D9A] text-[#E85D9A] font-bold rounded-xl text-center text-sm cursor-pointer">Send Test Notification</button>
-                {['push_period_reminder', 'push_fertile_window', 'push_log_reminder'].map(key => (
+                {['push_period_reminder', 'push_fertile_window', 'push_log_reminder', 'push_hydration_reminder'].map(key => (
                   <label key={key} className="flex items-center justify-between p-3 border border-[#E85D9A]/10 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <span className="text-[#4A1B3C] font-medium capitalize">{key.replace('push_', '').replace('_', ' ')}</span>
                     <input type="checkbox" checked={!!settings[key as keyof UserSettings]} onChange={e => setSettings({...settings, [key]: e.target.checked})} className="w-5 h-5 accent-[#E85D9A]" />
@@ -325,18 +329,56 @@ export default function ProfilePage() {
             </div>
             <div>
                <label className="block text-sm font-semibold text-[#4A1B3C] mb-2 uppercase tracking-wide">Time of day</label>
-               <select 
-                 value={settings.notify_hour !== undefined ? settings.notify_hour : 8} 
-                 onChange={e => setSettings({...settings, notify_hour: Number(e.target.value)})} 
-                 className="w-full p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C]"
-               >
-                  {Array.from({ length: 24 }).map((_, i) => {
-                    const h = i % 12 === 0 ? 12 : i % 12;
-                    const ampm = i < 12 ? 'AM' : 'PM';
-                    return <option key={i} value={i}>{`${h}:00 ${ampm}`}</option>;
-                  })}
-               </select>
-            </div>
+                <div className="flex gap-2">
+                  <select 
+                     value={settings.notify_hour !== undefined ? settings.notify_hour : 8} 
+                     onChange={e => setSettings({...settings, notify_hour: Number(e.target.value)})} 
+                     className="flex-1 p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C]"
+                  >
+                     {Array.from({ length: 24 }).map((_, i) => {
+                       const h = i % 12 === 0 ? 12 : i % 12;
+                       const ampm = i < 12 ? 'AM' : 'PM';
+                       return <option key={i} value={i}>{`${h} ${ampm}`}</option>;
+                     })}
+                  </select>
+                  <select 
+                     value={settings.notify_minute !== undefined ? settings.notify_minute : 0} 
+                     onChange={e => setSettings({...settings, notify_minute: Number(e.target.value)})} 
+                     className="w-24 p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C]"
+                  >
+                     {Array.from({ length: 60 }).map((_, m) => (
+                       <option key={m} value={m}>{m.toString().padStart(2, '0')}m</option>
+                     ))}
+                  </select>
+                </div>
+             </div>
+             {settings.push_hydration_reminder && (
+               <div className="col-span-2">
+                  <label className="block text-sm font-semibold text-[#4A1B3C] mb-2 uppercase tracking-wide">Hydration reminder time</label>
+                  <div className="flex gap-2">
+                    <select 
+                      value={settings.hydration_notify_hour !== undefined ? settings.hydration_notify_hour : 14} 
+                      onChange={e => setSettings({...settings, hydration_notify_hour: Number(e.target.value)})} 
+                      className="flex-1 p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C]"
+                    >
+                       {Array.from({ length: 24 }).map((_, i) => {
+                         const h = i % 12 === 0 ? 12 : i % 12;
+                         const ampm = i < 12 ? 'AM' : 'PM';
+                         return <option key={i} value={i}>{`${h} ${ampm}`}</option>;
+                       })}
+                    </select>
+                    <select 
+                      value={settings.hydration_notify_minute !== undefined ? settings.hydration_notify_minute : 0} 
+                      onChange={e => setSettings({...settings, hydration_notify_minute: Number(e.target.value)})} 
+                      className="w-24 p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C]"
+                    >
+                       {Array.from({ length: 60 }).map((_, m) => (
+                         <option key={m} value={m}>{m.toString().padStart(2, '0')}m</option>
+                       ))}
+                    </select>
+                  </div>
+               </div>
+             )}
           </div>
 
           <button type="submit" disabled={saving} className="mt-4 px-8 py-3 bg-[#E85D9A] text-white font-bold rounded-xl shadow-md w-full sm:w-auto">Save Settings</button>

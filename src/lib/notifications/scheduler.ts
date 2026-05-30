@@ -12,7 +12,10 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
   let failed = 0;
   const admin = createAdminClient();
   const today = new Date();
-  today.setHours(today.getHours() + 5); // Add 5h 30m for IST roughly, or just use UTC/server local
+  if (process.env.NODE_ENV !== 'development') {
+    // Vercel server is in UTC. Shift to IST (UTC+5:30)
+    today.setMinutes(today.getMinutes() + 330);
+  }
   const currentHour = today.getHours();
   
   // 1. Query all settings
@@ -23,8 +26,23 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
     try {
       const userId = settings.user_id;
 
-      // Ensure it's the right time to send
-      if (settings.notify_hour !== currentHour) continue;
+      const istHour = process.env.NODE_ENV !== 'development'
+        ? (new Date().getUTCHours() + 5) % 24  // rough IST conversion
+        : new Date().getHours();
+      
+      const targetHour = settings.notify_hour ?? 8;
+      const targetMinute = settings.notify_minute ?? 0;
+      const isNotifyTime = currentHour > targetHour || (currentHour === targetHour && today.getMinutes() >= targetMinute);
+
+      const hydrationHour = settings.hydration_notify_hour ?? 14;
+      const hydrationMinute = settings.hydration_notify_minute ?? 0;
+      const isHydrationTime = istHour > hydrationHour || (istHour === hydrationHour && new Date().getMinutes() >= hydrationMinute);
+
+      const isStreakTime = istHour > 21 || (istHour === 21 && new Date().getMinutes() >= 0);
+
+      if (!isNotifyTime && !isHydrationTime && !isStreakTime) {
+        continue;
+      }
 
       const [{ data: prediction }, { data: onboard }, { data: profile }] = await Promise.all([
         admin.from('cycle_predictions').select('*').eq('user_id', userId).maybeSingle(),
@@ -38,7 +56,7 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
       const displayName = profile.display_name || 'there';
 
       // Check period reminder
-      if (settings.email_period_reminder || settings.push_period_reminder) {
+      if (isNotifyTime && (settings.email_period_reminder || settings.push_period_reminder)) {
         const predictedStart = new Date(prediction.predicted_start);
         const daysUntil = Math.floor((predictedStart.getTime() - new Date().getTime()) / (1000 * 3600 * 24));
         
@@ -68,7 +86,7 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
       }
 
       // Check fertile window
-      if (settings.email_fertile_window || settings.push_fertile_window) {
+      if (isNotifyTime && (settings.email_fertile_window || settings.push_fertile_window)) {
         const fertileStart = new Date(prediction.fertile_start);
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -105,7 +123,7 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
       }
 
       // Check check-in log reminder (every day at their custom notify hour if they want daily reminders)
-      if (settings.push_log_reminder) {
+      if (isNotifyTime && settings.push_log_reminder) {
         const { data: checkinLogs } = await admin.from('notification_log')
           .select('id').eq('user_id', userId).eq('notification_type', 'daily_checkin')
           .gte('sent_at', new Date(new Date().setHours(0,0,0,0)).toISOString());
@@ -123,9 +141,8 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
         }
       }
 
-      // Hydration reminder at 2pm IST (14:00)
-      const istHour = (new Date().getUTCHours() + 5) % 24; // rough IST conversion
-      if (istHour === 14 && (settings.push_period_reminder || settings.push_fertile_window)) {
+      // Hydration reminder
+      if (isHydrationTime && settings.push_hydration_reminder) {
         const todayStr = new Date().toISOString().split('T')[0];
         const { data: todayLog } = await admin.from('daily_logs')
           .select('water_glasses')
@@ -163,8 +180,40 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
         }
       }
 
+      // Streak at risk at 9 PM IST (21:00)
+      if (isStreakTime && settings.push_log_reminder) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const { data: todayLog } = await admin.from('daily_logs')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('log_date', todayStr)
+          .maybeSingle();
+
+        const { data: streakData } = await admin.from('user_badges')
+          .select('badge_key')
+          .eq('user_id', userId)
+          .like('badge_key', 'streak_%');
+
+        const hasStreak = streakData && streakData.length > 0;
+
+        if (!todayLog && hasStreak) {
+          const { data: streakLogs } = await admin.from('notification_log')
+            .select('id').eq('user_id', userId).eq('notification_type', 'streak_risk')
+            .gte('sent_at', new Date(new Date().setHours(0,0,0,0)).toISOString());
+
+          if (!streakLogs || streakLogs.length === 0) {
+            const res = await sendPushNotification(userId, 'streak_risk', {
+              title: "Don't break your streak! 🔥",
+              body: "You haven't logged today. 1 minute is all it takes.",
+              url: '/dashboard'
+            });
+            if (res) { sent++; } else { failed++; }
+          }
+        }
+      }
+
       // Symptom prediction alerts
-      if (settings.email_tips || settings.push_log_reminder) {
+      if (isNotifyTime && (settings.email_tips || settings.push_log_reminder)) {
         const predictions = await predictUpcomingSymptoms(userId);
         
         for (const prediction of predictions) {

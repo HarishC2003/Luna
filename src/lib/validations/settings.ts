@@ -11,7 +11,11 @@ export const notificationSettingsSchema = z.object({
   push_period_reminder: z.boolean().optional(),
   push_fertile_window: z.boolean().optional(),
   push_log_reminder: z.boolean().optional(),
+  push_hydration_reminder: z.boolean().optional(),
   notify_hour: z.union([z.string(), z.number()]).transform(Number).optional(),
+  notify_minute: z.union([z.string(), z.number()]).transform(Number).optional(),
+  hydration_notify_hour: z.union([z.string(), z.number()]).transform(Number).optional(),
+  hydration_notify_minute: z.union([z.string(), z.number()]).transform(Number).optional(),
   notify_days_before: z.union([z.string(), z.number()]).transform(Number).optional(),
 });
 
