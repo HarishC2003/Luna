@@ -159,7 +159,7 @@ export default function PrivacyPage() {
   };
 
   if (loading) return (
-    <div className="max-w-3xl mx-auto pb-10 space-y-4 pt-8 px-6">
+    <div className="space-y-8 pb-10 pt-8 animate-fade-in">
       <Skeleton className="h-12 w-full" />
       <Skeleton className="h-12 w-full" />
       <Skeleton className="h-12 w-full" />
@@ -167,8 +167,8 @@ export default function PrivacyPage() {
   );
 
   return (
-    <div className="max-w-3xl mx-auto pb-10 px-6 sm:px-0 mt-6 relative">
-      <h1 className="text-3xl font-extrabold text-[#4A1B3C] mb-8">Privacy &amp; Data</h1>
+    <div className="space-y-8 pb-10 animate-fade-in relative">
+      <h1 className="text-3xl font-extrabold text-[#4A1B3C]">Privacy &amp; Data</h1>
 
       <div className="space-y-6 animate-fade-in bg-white p-6 rounded-3xl shadow-sm border border-[#E85D9A]/10">
         <div className="grid grid-cols-3 gap-4">

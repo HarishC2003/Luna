@@ -68,7 +68,7 @@ export async function sendPushNotification(
     for (const sub of subs) {
       try {
         await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth_key } },
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth || sub.auth_key } },
           notificationPayload
         );
         anySuccess = true;

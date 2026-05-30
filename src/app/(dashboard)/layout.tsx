@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { InstallBanner } from '@/components/pwa/InstallBanner';
 import { useState, useEffect, useRef } from 'react';
-import { Home, Calendar, Clock, MessageCircle, User } from 'lucide-react';
+import { Home, Calendar, Clock, MessageCircle, Shield } from 'lucide-react';
 import NotificationPermission from '@/components/notifications/NotificationPermission';
 
 const tabs = [
@@ -13,7 +13,7 @@ const tabs = [
   { href: '/cycles', icon: Calendar, label: 'Calendar' },
   { href: '/history', icon: Clock, label: 'History' },
   { href: '/chat', icon: MessageCircle, label: 'Chat' },
-  { href: '/profile', icon: User, label: 'Profile' },
+  { href: '/privacy', icon: Shield, label: 'Privacy' },
 ];
 
 function partsToName(email: string) {

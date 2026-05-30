@@ -220,7 +220,7 @@ export default function ProfilePage() {
   };
 
   if (loading) return (
-    <div className="max-w-3xl mx-auto pb-10 space-y-4 pt-8 px-6">
+    <div className="space-y-8 pb-10 pt-8 animate-fade-in">
       <Skeleton className="h-12 w-full" />
       <Skeleton className="h-12 w-full" />
       <Skeleton className="h-12 w-full" />
@@ -228,7 +228,7 @@ export default function ProfilePage() {
   );
 
   return (
-    <div className="max-w-3xl mx-auto pb-10 px-6 sm:px-0 mt-6 relative">
+    <div className="space-y-8 pb-10 animate-fade-in relative">
       {success && (
         <div className="fixed top-4 right-4 bg-green-100 text-green-800 px-4 py-3 rounded-lg shadow-lg z-50">
           {success}
@@ -240,7 +240,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <h1 className="text-3xl font-extrabold text-[#4A1B3C] mb-8">Settings</h1>
+      <h1 className="text-3xl font-extrabold text-[#4A1B3C]">Settings</h1>
       
       {/* Tab Nav */}
       <div className="flex border-b border-[#E85D9A]/20 mb-8 overflow-x-auto hide-scrollbar">
@@ -320,11 +320,16 @@ export default function ProfilePage() {
             </div>
             <div>
                <label className="block text-sm font-semibold text-[#4A1B3C] mb-2 uppercase tracking-wide">Time of day</label>
-               <select value={settings.notify_hour || 8} onChange={e => setSettings({...settings, notify_hour: e.target.value})} className="w-full p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C]">
-                  <option value={8}>8:00 AM</option>
-                  <option value={12}>12:00 PM</option>
-                  <option value={18}>6:00 PM</option>
-                  <option value={20}>8:00 PM</option>
+               <select 
+                 value={settings.notify_hour !== undefined ? settings.notify_hour : 8} 
+                 onChange={e => setSettings({...settings, notify_hour: Number(e.target.value)})} 
+                 className="w-full p-3 rounded-xl border border-[#E85D9A]/20 bg-white text-[#4A1B3C]"
+               >
+                  {Array.from({ length: 24 }).map((_, i) => {
+                    const h = i % 12 === 0 ? 12 : i % 12;
+                    const ampm = i < 12 ? 'AM' : 'PM';
+                    return <option key={i} value={i}>{`${h}:00 ${ampm}`}</option>;
+                  })}
                </select>
             </div>
           </div>
