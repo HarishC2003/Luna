@@ -66,7 +66,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-80px-5rem)] max-h-screen -mx-4 sm:-mx-6 -mt-2 relative">
+    <div className="flex h-[calc(100vh-16px)] -mx-4 sm:-mx-6 -mt-2 -mb-32 relative overflow-hidden">
 
       {/* ─── Sidebar Overlay (Mobile) ─── */}
       {sidebarOpen && (
@@ -235,7 +235,7 @@ export default function ChatPage() {
         </div>
 
         {/* Input area */}
-        <div className="p-4 sm:p-6 bg-gradient-to-t from-[#FDF8F9] via-[#FDF8F9]/90 to-transparent z-10 relative mt-auto">
+        <div className="p-4 pb-20 sm:p-6 sm:pb-20 bg-gradient-to-t from-[#FDF8F9] via-[#FDF8F9]/90 to-transparent z-10 relative mt-auto">
           {messages.length === 1 && suggestions.length > 0 && (
             <div className="mb-3 animate-fade-in-up">
               <SuggestionChips suggestions={suggestions} onSelect={sendMessage} />

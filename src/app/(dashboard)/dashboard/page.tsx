@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PhaseStatusCard } from '@/components/cycle/PhaseStatusCard';
@@ -10,16 +10,21 @@ import { DailyFeelingsModal } from '@/components/cycle/DailyFeelingsModal';
 import { PeriodLogModal } from '@/components/cycle/PeriodLogModal';
 import { CheckInCard } from '@/components/cycle/CheckInCard';
 
-
 import { StreakWidget } from '@/components/streaks/StreakWidget';
 import { MilestoneCelebration } from '@/components/streaks/MilestoneCelebration';
 import { TodayLogQuickCard } from '@/components/cycle/TodayLogQuickCard';
 import WelcomePopup from '@/components/dashboard/WelcomePopup';
 import UpcomingSymptomAlerts from '@/components/predictions/UpcomingSymptomAlerts';
-import { WellnessTracker } from '@/components/dashboard/WellnessTracker';
-import { QuickMoodLogger } from '@/components/dashboard/QuickMoodLogger';
+
 import { DailyAffirmation } from '@/components/dashboard/DailyAffirmation';
 import { Prediction, CycleLog, DailyLog, Insight } from '@/types/cycle';
+
+// Premium component imports
+import { DashboardSkeleton } from '@/components/ui/Skeleton';
+import Confetti from '@/components/ui/Confetti';
+import { HydrationWidget } from '@/components/hydration/HydrationWidget';
+import { useToast } from '@/components/ui/Toast';
+import { Plus } from 'lucide-react';
 
 interface DashboardData {
   prediction?: Prediction;
@@ -31,17 +36,16 @@ interface DashboardData {
   displayName?: string;
 }
 
-
-
 export default function DashboardClient() {
   const router = useRouter();
+  const toast = useToast();
+  
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDailyFeelingsModalOpen, setDailyFeelingsModalOpen] = useState(false);
   const [isPeriodModalOpen, setPeriodModalOpen] = useState(false);
   const [earnedBadgeKeys, setEarnedBadgeKeys] = useState<string[]>([]);
-  const [isFabMenuOpen, setFabMenuOpen] = useState(false);
-  const fabTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -56,45 +60,30 @@ export default function DashboardClient() {
       setData(json);
     } catch (e) {
       console.error(e);
+      toast('error', 'Failed to load data', 'Could not refresh cycle predictions.');
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, toast]);
 
   useEffect(() => {
-    /* eslint-disable-next-line react-hooks/set-state-in-effect */
     void fetchDashboard();
   }, [fetchDashboard]);
 
-  // FAB Long Press logic
-  const handleFabDown = () => {
-    fabTimerRef.current = setTimeout(() => {
-      setFabMenuOpen(true);
-    }, 500);
-  };
-  const handleFabUp = () => {
-    if (fabTimerRef.current) clearTimeout(fabTimerRef.current);
-    if (!isFabMenuOpen) setDailyFeelingsModalOpen(true);
-  };
+
 
   if (loading) {
-    return (
-      <div className="w-full h-full flex flex-col gap-6 animate-pulse pt-4">
-        <div className="w-full h-[60px] bg-gray-200 rounded-[20px]" />
-        <div className="w-full h-[200px] bg-gray-200 rounded-[20px]" />
-        <div className="w-full h-[80px] bg-gray-200 rounded-[20px]" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (!data) return null;
 
-
   const isOnPeriod = data.prediction?.currentPhase === 'menstrual';
 
   return (
-    <div className="flex flex-col gap-[24px]">
-      
+    <div className="flex flex-col gap-[24px] relative pb-20">
+      <Confetti trigger={showConfetti} />
+
       {earnedBadgeKeys.length > 0 && (
         <MilestoneCelebration 
           badgeKeys={earnedBadgeKeys} 
@@ -104,43 +93,52 @@ export default function DashboardClient() {
 
       <WelcomePopup />
       
-      <UpcomingSymptomAlerts />
+      <div className="animate-slide-up stagger-1">
+        <UpcomingSymptomAlerts />
+      </div>
 
-      <DailyAffirmation phase={data.prediction?.currentPhase || 'unknown'} />
+      <div className="animate-slide-up stagger-2">
+        <DailyAffirmation phase={data.prediction?.currentPhase || 'unknown'} />
+      </div>
 
-      <CheckInCard onAnswered={fetchDashboard} />
+      <div className="animate-slide-up stagger-2">
+        <CheckInCard onAnswered={fetchDashboard} />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-[16px] md:gap-[24px]">
         {/* Left Column (Primary Cycle Info) */}
         <div className="md:col-span-7 lg:col-span-8 flex flex-col gap-[16px]">
           {/* Phase Card */}
-          {data.prediction ? (
-            <PhaseStatusCard 
-              phase={data.prediction.currentPhase || 'unknown'}
-              daysUntilNext={data.prediction.daysUntilNextPeriod || 0}
-              dayOfCycle={data.prediction.dayOfCycle || 0}
-              avgCycleLength={data.recentCycles && data.recentCycles.length > 0 ? (data.recentCycles[0].cycle_length || 28) : 28}
-              avgPeriodLength={5}
-            />
-          ) : (
-            <div className="w-full p-8 rounded-[20px] bg-white border-[0.5px] border-[#E85D9A]/10 text-center shadow-sm">
-              <h2 className="text-[16px] font-semibold text-[#1A0A12] mb-2">Welcome to Luna</h2>
-              <p className="text-[14px] text-[#4A3040]">Log your first period to activate cycle predictions.</p>
-            </div>
-          )}
+          <div className="animate-slide-up stagger-3">
+            {data.prediction ? (
+              <PhaseStatusCard 
+                phase={data.prediction.currentPhase || 'unknown'}
+                dayOfCycle={data.prediction.dayOfCycle || 0}
+                avgCycleLength={data.recentCycles && data.recentCycles.length > 0 ? (data.recentCycles[0].cycle_length || 28) : 28}
+                daysUntilNextPeriod={data.prediction.daysUntilNextPeriod || 0}
+                isLate={data.prediction.isLate || (data.prediction.daysUntilNextPeriod !== undefined && data.prediction.daysUntilNextPeriod < 0)}
+              />
+            ) : (
+              <div className="w-full p-8 rounded-[20px] bg-white border-[0.5px] border-[#E85D9A]/10 text-center shadow-sm">
+                <h2 className="text-[16px] font-semibold text-[#1A0A12] mb-2">Welcome to Luna</h2>
+                <p className="text-[14px] text-[#4A3040]">Log your first period to activate cycle predictions.</p>
+              </div>
+            )}
+          </div>
 
           {/* Calendar Grid */}
-          <CalendarGrid 
-            prediction={data.prediction ?? null}
-            cycles={data.recentCycles ?? []}
-            logs={data.allLogs ?? []}
-            onRefresh={fetchDashboard}
-          />
-
+          <div className="animate-slide-up stagger-4">
+            <CalendarGrid 
+              prediction={data.prediction ?? null}
+              cycles={data.recentCycles ?? []}
+              logs={data.allLogs ?? []}
+              onRefresh={fetchDashboard}
+            />
+          </div>
 
           {/* Insights Strip */}
           {data.insights && data.insights.length > 0 && (
-            <div className="mt-[8px]">
+            <div className="mt-[8px] animate-slide-up stagger-5">
               <div className="flex justify-between items-end mb-[12px]">
                 <h3 className="text-[16px] font-semibold text-[#1A0A12]">For you</h3>
                 <Link href="/insights" className="text-[12px] text-[#E85D9A] font-medium cursor-pointer hover:underline">See all</Link>
@@ -156,68 +154,82 @@ export default function DashboardClient() {
 
         {/* Right Column (Daily Logging & Widgets) */}
         <div className="md:col-span-5 lg:col-span-4 flex flex-col gap-[16px]">
-          {/* Quick Mood Logger */}
-          <QuickMoodLogger onLogged={fetchDashboard} />
+          {/* Hydration Widget */}
+          <div className="animate-slide-up stagger-3">
+            <HydrationWidget phase={data.prediction?.currentPhase || 'unknown'} />
+          </div>
 
           {/* Today's Log Quick-Card */}
-          <TodayLogQuickCard 
-            todayLog={data.todayLog || null} 
-            isOnPeriod={isOnPeriod}
-            onLogDaily={() => setDailyFeelingsModalOpen(true)}
-            onLogPeriod={() => setPeriodModalOpen(true)}
-          />
+          <div className="animate-slide-up stagger-4">
+            <TodayLogQuickCard 
+              todayLog={data.todayLog || null} 
+              isOnPeriod={isOnPeriod}
+              onLogDaily={() => setDailyFeelingsModalOpen(true)}
+              onLogPeriod={() => setPeriodModalOpen(true)}
+            />
+          </div>
 
-          {/* Daily Wellness Tracker */}
-          <WellnessTracker 
-            initialData={data.todayLog ? { 
-            hydration_goal: !!data.todayLog.hydration_goal, 
-            slept_well: !!data.todayLog.slept_well, 
-            moved_body: !!data.todayLog.moved_body 
-          } : undefined} 
-            onUpdate={fetchDashboard} 
-          />
+          {/* App Benefits Card */}
+          <div className="bg-white rounded-[20px] p-6 border-[0.5px] border-[#E85D9A]/10 shadow-sm relative overflow-hidden group hover:border-[#E85D9A]/30 transition-all duration-300 animate-slide-up stagger-5">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-pink-50 to-transparent rounded-bl-[100px] pointer-events-none -z-10 group-hover:scale-110 transition-transform duration-300" />
+            <h3 className="text-[16px] font-bold text-[#1A0A12] mb-4 flex items-center gap-2">
+              ✨ Luna Benefits
+            </h3>
+            <ul className="space-y-3.5">
+              <li className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-50 text-[#E85D9A] flex items-center justify-center text-xs font-bold">🔒</span>
+                <div>
+                  <span className="text-[13px] font-bold text-[#4A1B3C] block">100% Secure & Private</span>
+                  <span className="text-[11px] text-[#4A1B3C]/70">Your health data is encrypted and completely under your control.</span>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center text-xs font-bold">🤖</span>
+                <div>
+                  <span className="text-[13px] font-bold text-[#4A1B3C] block">AI Insights & Predictions</span>
+                  <span className="text-[11px] text-[#4A1B3C]/70">Get custom predictions for your upcoming phase, fertile windows, and symptom alerts.</span>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-teal-50 text-teal-500 flex items-center justify-center text-xs font-bold">🤝</span>
+                <div>
+                  <span className="text-[13px] font-bold text-[#4A1B3C] block">Secure Partner Sharing</span>
+                  <span className="text-[11px] text-[#4A1B3C]/70">Share read-only phase predictions and support guides with your partner securely.</span>
+                </div>
+              </li>
+            </ul>
+          </div>
 
           {/* Streak Widget */}
-          <StreakWidget allLogs={data.allLogs} />
-        </div>
-      </div>
-
-      {/* FAB */}
-      <div className="fixed bottom-[80px] left-0 right-0 mx-auto pointer-events-none z-40 w-full max-w-[480px] md:max-w-5xl">
-        <div className="absolute bottom-0 right-[20px] pointer-events-auto flex flex-col items-end gap-2">
-          {isFabMenuOpen && (
-            <div className="flex flex-col gap-3 mb-2 items-end stagger-children">
-              <button onClick={() => { setFabMenuOpen(false); setDailyFeelingsModalOpen(true); }} className="bg-white text-[#1A0A12] text-[13px] font-bold px-5 py-3 rounded-2xl shadow-[0_4px_20px_rgba(232,93,154,0.15)] transition-all hover:bg-gray-50 active:scale-95 animate-slide-up" style={{ animationDelay: '0ms' }}>
-                Log feelings
-              </button>
-              <button onClick={() => { setFabMenuOpen(false); setPeriodModalOpen(true); }} className="bg-white text-[#1A0A12] text-[13px] font-bold px-5 py-3 rounded-2xl shadow-[0_4px_20px_rgba(232,93,154,0.15)] transition-all hover:bg-gray-50 active:scale-95 animate-slide-up" style={{ animationDelay: '50ms' }}>
-                Log period
-              </button>
-            </div>
-          )}
-          <div className="relative">
-            {/* Pulse ring */}
-            <div className={`absolute inset-0 bg-[#E85D9A] rounded-full opacity-30 ${!isFabMenuOpen && 'animate-pulse-ring'}`} />
-            
-            <button 
-              onPointerDown={handleFabDown}
-              onPointerUp={handleFabUp}
-              onPointerLeave={() => { if (fabTimerRef.current) clearTimeout(fabTimerRef.current); }}
-              className={`relative z-10 w-[60px] h-[60px] bg-gradient-to-tr from-[#E85D9A] to-[#D93F7D] text-white rounded-full shadow-[0_4px_20px_rgba(232,93,154,0.4)] flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-105 active:scale-95 ${isFabMenuOpen ? 'rotate-[135deg] bg-gradient-to-tr from-gray-700 to-gray-900 shadow-md' : ''}`}
-            >
-              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
-            </button>
+          <div className="animate-slide-up stagger-6">
+            <StreakWidget allLogs={data.allLogs} />
           </div>
         </div>
       </div>
+
+      {/* Floating Action Button */}
+      <button
+        className="fixed bottom-24 right-5 w-14 h-14 rounded-full text-white flex items-center justify-center z-30 active:scale-90 transition-transform cursor-pointer outline-none"
+        style={{
+          background: 'linear-gradient(135deg, #E85D9A, #7F77DD)',
+          boxShadow: '0 8px 24px rgba(232,93,154,0.4)',
+          animation: 'floatUp 3s ease-in-out infinite',
+        }}
+        onClick={() => setDailyFeelingsModalOpen(true)}
+      >
+        <Plus size={24} />
+      </button>
 
       <DailyFeelingsModal 
         isOpen={isDailyFeelingsModalOpen} 
         onClose={() => setDailyFeelingsModalOpen(false)} 
         onSuccess={(newBadges?: string[]) => { 
           setDailyFeelingsModalOpen(false); 
+          toast('success', 'Daily log saved', 'Your feelings have been logged.');
           if (newBadges && newBadges.length > 0) {
             setEarnedBadgeKeys(newBadges);
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 100);
           }
           fetchDashboard(); 
         }}
@@ -229,6 +241,7 @@ export default function DashboardClient() {
         onClose={() => setPeriodModalOpen(false)} 
         onSuccess={() => { 
           setPeriodModalOpen(false); 
+          toast('success', 'Period logged', 'Your cycle dates have been updated.');
           fetchDashboard(); 
         }}
         initialData={data.recentCycles ? data.recentCycles[0] : undefined}

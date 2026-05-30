@@ -60,28 +60,24 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* SOCIAL PROOF BAR */}
+        {/* VALUE PROPOSITIONS BAR */}
         <section className="bg-[#FBEAF0] py-4 w-full overflow-hidden whitespace-nowrap">
-          <div className="flex justify-center items-center gap-3 px-4 min-w-max mx-auto text-sm text-[#4A1B3C] font-medium">
-             Trusted by 10,000+ women
-             <span className="text-[#E85D9A] mx-2 flex gap-0.5">
-                {[1,2,3,4,5].map(i => (
-                  <svg key={i} className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                  </svg>
-                ))}
-             </span>
-             4.9 stars
-             <span className="mx-3 text-[#E85D9A] font-light">|</span>
-             100% private
+          <div className="flex justify-center items-center gap-6 px-4 min-w-max mx-auto text-sm text-[#4A1B3C] font-semibold">
+             <span>🛡️ 100% Data Privacy & Control</span>
+             <span className="text-[#E85D9A] font-light">|</span>
+             <span>🤖 Context-Aware Luna AI</span>
+             <span className="text-[#E85D9A] font-light">|</span>
+             <span>💧 Phase-Aware Hydration Goals</span>
+             <span className="text-[#E85D9A] font-light">|</span>
+             <span>🔔 Instant Browser Push Alerts</span>
           </div>
         </section>
 
         {/* FEATURES GRID */}
         <section className="max-w-6xl mx-auto px-4 md:px-6 py-20">
-          <div className="grid md:grid-cols-3 gap-10">
-            {/* Card 1 */}
-            <div className="flex flex-col gap-4 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {/* Card 1: Cycle Predictions */}
+            <div className="flex flex-col gap-4 items-start p-6 rounded-2xl bg-white border border-gray-100 hover:border-[#E85D9A]/30 hover:shadow-sm transition-all duration-300">
               <div className="w-12 h-12 rounded-xl bg-[#E85D9A]/10 flex items-center justify-center text-[#E85D9A]">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -91,35 +87,74 @@ export default async function LandingPage() {
                   <circle cx="12" cy="15" r="2" fill="currentColor" />
                 </svg>
               </div>
-              <h3 className="text-[16px] font-medium text-[#4A1B3C]">Predict your cycle</h3>
+              <h3 className="text-[16px] font-bold text-[#4A1B3C]">Predict your cycle</h3>
               <p className="text-[14px] text-gray-500 leading-relaxed">
-                Luna learns from your history and predicts your next period, fertile window, and ovulation day — getting more accurate every month.
+                Luna learns from your history to predict your next period, ovulation day, and fertile windows with increasing precision every month.
               </p>
             </div>
 
-            {/* Card 2 */}
-            <div className="flex flex-col gap-4 items-start">
+            {/* Card 2: AI Chat */}
+            <div className="flex flex-col gap-4 items-start p-6 rounded-2xl bg-white border border-gray-100 hover:border-[#8b5cf6]/30 hover:shadow-sm transition-all duration-300">
               <div className="w-12 h-12 rounded-xl bg-[#8b5cf6]/10 flex items-center justify-center text-[#8b5cf6]">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
-              <h3 className="text-[16px] font-medium text-[#4A1B3C]">Chat with Luna AI</h3>
+              <h3 className="text-[16px] font-bold text-[#4A1B3C]">Chat with Luna AI</h3>
               <p className="text-[14px] text-gray-500 leading-relaxed">
-                Ask anything — what to eat, why you feel tired, whether your symptoms are normal. Luna knows your cycle data and gives personalised answers.
+                Ask wellness or symptom questions. Luna knows your cycle history securely and gives customized, biology-backed answers.
               </p>
             </div>
 
-            {/* Card 3 */}
-            <div className="flex flex-col gap-4 items-start">
+            {/* Card 3: Privacy */}
+            <div className="flex flex-col gap-4 items-start p-6 rounded-2xl bg-white border border-gray-100 hover:border-[#14b8a6]/30 hover:shadow-sm transition-all duration-300">
               <div className="w-12 h-12 rounded-xl bg-[#14b8a6]/10 flex items-center justify-center text-[#14b8a6]">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <h3 className="text-[16px] font-medium text-[#4A1B3C]">Private by design</h3>
+              <h3 className="text-[16px] font-bold text-[#4A1B3C]">Private by design</h3>
               <p className="text-[14px] text-gray-500 leading-relaxed">
-                Your health data never trains AI models. Conversations are ephemeral. You can export or delete everything in one tap.
+                Your health records never train AI models. All chat logs are ephemeral, and you can export or delete everything with one tap.
+              </p>
+            </div>
+
+            {/* Card 4: Hydration Tracker */}
+            <div className="flex flex-col gap-4 items-start p-6 rounded-2xl bg-white border border-gray-100 hover:border-[#3b82f6]/30 hover:shadow-sm transition-all duration-300">
+              <div className="w-12 h-12 rounded-xl bg-[#3b82f6]/10 flex items-center justify-center text-[#3b82f6]">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.4 15a8.3 8.3 0 01-14.8 0c-1.8-3.3.6-7.3 2.1-9.3.9-1.2 2.7-1.2 3.6 0 1.5 2 3.9 6 2.1 9.3z" />
+                </svg>
+              </div>
+              <h3 className="text-[16px] font-bold text-[#4A1B3C]">Cycle-Aware Hydration</h3>
+              <p className="text-[14px] text-gray-500 leading-relaxed">
+                Stay hydrated with dynamic daily goals calculated automatically based on the biological demands of your current phase.
+              </p>
+            </div>
+
+            {/* Card 5: Real-time Browser Push Notifications */}
+            <div className="flex flex-col gap-4 items-start p-6 rounded-2xl bg-white border border-gray-100 hover:border-[#f59e0b]/30 hover:shadow-sm transition-all duration-300">
+              <div className="w-12 h-12 rounded-xl bg-[#f59e0b]/10 flex items-center justify-center text-[#f59e0b]">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </div>
+              <h3 className="text-[16px] font-bold text-[#4A1B3C]">Real-time Browser Push</h3>
+              <p className="text-[14px] text-gray-500 leading-relaxed">
+                Receive direct updates for period warnings, fertility shifts, and daily logging reminders — even when the app is closed.
+              </p>
+            </div>
+
+            {/* Card 6: Streaks & Milestones */}
+            <div className="flex flex-col gap-4 items-start p-6 rounded-2xl bg-white border border-gray-100 hover:border-[#10b981]/30 hover:shadow-sm transition-all duration-300">
+              <div className="w-12 h-12 rounded-xl bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="text-[16px] font-bold text-[#4A1B3C]">Streak & Habits Tracking</h3>
+              <p className="text-[14px] text-gray-500 leading-relaxed">
+                Encourage consistent tracking with interactive logging streaks and share milestone celebrations as you build better health insights.
               </p>
             </div>
           </div>

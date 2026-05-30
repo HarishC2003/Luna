@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, ReactNode } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 
 interface ModalProps {
@@ -7,60 +7,62 @@ interface ModalProps {
   onClose: () => void
   title: string
   children: ReactNode
+  size?: 'sm' | 'md' | 'lg' | 'full'
 }
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
-  const [mounted, setMounted] = useState(false)
+export default function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+  const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMounted(true)
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
-      const timer = setTimeout(() => setMounted(false), 300)
-      return () => clearTimeout(timer)
     }
+    return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
-  if (!mounted) return null
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [onClose])
+
+  if (!isOpen) return null
+
+  const maxWidths = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', full: 'max-w-full' }
 
   return (
-    <div 
-      className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all duration-300 ${
-        isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}
-      onClick={onClose}
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+      onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
     >
-      {/* Backdrop with blur */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300" />
-      
-      {/* Modal content */}
-      <div 
-        className={`relative bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto transition-transform duration-300 ${
-          isOpen ? 'translate-y-0' : 'translate-y-full sm:translate-y-8'
-        }`}
-        onClick={(e) => e.stopPropagation()}
+      <div
+        className={`animate-slide-up bg-white w-full ${maxWidths[size]} rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[90vh] flex flex-col`}
+        style={{ boxShadow: '0 25px 60px rgba(0,0,0,0.2)' }}
       >
-        {/* Handle bar for mobile */}
-        <div className="sm:hidden flex justify-center pt-3 pb-1">
-          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+        {/* Mobile drag handle */}
+        <div className="sm:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+          <div className="w-10 h-1 bg-gray-300 rounded-full" />
         </div>
 
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-3xl z-10">
-          <h2 className="text-xl font-bold text-[#4A1B3C]">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors active:scale-95 text-gray-500 hover:text-gray-800"
+            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors active:scale-95"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6">
+        {/* Scrollable content */}
+        <div className="overflow-y-auto flex-1 p-6">
           {children}
         </div>
       </div>

@@ -66,12 +66,12 @@ export async function GET(
     // 2. Get current prediction
     const prediction = await getPrediction(profile.id);
 
-    // 3. Get recent mood trend (last 7 days) — just the general trend, not specific moods
+    // 3. Get recent mood trend (last 7 days) and core daily log data safely
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const { data: recentLogs } = await adminSupabase
       .from('daily_logs')
-      .select('mood, energy, log_date')
+      .select('id, mood, energy, flow, symptoms, log_date')
       .eq('user_id', profile.id)
       .gte('log_date', sevenDaysAgo.toISOString().split('T')[0])
       .order('log_date', { ascending: false });
@@ -111,6 +111,7 @@ export async function GET(
       supportTips: insights.tips,
       whatToExpect: insights.whatToExpect,
       dosDonts: insights.dosDonts,
+      recentLogs: recentLogs || [],
     });
   } catch (error) {
     console.error('Partner insights error:', error);

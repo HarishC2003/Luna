@@ -39,6 +39,7 @@ export default function PrivacyPage() {
   const [partnerEnabled, setPartnerEnabled] = useState(false);
   const [partnerToken, setPartnerToken] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [partnerToggling, setPartnerToggling] = useState<'generating' | 'disabling' | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -80,7 +81,9 @@ export default function PrivacyPage() {
   }, [fetchData, fetchReports]);
 
   const handleTogglePartnerShare = async () => {
+    if (partnerToggling) return;
     const newEnabled = !partnerEnabled;
+    setPartnerToggling(newEnabled ? 'generating' : 'disabling');
     try {
       const res = await fetch('/api/profile/partner-share', {
         method: 'PATCH',
@@ -94,6 +97,8 @@ export default function PrivacyPage() {
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setPartnerToggling(null);
     }
   };
 
@@ -285,13 +290,30 @@ export default function PrivacyPage() {
               Share a read-only view of your cycle insights with a partner. They&apos;ll see your current phase and helpful tips — not your raw health data or notes.
             </p>
             
-            <div className="flex items-center justify-between bg-[#FDF8FA] p-4 rounded-2xl border border-[#E85D9A]/10 mb-4 hover:border-[#E85D9A]/30 transition-colors cursor-pointer" onClick={handleTogglePartnerShare}>
-              <span className="text-[15px] font-bold text-[#4A1B3C]">Enable Partner Link</span>
+            <div 
+              className={`flex items-center justify-between bg-[#FDF8FA] p-4 rounded-2xl border border-[#E85D9A]/10 mb-4 hover:border-[#E85D9A]/30 transition-colors ${partnerToggling ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}`} 
+              onClick={partnerToggling ? undefined : handleTogglePartnerShare}
+            >
+              <div className="flex flex-col">
+                <span className="text-[15px] font-bold text-[#4A1B3C]">
+                  {partnerToggling === 'generating' 
+                    ? 'Generating...' 
+                    : partnerToggling === 'disabling' 
+                      ? 'Disabling...' 
+                      : 'Enable Partner Link'}
+                </span>
+                {partnerToggling && (
+                  <span className="text-xs text-[#E85D9A] animate-pulse">
+                    {partnerToggling === 'generating' ? 'Please wait, generating link...' : 'Please wait, disabling link...'}
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
+                disabled={!!partnerToggling}
                 className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                   partnerEnabled ? 'bg-gradient-to-r from-[#E85D9A] to-[#D93F7D] shadow-inner' : 'bg-gray-200'
-                }`}
+                } ${partnerToggling ? 'opacity-50 cursor-not-allowed' : ''}`}
                 role="switch"
                 aria-checked={partnerEnabled}
               >

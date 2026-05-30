@@ -6,6 +6,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/Toast';
 import { Skeleton } from '@/components/ui/Skeleton';
+import NotificationSettings from '@/components/notifications/NotificationSettings';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -295,19 +296,11 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <h3 className="text-xl font-bold text-[#4A1B3C] mb-4 flex items-center justify-between">
-              Push Notifications
-              {!isSupported ? (
-                <span className="text-xs text-red-500 font-normal">Not Supported</span>
-              ) : isSubscribed ? (
-                <button type="button" onClick={unsubscribe} disabled={pushLoading} className="text-xs px-3 py-1 bg-gray-200 rounded-full text-[#4A1B3C] font-bold">Disable</button>
-              ) : (
-                <button type="button" onClick={subscribe} disabled={pushLoading} className="text-xs px-3 py-1 bg-[#E85D9A] text-white rounded-full font-bold">Enable Now</button>
-              )}
-            </h3>
+            <h3 className="text-xl font-bold text-[#4A1B3C] mb-4">Push Notifications</h3>
+            <NotificationSettings />
             {isSubscribed && (
-              <div className="space-y-3 mb-4">
-                <button type="button" onClick={handleTestPush} className="w-full p-2 border border-dashed border-[#E85D9A] text-[#E85D9A] font-bold rounded-xl text-center text-sm">Send Test Notification</button>
+              <div className="space-y-3 mt-4">
+                <button type="button" onClick={handleTestPush} className="w-full p-2 border border-dashed border-[#E85D9A] text-[#E85D9A] font-bold rounded-xl text-center text-sm cursor-pointer">Send Test Notification</button>
                 {['push_period_reminder', 'push_fertile_window', 'push_log_reminder'].map(key => (
                   <label key={key} className="flex items-center justify-between p-3 border border-[#E85D9A]/10 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <span className="text-[#4A1B3C] font-medium capitalize">{key.replace('push_', '').replace('_', ' ')}</span>

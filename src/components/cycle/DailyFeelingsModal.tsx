@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mood, Symptom, DailyLog } from '@/types/cycle';
 
 interface Props {
@@ -34,18 +34,46 @@ export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, i
   const [mood, setMood] = useState<Mood | ''>(() => initialData?.mood || '');
   const [energy, setEnergy] = useState<number | ''>(() => initialData?.energy || '');
   const [sleepQuality, setSleepQuality] = useState<number | ''>(() => initialData?.sleep_quality || '');
-  const [stressLevel, setStressLevel] = useState<number | ''>(() => initialData?.stress_level || '');
+  const [stressLevel, setStressLevel] = useState<number | ''>(() => (initialData?.stress_level !== undefined && initialData?.stress_level !== null) ? initialData.stress_level : '');
   const [exercise, setExercise] = useState<boolean>(() => !!initialData?.exercise);
-  const [exerciseType, setExerciseType] = useState<string>(() => initialData?.exercise_type || 'none');
+  const [exerciseType, setExerciseType] = useState<string>(() => (initialData?.exercise_type && initialData.exercise_type !== 'none') ? initialData.exercise_type : 'walking');
   const [symptoms, setSymptoms] = useState<Symptom[]>(() => initialData?.symptoms || []);
   const [notes, setNotes] = useState(() => initialData?.notes || '');
-  const [waterGlasses, setWaterGlasses] = useState<number | ''>(() => (initialData as Record<string, unknown>)?.water_glasses as number ?? '');
+  const [waterGlasses, setWaterGlasses] = useState<number | ''>(() => (initialData as Record<string, unknown>)?.water_glasses as number ?? 0);
+  const [customSymptom, setCustomSymptom] = useState('');
 
-  const toggleSymptom = (s: Symptom) => {
-    if (symptoms.includes(s)) {
+  useEffect(() => {
+    if (isOpen) {
+      setDate(selectedDate || (initialData?.log_date ? initialData.log_date.split('T')[0] : todayStr));
+      setMood(initialData?.mood || '');
+      setEnergy(initialData?.energy || '');
+      setSleepQuality(initialData?.sleep_quality || '');
+      setStressLevel((initialData?.stress_level !== undefined && initialData?.stress_level !== null) ? initialData.stress_level : '');
+      setExercise(!!initialData?.exercise);
+      setExerciseType((initialData?.exercise_type && initialData.exercise_type !== 'none') ? initialData.exercise_type : 'walking');
+      setSymptoms(initialData?.symptoms || []);
+      setNotes(initialData?.notes || '');
+      setWaterGlasses((initialData as Record<string, unknown>)?.water_glasses as number ?? 0);
+      setCustomSymptom('');
+      setError(null);
+    }
+  }, [isOpen, selectedDate, initialData, todayStr]);
+
+  const toggleSymptom = (s: string) => {
+    if (symptoms.includes(s as Symptom)) {
       setSymptoms(symptoms.filter(x => x !== s));
     } else {
-      if (symptoms.length < 10) setSymptoms([...symptoms, s]);
+      if (symptoms.length < 10) setSymptoms([...symptoms, s as Symptom]);
+    }
+  };
+
+  const addCustomSymptom = () => {
+    const trimmed = customSymptom.trim().toLowerCase();
+    if (trimmed && !symptoms.includes(trimmed as Symptom)) {
+      if (symptoms.length < 10) {
+        setSymptoms([...symptoms, trimmed as Symptom]);
+      }
+      setCustomSymptom('');
     }
   };
 
@@ -59,8 +87,8 @@ export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, i
       if (mood) payload.mood = mood;
       if (energy) payload.energy = energy;
       if (sleepQuality) payload.sleep_quality = sleepQuality;
-      if (stressLevel) payload.stress_level = stressLevel;
-      if (waterGlasses !== '') payload.waterGlasses = waterGlasses;
+      if (stressLevel !== '') payload.stress_level = stressLevel;
+      if (waterGlasses !== '') payload.waterGlasses = Number(waterGlasses);
       payload.exercise = exercise;
       if (exercise) payload.exercise_type = exerciseType;
       if (symptoms.length) payload.symptoms = symptoms;
@@ -138,27 +166,63 @@ export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, i
 
         <div>
           <label className="block text-sm font-semibold text-[#4A1B3C] mb-3 uppercase tracking-wide">Stress Level</label>
-          <div className="flex gap-1">
-            {[1,2,3,4,5].map(num => (
-              <button key={num} type="button" onClick={() => setStressLevel(stressLevel === num ? '' : num)} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 ${stressLevel === num ? 'bg-red-500 text-white shadow-md transform scale-105 animate-scale-bounce' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
-                {num}
-              </button>
-            ))}
+          <div className="flex flex-col sm:flex-row gap-2 mb-2">
+            <button 
+              type="button" 
+              onClick={() => setStressLevel(stressLevel === 0 ? '' : 0)} 
+              className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 whitespace-nowrap ${stressLevel === 0 ? 'bg-green-500 text-white shadow-md animate-scale-bounce' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+            >
+              No Stress
+            </button>
+            <div className="flex flex-1 gap-1">
+              {[1,2,3,4,5].map(num => (
+                <button key={num} type="button" onClick={() => setStressLevel(stressLevel === num ? '' : num)} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${stressLevel === num ? 'bg-red-500 text-white shadow-md transform scale-105 animate-scale-bounce' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
+                  {num}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
-            <span>Low</span>
+            <span>None / Low</span>
             <span>High</span>
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-semibold text-[#4A1B3C] mb-3 uppercase tracking-wide">Symptoms</label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mb-3">
             {SYMPTOMS.map(s => (
               <button key={s} type="button" onClick={() => toggleSymptom(s)} className={`px-3 py-1.5 rounded-lg text-sm transition-all capitalize border active:scale-95 ${symptoms.includes(s) ? 'bg-[#4A1B3C] text-white border-[#4A1B3C] shadow-md animate-scale-bounce' : 'bg-white text-[#4A1B3C]/70 border-gray-200 hover:border-[#4A1B3C]/30'}`}>
                 {s.replace('_', ' ')}
               </button>
             ))}
+            {symptoms.filter(s => !SYMPTOMS.includes(s)).map(s => (
+              <button key={s} type="button" onClick={() => toggleSymptom(s)} className="px-3 py-1.5 rounded-lg text-sm transition-all capitalize border active:scale-95 bg-[#E85D9A] text-white border-[#E85D9A] shadow-md animate-scale-bounce">
+                {s.replace('_', ' ')}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 max-w-md">
+            <input 
+              type="text" 
+              placeholder="Add custom symptom..." 
+              value={customSymptom} 
+              onChange={e => setCustomSymptom(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addCustomSymptom();
+                }
+              }}
+              className="flex-1 px-4 py-2 rounded-xl border border-[#E85D9A]/20 focus:border-[#E85D9A] focus:ring-2 focus:ring-[#E85D9A]/20 outline-none text-[#4A1B3C] text-sm bg-white"
+            />
+            <button 
+              type="button" 
+              onClick={addCustomSymptom}
+              className="px-4 py-2 bg-[#E85D9A] hover:bg-[#d44d88] text-white font-bold text-sm rounded-xl transition-all"
+            >
+              Add
+            </button>
           </div>
         </div>
 
@@ -172,12 +236,23 @@ export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, i
           </div>
           
           {exercise && (
-            <div className="flex flex-wrap gap-2 animate-in slide-in-from-top-2">
-              {EXERCISE_TYPES.map(type => (
-                <button key={type} type="button" onClick={() => setExerciseType(type)} className={`px-4 py-2 rounded-xl text-sm font-medium capitalize border transition-all active:scale-95 ${exerciseType === type ? 'bg-green-500 text-white border-green-500 shadow-md animate-scale-bounce' : 'bg-white text-[#4A1B3C] border-gray-200 hover:border-gray-300'}`}>
-                  {type}
-                </button>
-              ))}
+            <div className="space-y-3 animate-in slide-in-from-top-2">
+              <div className="flex flex-wrap gap-2">
+                {['walking', 'yoga', 'gym'].map(type => (
+                  <button key={type} type="button" onClick={() => setExerciseType(type)} className={`px-4 py-2 rounded-xl text-sm font-medium capitalize border transition-all active:scale-95 ${exerciseType === type ? 'bg-green-500 text-white border-green-500 shadow-md animate-scale-bounce' : 'bg-white text-[#4A1B3C] border-gray-200 hover:border-gray-300'}`}>
+                    {type}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2 max-w-md">
+                <input 
+                  type="text" 
+                  placeholder="Or enter custom exercise..." 
+                  value={['walking', 'yoga', 'gym'].includes(exerciseType) ? '' : exerciseType} 
+                  onChange={e => setExerciseType(e.target.value)}
+                  className="flex-1 px-4 py-2 rounded-xl border border-[#E85D9A]/20 focus:border-[#E85D9A] focus:ring-2 focus:ring-[#E85D9A]/20 outline-none text-[#4A1B3C] text-sm bg-white"
+                />
+              </div>
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getPhaseDescription, CyclePhase } from '@/lib/cycle/predictor';
+import { computePrediction, getPhaseDescription, CyclePhase } from '@/lib/cycle/predictor';
 
 export async function GET() {
   try {
@@ -11,27 +11,40 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const [{ data: profile }, { data: prediction }] = await Promise.all([
+    const [profileRes, recentCyclesRes, onboardRes] = await Promise.all([
       supabase.from('profiles').select('display_name').eq('id', user.id).single(),
-      supabase.from('cycle_predictions').select('*').eq('user_id', user.id).single()
+      supabase.from('cycle_logs').select('*').eq('user_id', user.id).order('period_start', { ascending: false }).limit(6),
+      supabase.from('onboarding_data').select('*').eq('user_id', user.id).single()
     ]);
+
+    const profile = profileRes.data;
+    const recentCycles = recentCyclesRes.data || [];
+    const onboard = onboardRes.data;
 
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
     
-    // Default phase
+    // Compute accurate phase and day of cycle
     let currentPhase = 'unknown';
     let dayOfCycle = 0;
     
-    if (prediction && prediction.predicted_start) {
-      const predictedStart = new Date(prediction.predicted_start);
-      const today = new Date();
-      dayOfCycle = Math.ceil((today.getTime() - predictedStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    if (onboard) {
+      const mappedCycles = recentCycles.map((c: any) => ({
+        periodStart: new Date(c.period_start),
+        periodEnd: c.period_end ? new Date(c.period_end) : undefined,
+        cycleLength: c.cycle_length || undefined
+      }));
       
-      if (dayOfCycle >= 1 && dayOfCycle <= 5) currentPhase = 'menstrual';
-      else if (dayOfCycle > 5 && dayOfCycle <= 13) currentPhase = 'follicular';
-      else if (dayOfCycle > 13 && dayOfCycle <= 15) currentPhase = 'ovulatory';
-      else if (dayOfCycle > 15) currentPhase = 'luteal';
+      const computed = computePrediction(mappedCycles, {
+        avgCycleLength: onboard.avg_cycle_length,
+        avgPeriodLength: onboard.avg_period_length,
+        lastPeriodStart: recentCycles.length > 0 
+          ? new Date(recentCycles[0].period_start) 
+          : (onboard.last_period_start ? new Date(onboard.last_period_start) : undefined)
+      });
+      
+      currentPhase = computed.currentPhase || 'unknown';
+      dayOfCycle = computed.dayOfCycle || 0;
     }
 
     const phaseTips: Record<string, { emoji: string; tip: string }> = {

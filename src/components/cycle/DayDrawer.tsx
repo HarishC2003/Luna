@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { DailyLog, CycleLog } from '@/types/cycle';
 import { MoodBar } from './MoodBar';
 import { FlowBadge } from './FlowBadge';
@@ -16,6 +17,15 @@ interface Props {
 }
 
 export function DayDrawer({ date, isOpen, onClose, dailyLog, cycleLog, onEditDaily, onEditCycle }: Props) {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -29,7 +39,7 @@ export function DayDrawer({ date, isOpen, onClose, dailyLog, cycleLog, onEditDai
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-8">
+      <div className="flex-1 overflow-y-auto p-6 space-y-8" style={{ WebkitOverflowScrolling: 'touch' }}>
         
         {/* Cycle Section */}
         <section>

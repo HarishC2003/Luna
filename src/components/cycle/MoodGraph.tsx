@@ -84,8 +84,8 @@ export function MoodGraph({ logs }: MoodGraphProps) {
   };
 
   return (
-    <div className="w-full overflow-hidden" style={{ minHeight: '260px' }}>
-      <svg viewBox={`0 0 ${width} ${height + 20}`} className="w-full h-full overflow-visible">
+    <div className="w-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-pink-200" style={{ minHeight: '260px' }}>
+      <svg viewBox={`0 0 ${width} ${height + 20}`} className="w-full h-full overflow-visible min-w-[650px] sm:min-w-0">
         <defs>
           <linearGradient id="moodGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#E85D9A" stopOpacity="0.4" />

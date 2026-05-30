@@ -98,60 +98,177 @@ export default function HistoryPage() {
             description="You haven't logged any daily feelings in the last 30 days."
           />
         ) : (
-          <div className="divide-y divide-[#E85D9A]/10">
-            {logs.map(log => (
-              <div key={log.id} className="p-5 sm:p-6 flex flex-col sm:flex-row gap-4 hover:bg-[#FDF8F9] transition-colors">
-                <div className="sm:w-32 flex-shrink-0 pt-1">
-                  <span className="font-bold text-[#4A1B3C]">
-                    {new Date(log.log_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                  </span>
-                </div>
-                
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-4">
-                      {log.mood && <div className="flex items-center gap-3"><span className="w-16 text-xs uppercase font-semibold text-[#4A1B3C]/40">Mood</span><MoodBar mood={log.mood} /></div>}
-                      {log.energy && <div className="flex items-center gap-3"><span className="w-16 text-xs uppercase font-semibold text-[#4A1B3C]/40">Energy</span><div className="flex gap-1">{Array.from({length: 5}).map((_, i) => <span key={i} className={i < log.energy! ? 'text-lg active-bolt drop-shadow-sm' : 'text-lg grayscale opacity-30'}>⚡</span>)}</div></div>}
-                  </div>
-                  <div className="space-y-4">
-                      {log.flow && <div className="flex items-center gap-3"><span className="w-16 text-xs uppercase font-semibold text-[#4A1B3C]/40">Flow</span><FlowBadge flow={log.flow} /></div>}
-                      {log.symptoms && log.symptoms.length > 0 && <div className="flex flex-col gap-2"><span className="text-xs uppercase font-semibold text-[#4A1B3C]/40 block">Symptoms</span><SymptomChips symptoms={log.symptoms} /></div>}
-                  </div>
-                </div>
+          <div className="space-y-6 p-4 sm:p-6 bg-gray-50/50">
+            {logs.map(log => {
+              const d = new Date(log.log_date);
+              const weekday = d.toLocaleDateString(undefined, { weekday: 'short' });
+              const day = d.toLocaleDateString(undefined, { day: 'numeric' });
+              const monthYear = d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
 
-                <div className="flex sm:flex-col gap-2 justify-center sm:pl-4 sm:border-l border-[#E85D9A]/10">
-                   {isDeleting === log.id ? (
-                     <div className="flex flex-col gap-2 animate-scale-in">
-                       <span className="text-[10px] font-bold text-red-500 uppercase text-center">Are you sure?</span>
-                       <div className="flex gap-2">
-                        <button onClick={() => handleDelete(log.id)} className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-                        </button>
-                        <button onClick={() => setIsDeleting(null)} className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
-                       </div>
-                     </div>
-                   ) : (
-                     <div className="flex sm:flex-col gap-2">
-                        <button 
-                          onClick={() => setEditingLog(log)}
-                          className="p-2 rounded-xl text-[#E85D9A] hover:bg-[#E85D9A]/10 transition-colors"
-                          title="Edit Log"
-                        >
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                        </button>
-                        <button 
-                          onClick={() => setIsDeleting(log.id)}
-                          className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                          title="Delete Log"
-                        >
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        </button>
-                     </div>
-                   )}
+              return (
+                <div 
+                  key={log.id} 
+                  className="bg-white rounded-3xl p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,27,60,0.02)] border border-[#E85D9A]/15 hover:border-[#E85D9A]/30 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(232,93,154,0.06)] flex flex-col gap-4 relative group"
+                >
+                  <div className="flex flex-col sm:flex-row gap-5 items-stretch w-full">
+                    {/* Date Block */}
+                    <div className="flex sm:flex-col items-baseline sm:items-center justify-between sm:justify-center gap-0.5 pb-4 sm:pb-0 sm:border-r border-[#E85D9A]/15 sm:pr-6 sm:w-28 flex-shrink-0">
+                      <span className="text-xs font-bold text-[#E85D9A] uppercase tracking-widest">{weekday}</span>
+                      <span className="text-4xl font-black text-[#4A1B3C] leading-none my-1">{day}</span>
+                      <span className="text-[11px] font-bold text-[#4A1B3C]/50">{monthYear}</span>
+                    </div>
+
+                    {/* Metrics Grid */}
+                    <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
+                      {/* Mood */}
+                      {log.mood && (
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#4A1B3C]/40 block">Mood</span>
+                          <MoodBar mood={log.mood} />
+                        </div>
+                      )}
+
+                      {/* Energy */}
+                      {log.energy !== undefined && log.energy !== null && (
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#4A1B3C]/40 block">Energy</span>
+                          <div className="flex gap-1 items-center">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <span 
+                                key={i} 
+                                className={`text-base transition-all duration-300 ${
+                                  i < log.energy! ? 'text-amber-400 drop-shadow-[0_2px_4px_rgba(251,191,36,0.3)]' : 'grayscale opacity-25'
+                                }`}
+                              >
+                                ⚡
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Sleep Quality */}
+                      {log.sleep_quality !== undefined && log.sleep_quality !== null && (
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#4A1B3C]/40 block">Sleep Quality</span>
+                          <div className="flex gap-1 items-center">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <span 
+                                key={i} 
+                                className={`text-base transition-all duration-300 ${
+                                  i < log.sleep_quality! ? 'text-indigo-500 drop-shadow-[0_2px_4px_rgba(99,102,241,0.3)]' : 'grayscale opacity-25'
+                                }`}
+                              >
+                                🌙
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Stress Level */}
+                      {log.stress_level !== undefined && log.stress_level !== null && (
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#4A1B3C]/40 block">Stress Level</span>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            log.stress_level === 0 
+                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                              : log.stress_level <= 2 
+                                ? 'bg-blue-50 text-blue-600 border border-blue-100' 
+                                : log.stress_level <= 4 
+                                  ? 'bg-amber-50 text-amber-600 border border-amber-100' 
+                                  : 'bg-rose-50 text-rose-600 border border-rose-100'
+                          }`}>
+                            {log.stress_level === 0 ? '🍃 No Stress' : `Level ${log.stress_level}`}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Hydration */}
+                      {log.water_glasses !== undefined && log.water_glasses !== null && (
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#4A1B3C]/40 block">Hydration</span>
+                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">
+                            💧 {log.water_glasses} {log.water_glasses === 1 ? 'glass' : 'glasses'}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Exercise */}
+                      {log.exercise && log.exercise_type && log.exercise_type !== 'none' && (
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#4A1B3C]/40 block">Exercise</span>
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-green-600 bg-green-50 px-2.5 py-0.5 rounded-full border border-green-100 capitalize">
+                            🏃‍♀️ {log.exercise_type}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Flow */}
+                      {log.flow && log.flow !== 'none' && (
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#4A1B3C]/40 block">Flow</span>
+                          <FlowBadge flow={log.flow} />
+                        </div>
+                      )}
+
+                      {/* Symptoms */}
+                      {log.symptoms && log.symptoms.length > 0 && (
+                        <div className="space-y-1 col-span-2 md:col-span-3">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#4A1B3C]/40 block mb-1">Symptoms</span>
+                          <SymptomChips symptoms={log.symptoms} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions Side */}
+                    <div className="flex sm:flex-col gap-2 justify-center sm:pl-4 sm:border-l border-[#E85D9A]/15 sm:w-16 flex-shrink-0">
+                      {isDeleting === log.id ? (
+                        <div className="flex flex-col gap-1.5 items-center justify-center animate-scale-in">
+                          <span className="text-[9px] font-black text-red-500 uppercase">Confirm?</span>
+                          <div className="flex gap-1.5">
+                            <button onClick={() => handleDelete(log.id)} className="p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 active:scale-95 transition-colors shadow-sm">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+                            </button>
+                            <button onClick={() => setIsDeleting(null)} className="p-1.5 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 active:scale-95 transition-colors">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex sm:flex-col gap-1.5 justify-center opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <button 
+                            onClick={() => setEditingLog(log)}
+                            className="p-2 rounded-xl text-[#E85D9A] hover:bg-[#E85D9A]/10 active:scale-95 transition-all"
+                            title="Edit Log"
+                          >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                          </button>
+                          <button 
+                            onClick={() => setIsDeleting(log.id)}
+                            className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 active:scale-95 transition-all"
+                            title="Delete Log"
+                          >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Journal Notes at bottom if present */}
+                  {log.notes && (
+                    <div className="w-full border-t border-[#E85D9A]/10 pt-3 flex flex-col gap-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#4A1B3C]/40">Journal Note</span>
+                      <div className="p-3 bg-[#FDF8F9]/60 rounded-2xl border-l-4 border-[#E85D9A] text-sm text-[#4A1B3C] italic relative">
+                        <span className="absolute top-1 left-2 text-3xl text-[#E85D9A]/10 font-serif leading-none">“</span>
+                        <p className="pl-4 pr-2 font-medium leading-relaxed">{log.notes}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

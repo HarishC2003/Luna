@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { Heart, Calendar, TrendingUp, Lightbulb } from 'lucide-react'
+import { MoodBar } from '@/components/cycle/MoodBar'
+import { FlowBadge } from '@/components/cycle/FlowBadge'
+import { SymptomChips } from '@/components/cycle/SymptomChips'
+import { DailyLog } from '@/types/cycle'
 
 interface PartnerInsights {
   displayName: string
@@ -17,6 +21,7 @@ interface PartnerInsights {
     dos: string[]
     donts: string[]
   }
+  recentLogs?: DailyLog[]
 }
 
 export default function PartnerInsightsPage({ params }: { params: Promise<{ token: string }> }) {
@@ -129,6 +134,71 @@ export default function PartnerInsightsPage({ params }: { params: Promise<{ toke
             </div>
           </div>
         </div>
+
+        {/* Recent Daily Logs (Real Data) */}
+        {insights.recentLogs && insights.recentLogs.length > 0 && (
+          <div className="bg-white rounded-3xl p-6 shadow-md border border-pink-100">
+            <div className="flex items-center gap-3 mb-6 border-b border-pink-50 pb-4">
+              <div className="p-3 bg-pink-100 rounded-xl">
+                <Heart className="text-[#E85D9A] w-6 h-6 fill-[#E85D9A]" />
+              </div>
+              <h2 className="text-xl font-bold text-[#4A1B3C]">Recent Daily Logs</h2>
+            </div>
+            
+            <div className="divide-y divide-[#E85D9A]/10 max-h-[360px] overflow-y-auto pr-2 scrollbar-thin">
+              {insights.recentLogs.map((log) => (
+                <div key={log.id} className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center animate-fade-in">
+                  <div className="sm:w-32 flex-shrink-0">
+                    <span className="font-bold text-[#4A1B3C]">
+                      {new Date(log.log_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                  
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                    <div className="space-y-3">
+                      {log.mood && (
+                        <div className="flex items-center gap-3">
+                          <span className="w-16 text-xs uppercase font-semibold text-[#4A1B3C]/40">Mood</span>
+                          <MoodBar mood={log.mood} />
+                        </div>
+                      )}
+                      {log.energy && (
+                        <div className="flex items-center gap-3">
+                          <span className="w-16 text-xs uppercase font-semibold text-[#4A1B3C]/40">Energy</span>
+                          <div className="flex gap-1">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <span 
+                                key={i} 
+                                className={i < log.energy! ? 'text-lg active-bolt drop-shadow-sm' : 'text-lg grayscale opacity-30'}
+                              >
+                                ⚡
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {log.flow && log.flow !== 'none' && (
+                        <div className="flex items-center gap-3">
+                          <span className="w-16 text-xs uppercase font-semibold text-[#4A1B3C]/40">Flow</span>
+                          <FlowBadge flow={log.flow} />
+                        </div>
+                      )}
+                      {log.symptoms && log.symptoms.length > 0 && (
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-xs uppercase font-semibold text-[#4A1B3C]/40 block">Symptoms</span>
+                          <SymptomChips symptoms={log.symptoms} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Support Tips */}
         <div className="bg-white rounded-3xl p-6 shadow-md border border-amber-100">

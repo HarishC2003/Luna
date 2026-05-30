@@ -1,43 +1,78 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { apiLimiter } from '@/lib/rate-limit/limiter';
-import { pushSubscriptionSchema } from '@/lib/validations/settings';
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { sendPushToUser } from '@/lib/notifications/push-server'
+import { z } from 'zod'
 
-export async function POST(request: Request) {
+const subscriptionSchema = z.object({
+  endpoint: z.string().url(),
+  keys: z.object({
+    p256dh: z.string(),
+    auth: z.string(),
+  }),
+})
+
+export async function POST(request: Request): Promise<Response> {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { success } = await apiLimiter.limit(user.id);
-    if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
-
-    const body = await request.json();
-    const parsed = pushSubscriptionSchema.safeParse(body);
-    
-    if (!parsed.success) {
-      return NextResponse.json({ error: 'Validation failed', fields: parsed.error.flatten() }, { status: 400 });
+    const body = await request.json()
+    const validated = subscriptionSchema.safeParse(body)
+    if (!validated.success) {
+      return Response.json({ error: 'Invalid subscription' }, { status: 400 })
     }
 
-    const admin = createAdminClient();
+    const adminSupabase = createAdminClient()
 
-    // Ensure notification settings exist
-    const { data: settings } = await admin.from('notification_settings').select('id').eq('user_id', user.id).maybeSingle();
-    if (!settings) {
-      await admin.from('notification_settings').insert({ user_id: user.id });
+    const { error } = await adminSupabase
+      .from('push_subscriptions')
+      .upsert({
+        user_id: user.id,
+        endpoint: validated.data.endpoint,
+        p256dh: validated.data.keys.p256dh,
+        auth: validated.data.keys.auth,
+        active: true,
+        created_at: new Date().toISOString(),
+      }, { onConflict: 'endpoint' })
+
+    if (error) {
+      console.error('Database subscription upsert error:', error)
+      return Response.json({ error: 'Failed to save subscription' }, { status: 500 })
     }
 
-    await admin.from('push_subscriptions').upsert({
-      user_id: user.id,
-      endpoint: parsed.data.endpoint,
-      p256dh: parsed.data.p256dh,
-      auth_key: parsed.data.auth,
-      user_agent: parsed.data.userAgent || null
-    }, { onConflict: 'endpoint' });
+    // Send welcome notification immediately
+    await sendPushToUser(user.id, {
+      title: 'Luna notifications are ON 🌸',
+      body: "You'll get period reminders, fertile window alerts, and daily check-ins.",
+      url: '/dashboard',
+      tag: 'welcome',
+    })
 
-    return NextResponse.json({ message: 'Push notifications enabled' }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return Response.json({ message: 'Subscribed successfully' })
+  } catch (error) {
+    console.error('Subscribe error:', error)
+    return Response.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request): Promise<Response> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { endpoint } = await request.json()
+    const adminSupabase = createAdminClient()
+
+    await adminSupabase
+      .from('push_subscriptions')
+      .update({ active: false })
+      .eq('user_id', user.id)
+      .eq('endpoint', endpoint)
+
+    return Response.json({ message: 'Unsubscribed' })
+  } catch (error) {
+    return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
