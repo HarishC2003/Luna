@@ -25,7 +25,8 @@ export async function POST(_request: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { success } = await testPushLimiter.limit(user.id);
+    const isDev = process.env.NODE_ENV === 'development';
+    const { success } = isDev ? { success: true } : await testPushLimiter.limit(user.id);
     if (!success) return NextResponse.json({ error: 'Too many requests. Allow 1 test per hour.' }, { status: 429 });
 
     const result = await sendPushNotification(user.id, 'test_notification', {
