@@ -104,29 +104,22 @@ export async function runDailyNotifications(): Promise<{ sent: number; failed: n
         }
       }
 
-      // Check check-in (e.g. at 9AM or whatever hour they want it, but if user wants push notifications)
-      if (settings.push_period_reminder || settings.push_fertile_window) { // Assume if they want pushes, send check-in at their notify hour
-        // For simplicity, we send check-in push if it's their notify hour and they haven't answered
-        const todayStr = new Date().toISOString().split('T')[0];
-        const { data: todayLog } = await admin.from('daily_logs').select('id').eq('user_id', userId).eq('log_date', todayStr).maybeSingle();
-        
-        if (!todayLog) {
-          // They haven't logged anything today = check-in unanswered
+      // Check check-in log reminder (every day at their custom notify hour if they want daily reminders)
+      if (settings.push_log_reminder) {
+        const { data: checkinLogs } = await admin.from('notification_log')
+          .select('id').eq('user_id', userId).eq('notification_type', 'daily_checkin')
+          .gte('sent_at', new Date(new Date().setHours(0,0,0,0)).toISOString());
+          
+        if (!checkinLogs || checkinLogs.length === 0) {
           const ctx = await buildUserHealthContext(userId);
           const checkin = generateCheckinQuestion(ctx);
           
-          const { data: checkinLogs } = await admin.from('notification_log')
-            .select('id').eq('user_id', userId).eq('notification_type', 'daily_checkin')
-            .gte('sent_at', new Date(new Date().setHours(0,0,0,0)).toISOString());
-            
-          if (!checkinLogs || checkinLogs.length === 0) {
-            const res = await sendPushNotification(userId, 'daily_checkin', {
-              title: 'Luna check-in',
-              body: checkin.question,
-              url: '/dashboard?checkin=true'
-            });
-            if (res) { sent++; } else { failed++; }
-          }
+          const res = await sendPushNotification(userId, 'daily_checkin', {
+            title: 'Luna Daily Check-in 🌸',
+            body: checkin?.question || "It's time to log your symptoms and check in with your body today.",
+            url: '/dashboard?checkin=true'
+          });
+          if (res) { sent++; } else { failed++; }
         }
       }
 
