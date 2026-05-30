@@ -1,11 +1,26 @@
 import webpush from 'web-push'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-webpush.setVapidDetails(
-  process.env.VAPID_EMAIL!,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
+let isVapidInitialized = false
+
+function initVapid() {
+  if (isVapidInitialized) return
+  const email = process.env.VAPID_EMAIL
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  const privateKey = process.env.VAPID_PRIVATE_KEY
+
+  if (!email || !publicKey || !privateKey) {
+    console.warn('VAPID environment variables are missing. Push notifications might not work.')
+    return
+  }
+
+  try {
+    webpush.setVapidDetails(email, publicKey, privateKey)
+    isVapidInitialized = true
+  } catch (err) {
+    console.error('Failed to set VAPID details:', err)
+  }
+}
 
 export interface PushPayload {
   title: string
@@ -19,6 +34,7 @@ export async function sendPushToUser(
   userId: string,
   payload: PushPayload
 ): Promise<{ sent: number; failed: number }> {
+  initVapid()
   const adminSupabase = createAdminClient()
 
   const { data: subscriptions } = await adminSupabase
