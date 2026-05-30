@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/Toast';
@@ -48,7 +49,8 @@ export default function ProfilePage() {
   const [settings, setSettings] = useState<UserSettings>({});
   // Privacy Summary (only for account deletion status)
   const [privacy, setPrivacy] = useState<PrivacySummary>({});
-
+  
+  const { isSubscribed } = usePushNotifications();
   const [deletionPhrase, setDeletionPhrase] = useState('');
 
   const fetchData = useCallback(async () => {
