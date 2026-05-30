@@ -20,7 +20,6 @@ const MOODS: { val: Mood, icon: string, label: string }[] = [
 ];
 
 const SYMPTOMS: Symptom[] = ['cramps', 'headache', 'bloating', 'breast_tenderness', 'fatigue', 'acne', 'back_pain', 'nausea', 'mood_swings', 'insomnia'];
-const EXERCISE_TYPES = ['walking', 'yoga', 'gym', 'none'] as const;
 
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';

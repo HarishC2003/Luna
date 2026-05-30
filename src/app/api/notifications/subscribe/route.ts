@@ -72,7 +72,7 @@ export async function DELETE(request: Request): Promise<Response> {
       .eq('endpoint', endpoint)
 
     return Response.json({ message: 'Unsubscribed' })
-  } catch (error) {
+  } catch (_error) {
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

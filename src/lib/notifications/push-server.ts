@@ -46,14 +46,10 @@ export async function sendPushToUser(
     try {
       await webpush.sendNotification(pushSubscription, JSON.stringify(payload))
       sent++
-    } catch (error: any) {
+    } catch (error) {
       failed++
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'statusCode' in error &&
-        (error.statusCode === 404 || error.statusCode === 410)
-      ) {
+      const err = error as { statusCode?: number }
+      if (err && (err.statusCode === 404 || err.statusCode === 410)) {
         // Subscription is expired or invalid — deactivate it
         await adminSupabase
           .from('push_subscriptions')

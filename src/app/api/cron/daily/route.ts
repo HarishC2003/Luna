@@ -40,7 +40,7 @@ export async function GET(request: Request): Promise<Response> {
       const recentCycles = recentCyclesRes.data || []
       if (!onboard) continue
 
-      const mappedCycles = recentCycles.map((c: any) => ({
+      const mappedCycles = recentCycles.map((c: { period_start: string; period_end: string | null; cycle_length: number | null }) => ({
         periodStart: new Date(c.period_start),
         periodEnd: c.period_end ? new Date(c.period_end) : undefined,
         cycleLength: c.cycle_length || undefined
