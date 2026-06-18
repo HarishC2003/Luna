@@ -8,8 +8,17 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger daily notifications
-        run: |
-          curl -X GET \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            ${{ secrets.NEXT_PUBLIC_APP_URL }}/api/cron/daily
+      - name: Checkout codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run hardened daily cron trigger
+        env:
+          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          DEBUG: "true"
+        run: node scripts/trigger-cron.mjs
