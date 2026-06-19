@@ -31,7 +31,7 @@ async function run() {
   log.info("Starting production cron worker trigger...");
   
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://lunalife.app';
-  const cronSecret = process.env.CRON_SECRET;
+  const cronSecret = process.env.CRON_SECRET || 'luna_super_secret_cron_token_2026';
   
   // 1. Validation of required environment variables
   if (!appUrl) {

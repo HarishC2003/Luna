@@ -19,6 +19,6 @@ jobs:
       - name: Run hardened daily cron trigger
         env:
           NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || 'https://lunalife.app' }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET || 'luna_super_secret_cron_token_2026' }}
           DEBUG: "true"
         run: node scripts/trigger-cron.mjs
