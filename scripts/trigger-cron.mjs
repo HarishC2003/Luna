@@ -96,6 +96,7 @@ async function run() {
           'Authorization': `Bearer ${cronSecret}`,
           'Accept': 'application/json'
         },
+        redirect: 'error',
         signal: controller.signal
       });
       clearTimeout(timeoutId);
@@ -105,14 +106,20 @@ async function run() {
       log.info(`Attempt ${attempt} response status: ${status} (took ${duration}ms)`);
       
       if (res.ok) {
-        const text = await res.text();
-        log.debug(`Attempt ${attempt} raw response: ${text}`);
-        try {
-          responseData = JSON.parse(text);
-          success = true;
-        } catch (jsonErr) {
-          log.warn(`Response was not valid JSON: ${text.substring(0, 200)}`);
-          lastError = jsonErr instanceof Error ? jsonErr : new Error(String(jsonErr));
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          log.warn(`Response was not application/json: ${contentType}`);
+          lastError = new Error(`Expected JSON response, got: ${contentType}`);
+        } else {
+          const text = await res.text();
+          log.debug(`Attempt ${attempt} raw response: ${text}`);
+          try {
+            responseData = JSON.parse(text);
+            success = true;
+          } catch (jsonErr) {
+            log.warn(`Response was not valid JSON: ${text.substring(0, 200)}`);
+            lastError = jsonErr instanceof Error ? jsonErr : new Error(String(jsonErr));
+          }
         }
       } else {
         const text = await res.text();
