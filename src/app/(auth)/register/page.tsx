@@ -201,7 +201,7 @@ export default function RegisterPage() {
             </Link>
           </p>
           <p className="text-xs text-[#4A1B3C]/60">
-            Didn't receive an email?{' '}
+            Didn&apos;t receive an email?{' '}
             <Link href="/resend-verification" className="text-[#E85D9A] hover:underline">
               Resend verification link
             </Link>

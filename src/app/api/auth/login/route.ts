@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     if (signInError || !signInData.user) {
       const adminClient = createAdminClient();
       await adminClient.from('auth_logs').insert({ event_type: 'login', ip_address: ip, success: false, metadata: { reason: 'Invalid credentials', email } });
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+      return NextResponse.json({ error: 'User not found, please register' }, { status: 401 });
     }
 
     const userId = signInData.user.id;

@@ -32,20 +32,44 @@ export async function POST(request: Request) {
     }
 
     // Create user in Supabase auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    const { data: initialAuthData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true, // We handle verification manually
       user_metadata: { display_name: displayName }
     });
 
-    if (authError || !authData.user) {
-      await supabase.from('auth_logs').insert({ event_type: 'register', ip_address: ip, success: false, metadata: { reason: authError?.message } });
-      
+    let authData = initialAuthData;
+
+    if (authError || !initialAuthData.user) {
       if (authError?.message?.includes('already been registered')) {
-        return NextResponse.json({ error: 'Email already exists' }, { status: 409 });
+        // Orphan user detected (exists in auth.users but not in profiles)
+        const { data: usersData } = await supabase.auth.admin.listUsers();
+        const orphan = usersData?.users?.find(u => u.email === email);
+        
+        if (orphan) {
+          await supabase.auth.admin.deleteUser(orphan.id);
+          
+          // Retry createUser
+          const { data: retryData, error: retryError } = await supabase.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: { display_name: displayName }
+          });
+          
+          if (retryError || !retryData.user) {
+            await supabase.from('auth_logs').insert({ event_type: 'register', ip_address: ip, success: false, metadata: { reason: retryError?.message } });
+            return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+          }
+          authData = retryData; // Successfully recreated
+        } else {
+          return NextResponse.json({ error: 'Email already exists' }, { status: 409 });
+        }
+      } else {
+        await supabase.from('auth_logs').insert({ event_type: 'register', ip_address: ip, success: false, metadata: { reason: authError?.message } });
+        return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
       }
-      return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
     }
 
     const userId = authData.user.id;
