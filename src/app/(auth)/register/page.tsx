@@ -193,12 +193,20 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-[#4A1B3C]/70">
-          Already have an account?{' '}
-          <Link href="/login" className="text-[#E85D9A] hover:underline font-medium">
-            Sign in
-          </Link>
-        </p>
+        <div className="mt-8 space-y-3 text-center">
+          <p className="text-sm text-[#4A1B3C]/70">
+            Already have an account?{' '}
+            <Link href="/login" className="text-[#E85D9A] hover:underline font-medium">
+              Sign in
+            </Link>
+          </p>
+          <p className="text-xs text-[#4A1B3C]/60">
+            Didn't receive an email?{' '}
+            <Link href="/resend-verification" className="text-[#E85D9A] hover:underline">
+              Resend verification link
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
