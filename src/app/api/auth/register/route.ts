@@ -75,7 +75,16 @@ export async function POST(request: Request) {
     });
 
     // Send email
-    const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`;
+    const reqUrl = new URL(request.url);
+    const origin = reqUrl.origin;
+    let appUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
+    
+    // Fix for Vercel: If env var is mistakenly left as localhost in production, use the actual request origin
+    if (appUrl.includes('localhost') && !origin.includes('localhost')) {
+      appUrl = origin;
+    }
+
+    const verifyUrl = `${appUrl}/verify-email?token=${token}`;
     const { html, text } = verificationEmail({ displayName, verifyUrl });
 
     try {
