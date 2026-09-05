@@ -48,7 +48,7 @@ export default function CyclesPage() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching on mount is a standard pattern
+     
     fetchCycles();
   }, [fetchCycles]);
 

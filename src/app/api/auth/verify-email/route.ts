@@ -28,12 +28,24 @@ export async function POST(request: Request) {
       .eq('token_hash', hashed)
       .single();
 
-    if (!tokenRecord || tokenRecord.used_at || new Date(tokenRecord.expires_at) < new Date()) {
+    if (!tokenRecord || new Date(tokenRecord.expires_at) < new Date()) {
       await supabase.from('auth_logs').insert({ event_type: 'verify_email', ip_address: ip, success: false, metadata: { reason: 'Invalid or expired token' } });
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 400 });
     }
 
     const userId = tokenRecord.user_id;
+
+    if (tokenRecord.used_at) {
+      // It might be a double click or React 18 strict mode double fetch.
+      // Check if the user is actually already verified.
+      const { data: profile } = await supabase.from('profiles').select('email_verified_at').eq('id', userId).single();
+      if (profile?.email_verified_at) {
+        return NextResponse.json({ message: 'Email verified successfully' }, { status: 200 });
+      }
+      
+      await supabase.from('auth_logs').insert({ event_type: 'verify_email', ip_address: ip, success: false, metadata: { reason: 'Token already used' } });
+      return NextResponse.json({ error: 'Token already used' }, { status: 400 });
+    }
 
     // Update profile
     await supabase.from('profiles').update({ email_verified_at: new Date().toISOString() }).eq('id', userId);

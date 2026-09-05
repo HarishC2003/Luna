@@ -133,7 +133,7 @@ export function computePrediction(cyclesInput: CycleInput[], onboarding: Onboard
     confidence = 0.50;
   } else if (numCycles >= 3 && numCycles <= 5) {
     // Case D
-    let weights = [0.4, 0.3, 0.2, 0.1].slice(0, numCycles);
+    let weights = [0.35, 0.25, 0.20, 0.12, 0.08].slice(0, numCycles);
     const sumW = weights.reduce((a, b) => a + b, 0);
     weights = weights.map(w => w / sumW);
     let weightedSum = 0;

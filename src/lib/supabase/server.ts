@@ -1,9 +1,16 @@
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { Database } from '@/types/database';
 
 export async function createClient() {
   const cookieStore = await cookies();
+  const headersList = await headers();
+  const authHeader = headersList.get('authorization');
+
+  const globalHeaders: Record<string, string> = {};
+  if (authHeader) {
+    globalHeaders['Authorization'] = authHeader;
+  }
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
@@ -22,6 +29,9 @@ export async function createClient() {
             // The `setAll` method was called from a Server Component.
           }
         },
+      },
+      global: {
+        headers: globalHeaders,
       },
     }
   );

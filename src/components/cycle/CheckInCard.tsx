@@ -14,7 +14,7 @@ export function CheckInCard({ onAnswered }: { onAnswered: () => void }) {
     
     // Only show check-in after 6 PM (18:00)
     if (hour < 18) {
-      /* eslint-disable-next-line react-hooks/set-state-in-effect */
+       
       setLoading(false);
       return;
     }

@@ -6,8 +6,20 @@ import { logCycleSchema } from '@/lib/validations/cycle';
 import { computePrediction } from '@/lib/cycle/predictor';
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const authHeader = request.headers.get('authorization');
+  let user;
+  
+  const admin = createAdminClient();
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const { data } = await admin.auth.getUser(token);
+    user = data?.user;
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data?.user;
+  }
   
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -23,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     const { periodStart, periodEnd, avgFlow, notes } = result.data;
-    const admin = createAdminClient();
+    // admin client already created above
 
     // Calculate cycle length if there's a previous cycle
     const { data: existingCycles } = await admin

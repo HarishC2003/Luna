@@ -39,7 +39,7 @@ export function HydrationWidget({ phase }: Props) {
   }, [goal.glasses]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     fetchToday();
   }, [fetchToday]);
 

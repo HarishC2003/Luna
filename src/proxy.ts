@@ -45,6 +45,25 @@ export async function proxy(request: NextRequest) {
     // Fail silently, user will be treated as guest
   }
 
+  // Mobile App Fallback: Check for Authorization header if cookie auth fails
+  if (!user && request.headers.has('authorization')) {
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      try {
+        const { data, error } = await supabase.auth.getUser(token);
+        if (error) {
+          console.warn("Mobile Auth Fallback Error:", error.message);
+        } else {
+          user = data?.user || null;
+          if (user) console.log("Mobile Auth Fallback Success:", user.id);
+        }
+      } catch (err) {
+        console.error("Mobile Auth Fallback Exception:", err);
+      }
+    }
+  }
+
   const url = request.nextUrl.clone();
   const path = url.pathname;
 

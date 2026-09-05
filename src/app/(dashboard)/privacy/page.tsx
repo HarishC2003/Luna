@@ -75,7 +75,7 @@ export default function PrivacyPage() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     void fetchData();
     void fetchReports();
   }, [fetchData, fetchReports]);

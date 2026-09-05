@@ -58,6 +58,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             lastPeriodStart: new Date(last6[0].period_start)
         });
 
+        console.log('[DEBUG PATCH] prediction:', prediction);
+
         await admin.from('cycle_predictions').upsert({
             user_id: user.id,
             predicted_start: prediction.predictedStart.toISOString(),

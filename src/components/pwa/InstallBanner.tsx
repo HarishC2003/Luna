@@ -24,14 +24,14 @@ export function InstallBanner() {
   });
 
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect */
+     
     if (isInstalled) return;
     const dismissed = sessionStorage.getItem('luna_install_dismissed');
     if (dismissed === 'true') return;
     if (!show && (canInstall || isIOS)) {
       setShow(true);
     }
-    /* eslint-enable react-hooks/set-state-in-effect */
+     
   }, [canInstall, isInstalled, show, isIOS]);
 
   if (!show) return null;

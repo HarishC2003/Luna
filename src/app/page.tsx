@@ -272,6 +272,13 @@ export default async function LandingPage() {
               <Link href="/dashboard" className="text-sm text-gray-500 hover:text-[#E85D9A] transition-colors w-fit">Dashboard</Link>
               <Link href="/chat" className="text-sm text-gray-500 hover:text-[#E85D9A] transition-colors w-fit">Chat AI</Link>
               <Link href="/cycles" className="text-sm text-gray-500 hover:text-[#E85D9A] transition-colors w-fit">Cycle Tracker</Link>
+              <a href="/downloads/luna.apk" className="mt-2 bg-[#E85D9A] text-white text-xs px-4 py-2 rounded-lg font-medium flex flex-col items-center hover:bg-[#d44d88] transition-colors w-fit">
+                <span className="flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.3414C17.523 16.5161 16.5701 17.469 15.3955 17.469C14.2208 17.469 13.2679 16.5161 13.2679 15.3414C13.2679 14.1668 14.2208 13.2139 15.3955 13.2139C16.5701 13.2139 17.523 14.1668 17.523 15.3414ZM10.7321 15.3414C10.7321 16.5161 9.77918 17.469 8.60454 17.469C7.42989 17.469 6.47702 16.5161 6.47702 15.3414C6.47702 14.1668 7.42989 13.2139 8.60454 13.2139C9.77918 13.2139 10.7321 14.1668 10.7321 15.3414ZM12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2ZM17.1517 7.02796C15.6568 6.37583 13.8863 6 12 6C10.1137 6 8.34325 6.37583 6.84833 7.02796L5.59807 4.86241L4.7319 5.36262L5.95251 7.47648C4.1623 8.78423 2.92484 10.751 2.65636 13H21.3436C21.0752 10.751 19.8377 8.78423 18.0475 7.47648L19.2681 5.36262L18.4019 4.86241L17.1517 7.02796Z"/></svg>
+                  Download App
+                </span>
+                <span className="text-[10px] font-normal opacity-80 mt-0.5">Version 1.0 · Free</span>
+              </a>
             </div>
 
             <div className="flex flex-col gap-3">

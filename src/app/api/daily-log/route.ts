@@ -8,8 +8,21 @@ import { clearUserContextCache } from '@/lib/chat/context-builder';
 import { checkAndAwardBadges } from '@/lib/streaks/calculator';
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const authHeader = request.headers.get('authorization');
+  let user;
+  
+  const admin = createAdminClient();
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const { data } = await admin.auth.getUser(token);
+    user = data?.user;
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data?.user;
+  }
+  
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { success } = await apiLimiter.limit(user.id);
@@ -19,7 +32,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const result = dailyLogSchema.parse(body);
 
-    const admin = createAdminClient();
+    // admin client already created above
     const logDateNormalized = new Date(result.logDate).toISOString().split('T')[0];
 
     const insertData: Record<string, unknown> = {
@@ -101,8 +114,21 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const authHeader = request.headers.get('authorization');
+  let user;
+  
+  const admin = createAdminClient();
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const { data } = await admin.auth.getUser(token);
+    user = data?.user;
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data?.user;
+  }
+  
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { success } = await apiLimiter.limit(user.id);
@@ -122,7 +148,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'max range is 90 days' }, { status: 400 });
   }
 
-  const admin = createAdminClient();
+  // admin client already created above
   const { data: logs } = await admin
     .from('daily_logs')
     .select('*')

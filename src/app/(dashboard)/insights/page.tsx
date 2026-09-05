@@ -69,7 +69,7 @@ export default function InsightsPage() {
   }, [router]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     void fetchAll();
   }, [fetchAll]);
 

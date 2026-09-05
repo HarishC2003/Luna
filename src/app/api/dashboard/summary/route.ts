@@ -6,16 +6,28 @@ import { computePrediction, getPhaseDescription } from '@/lib/cycle/predictor';
 import { generateInsights } from '@/lib/cycle/insights';
 import { analyzePatterns } from '@/lib/insights/pattern-analyzer';
 
-export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+export async function GET(req: Request) {
+  const authHeader = req.headers.get('authorization');
+  let user;
+  
+  const admin = createAdminClient();
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const { data } = await admin.auth.getUser(token);
+    user = data?.user;
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data?.user;
+  }
+
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { success } = await apiLimiter.limit(user.id);
   if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
-  const admin = createAdminClient();
-  
+  // admin client already created above
   // Fetch profiles table to check if onboarding is complete
   const { data: profile } = await admin.from('profiles').select('onboarding_completed, display_name').eq('id', user.id).single();
   
