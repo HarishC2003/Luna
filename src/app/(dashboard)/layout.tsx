@@ -89,6 +89,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.refresh();
   };
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const today = new Date();
   const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
   const hour = new Date().getHours();
@@ -105,9 +110,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {pathname === '/dashboard' && (
                 <>
                   <h1 className="text-[16px] font-bold text-[#1A0A12] leading-tight">
-                    {greeting}, {userName || 'User'}
+                    {mounted ? greeting : 'Welcome'}, {userName || 'User'}
                   </h1>
-                  <p className="text-[11px] text-[#9E7A8A] font-semibold mt-0.5">{dateStr}</p>
+                  <p className="text-[11px] text-[#9E7A8A] font-semibold mt-0.5 min-h-[16px]">{mounted ? dateStr : ''}</p>
                 </>
               )}
             </div>

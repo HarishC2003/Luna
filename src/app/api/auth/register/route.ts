@@ -41,18 +41,29 @@ export async function POST(request: Request) {
 
     if (authError || !authData.user) {
       await supabase.from('auth_logs').insert({ event_type: 'register', ip_address: ip, success: false, metadata: { reason: authError?.message } });
+      
+      if (authError?.message?.includes('already been registered')) {
+        return NextResponse.json({ error: 'Email already exists' }, { status: 409 });
+      }
       return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
     }
 
     const userId = authData.user.id;
 
     // Create profile
-    await supabase.from('profiles').insert({
+    const { error: profileError } = await supabase.from('profiles').insert({
       id: userId,
       email,
       display_name: displayName,
       role: 'user',
     });
+
+    if (profileError) {
+      console.error('[register] Failed to create profile:', profileError);
+      await supabase.auth.admin.deleteUser(userId); // Rollback
+      await supabase.from('auth_logs').insert({ event_type: 'register', ip_address: ip, success: false, metadata: { reason: 'Profile creation failed' } });
+      return NextResponse.json({ error: 'Failed to create user profile' }, { status: 500 });
+    }
 
     // Verification token
     const token = generateSecureToken();
