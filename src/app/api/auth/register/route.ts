@@ -72,6 +72,10 @@ export async function POST(request: Request) {
       }
     }
 
+    if (!authData.user) {
+      return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+    }
+
     const userId = authData.user.id;
 
     // Create profile
