@@ -54,7 +54,11 @@ function ResetPasswordContent() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Password reset failed');
+        if (data.fields?.newPassword?.length > 0) {
+          setError(data.fields.newPassword[0]);
+        } else {
+          setError(data.error || 'Password reset failed');
+        }
       } else {
         setSuccess(true);
       }
