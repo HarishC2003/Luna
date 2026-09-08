@@ -5,11 +5,22 @@ import { apiLimiter } from '@/lib/rate-limit/limiter';
 
 export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const authHeader = request.headers.get('authorization');
+    let user;
+    const admin = createAdminClient();
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const { data } = await admin.auth.getUser(token);
+      user = data?.user;
+    } else {
+      const supabase = await createClient();
+      const { data } = await supabase.auth.getUser();
+      user = data?.user;
+    }
+
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
 
-    const admin = createAdminClient();
     const { data: profile } = await admin.from('profiles').select('role').eq('id', user.id).maybeSingle();
     if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
