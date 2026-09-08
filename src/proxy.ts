@@ -92,7 +92,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Protect /api routes
-  if (path.startsWith('/api') && !path.startsWith('/api/auth') && !path.startsWith('/api/cron')) {
+  if (path.startsWith('/api') && !path.startsWith('/api/auth') && !path.startsWith('/api/cron') && !path.startsWith('/api/partner')) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

@@ -7,6 +7,8 @@ import { FlowBadge } from '@/components/cycle/FlowBadge'
 import { SymptomChips } from '@/components/cycle/SymptomChips'
 import { DailyLog } from '@/types/cycle'
 
+import { useParams } from 'next/navigation'
+
 interface PartnerInsights {
   displayName: string
   currentPhase: string
@@ -24,23 +26,26 @@ interface PartnerInsights {
   recentLogs?: DailyLog[]
 }
 
-export default function PartnerInsightsPage({ params }: { params: Promise<{ token: string }> }) {
+export default function PartnerInsightsPage() {
+  const params = useParams()
+  const token = params?.token as string
+
   const [insights, setInsights] = useState<PartnerInsights | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    params.then(({ token }) => {
-      fetch(`/api/partner/insights/${token}`)
-        .then(res => {
-          if (!res.ok) throw new Error('Invalid link')
-          return res.json()
-        })
-        .then(setInsights)
-        .catch(() => setError('This link is invalid or has been disabled.'))
-        .finally(() => setLoading(false))
-    })
-  }, [params])
+    if (!token) return;
+    
+    fetch(`/api/partner/insights/${token}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Invalid link')
+        return res.json()
+      })
+      .then(setInsights)
+      .catch(() => setError('This link is invalid or has been disabled.'))
+      .finally(() => setLoading(false))
+  }, [token])
 
   if (loading) {
     return (
