@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
   // 1. Rate Limiting
   const { success } = await reportLimiter.limit(user.id);
-  if (!success) return NextResponse.json({ error: 'You have reached the limit of 2 reports per day. Please try again tomorrow.' }, { status: 429 });
+  if (!success) return NextResponse.json({ error: 'You have reached the limit of 5 reports per day. Please try again tomorrow.' }, { status: 429 });
 
   try {
     const { month, year, startDate: reqStartDate, endDate: reqEndDate } = await request.json();
