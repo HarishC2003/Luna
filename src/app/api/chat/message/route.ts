@@ -9,6 +9,7 @@ import { detectCrisis } from '@/lib/chat/crisis-detector';
 import { buildSystemPrompt } from '@/lib/chat/system-prompt';
 import { buildUserHealthContext, formatContextForPrompt } from '@/lib/chat/context-builder';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { sendAdminNotification } from '@/lib/notifications/expo-push';
 
 export const maxDuration = 60;
 
@@ -68,6 +69,13 @@ export async function POST(request: Request) {
         reason: `crisis_detected_${crisis.severity}`,
         ip_address: getRealIP(request)
       });
+
+      // Send push notification to admins without awaiting
+      sendAdminNotification(
+        'Crisis Alert Detected',
+        `Severity: ${crisis.severity}. User needs immediate attention.`,
+        { type: 'crisis_alert', severity: crisis.severity, userId: user.id }
+      );
 
       return new Response(
         new ReadableStream({

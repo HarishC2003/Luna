@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { generateSecureToken, hashToken } from '@/lib/auth/password';
 import { sendEmail } from '@/lib/email/gmail-sender';
 import { verificationEmail } from '@/lib/email/templates';
+import { sendAdminNotification } from '@/lib/notifications/expo-push';
 
 export async function POST(request: Request) {
   const ip = getRealIP(request);
@@ -141,6 +142,13 @@ export async function POST(request: Request) {
     }
 
     await supabase.from('auth_logs').insert({ user_id: userId, event_type: 'register', ip_address: ip, success: true });
+
+    // Send push notification to admins without awaiting so it doesn't block the response
+    sendAdminNotification(
+      'New User Registration',
+      `A new user registered: ${email}`,
+      { type: 'new_registration', userId, email }
+    );
 
     return NextResponse.json({ message: 'Check your email to verify your account' }, { status: 201 });
 
