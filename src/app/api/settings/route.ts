@@ -26,6 +26,7 @@ export async function GET(_request: Request) {
       push_fertile_window: false,
       push_log_reminder: false,
       push_hydration_reminder: false,
+      push_admin_alerts: true,
       notify_hour: 8,
       notify_minute: 0,
       hydration_notify_hour: 14,
@@ -68,6 +69,7 @@ export async function PATCH(request: Request) {
     if (pd.push_fertile_window !== undefined) upsertData.push_fertile_window = pd.push_fertile_window;
     if (pd.push_log_reminder !== undefined) upsertData.push_log_reminder = pd.push_log_reminder;
     if (pd.push_hydration_reminder !== undefined) upsertData.push_hydration_reminder = pd.push_hydration_reminder;
+    if (pd.push_admin_alerts !== undefined) upsertData.push_admin_alerts = pd.push_admin_alerts;
     if (pd.notify_hour !== undefined) upsertData.notify_hour = pd.notify_hour;
     if (pd.notify_minute !== undefined) upsertData.notify_minute = pd.notify_minute;
     if (pd.hydration_notify_hour !== undefined) upsertData.hydration_notify_hour = pd.hydration_notify_hour;

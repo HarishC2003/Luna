@@ -12,6 +12,7 @@ export const notificationSettingsSchema = z.object({
   push_fertile_window: z.boolean().optional(),
   push_log_reminder: z.boolean().optional(),
   push_hydration_reminder: z.boolean().optional(),
+  push_admin_alerts: z.boolean().optional(),
   notify_hour: z.union([z.string(), z.number(), z.null()]).transform(v => v === null ? undefined : Number(v)).optional(),
   notify_minute: z.union([z.string(), z.number(), z.null()]).transform(v => v === null ? undefined : Number(v)).optional(),
   hydration_notify_hour: z.union([z.string(), z.number(), z.null()]).transform(v => v === null ? undefined : Number(v)).optional(),

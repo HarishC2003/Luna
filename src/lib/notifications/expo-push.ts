@@ -39,12 +39,25 @@ export async function sendAdminNotification(title: string, body: string, data: R
     if (!admins || admins.length === 0) return;
     
     const adminIds = admins.map(a => a.id);
+
+    // Filter admins by those who have push_admin_alerts enabled
+    const { data: adminSettings } = await adminClient
+      .from('notification_settings')
+      .select('user_id, push_admin_alerts')
+      .in('user_id', adminIds);
+
+    const enabledAdminIds = (adminSettings || [])
+      .filter(s => s.push_admin_alerts !== false) // default to true if null
+      .map(s => s.user_id);
+
+    // If no admins have alerts enabled, return
+    if (enabledAdminIds.length === 0) return;
     
     // Get their push tokens
     const { data: tokensData } = await adminClient
       .from('push_tokens')
       .select('token')
-      .in('user_id', adminIds);
+      .in('user_id', enabledAdminIds);
       
     if (!tokensData || tokensData.length === 0) return;
     
