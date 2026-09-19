@@ -23,6 +23,7 @@ export async function GET(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
 
     const { data: profile } = await admin.from('profiles').select('role').eq('id', user.id).maybeSingle();
+    
     if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { success } = await apiLimiter.limit(user.id);

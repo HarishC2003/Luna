@@ -111,7 +111,17 @@ export async function proxy(request: NextRequest) {
       if (path.startsWith('/api/admin')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       return NextResponse.redirect(new URL('/login', request.url));
     }
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+    
+    // We must use the service role key to fetch the profile because if this is a mobile request
+    // using a Bearer token, the `createServerClient` above is unauthenticated (no cookies)
+    // and RLS will prevent it from reading the profile.
+    const { createClient } = require('@supabase/supabase-js');
+    const adminSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    );
+    
+    const { data: profile } = await adminSupabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
     
     if (!profile || profile.role !== 'admin') {
       if (path.startsWith('/api/admin')) {
