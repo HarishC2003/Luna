@@ -31,7 +31,7 @@ function createLimiter(window: Parameters<typeof Ratelimit.slidingWindow>[0], du
 }
 
 export const loginLimiter = createLimiter(5, '15 m');
-export const registerLimiter = createLimiter(3, '60 m');
+export const registerLimiter = createLimiter(10, '60 m');
 export const passwordLimiter = createLimiter(3, '60 m');
 export const apiLimiter = createLimiter(100, '60 s');
 
