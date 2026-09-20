@@ -135,6 +135,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 Insights
               </Link>
 
+              {/* Download App Button */}
+              <a
+                href="https://expo.dev/artifacts/eas/IMDgPMNFIeNJYiH6qjgwT41XvstZVxL-XVAyOgS74-8.apk"
+                className="flex items-center gap-1.5 text-xs font-bold text-white transition-colors px-3 py-1.5 bg-gradient-to-r from-[#E85D9A] to-[#D93F7D] hover:from-[#d44d88] hover:to-[#c2376e] rounded-full shadow-sm active:scale-95"
+                title="Download Android App"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 15.3c0 1.2-.9 2.1-2.1 2.1H8.6c-1.2 0-2.1-.9-2.1-2.1v-2.1H4v4.2c0 2.3 1.9 4.2 4.2 4.2h7.5c2.3 0 4.2-1.9 4.2-4.2v-4.2h-2.5v2.1zm-5.5-13.3v11l4.2-4.2 1.8 1.8L12 16.5 6.1 10.6l1.8-1.8 4.1 4.1v-11z"/></svg>
+                <span className="hidden sm:inline">Get App</span>
+              </a>
+
               {/* User Avatar Badge */}
               <div className="relative" ref={menuRef}>
                 <button
