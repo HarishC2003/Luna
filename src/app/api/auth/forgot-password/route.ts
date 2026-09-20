@@ -34,7 +34,12 @@ export async function POST(request: Request) {
         token_hash: hashed,
       });
 
-      const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`;
+      // Use VERCEL_PROJECT_PRODUCTION_URL if available, otherwise fallback to the live server
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL?.includes('localhost') 
+        ? 'https://lunatrackapp.vercel.app' 
+        : (process.env.NEXT_PUBLIC_APP_URL || 'https://lunatrackapp.vercel.app');
+      
+      const resetUrl = `${appUrl}/reset-password?token=${token}`;
       await sendEmail({
         to: email,
         subject: 'Reset your Luna password',
