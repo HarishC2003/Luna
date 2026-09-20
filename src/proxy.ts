@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { getFeatureFlag } from '@/lib/feature-flags';
 import { Redis } from '@upstash/redis';
 
@@ -115,7 +116,6 @@ export async function proxy(request: NextRequest) {
     // We must use the service role key to fetch the profile because if this is a mobile request
     // using a Bearer token, the `createServerClient` above is unauthenticated (no cookies)
     // and RLS will prevent it from reading the profile.
-    const { createClient } = require('@supabase/supabase-js');
     const adminSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || '',
       process.env.SUPABASE_SERVICE_ROLE_KEY || ''
