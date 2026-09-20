@@ -106,7 +106,9 @@ export async function POST(request: Request) {
     // Send email
     const reqUrl = new URL(request.url);
     const origin = reqUrl.origin;
-    let appUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
+    let appUrl = process.env.NEXT_PUBLIC_APP_URL?.includes('localhost') 
+      ? 'https://lunatrackapp.vercel.app' 
+      : (process.env.NEXT_PUBLIC_APP_URL || origin);
     
     // Fix for Vercel: If env var is mistakenly left as localhost in production, use the actual request origin
     if (appUrl.includes('localhost') && !origin.includes('localhost')) {
