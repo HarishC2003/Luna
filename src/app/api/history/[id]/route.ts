@@ -59,19 +59,47 @@ export async function PUT(
   if (result.data.flow !== undefined) updateData.flow = result.data.flow;
   if (result.data.symptoms !== undefined) updateData.symptoms = result.data.symptoms;
   if (result.data.notes !== undefined) updateData.notes = result.data.notes;
+  if (result.data.waterGlasses !== undefined && result.data.waterGlasses !== null) updateData.water_glasses = result.data.waterGlasses;
+  if (result.data.sleep_quality !== undefined && result.data.sleep_quality !== null) updateData.sleep_quality = result.data.sleep_quality;
+  if (result.data.stress_level !== undefined && result.data.stress_level !== null) updateData.stress_level = result.data.stress_level;
+  if (result.data.exercise !== undefined && result.data.exercise !== null) updateData.exercise = result.data.exercise;
+  if (result.data.exercise_type !== undefined && result.data.exercise_type !== null) updateData.exercise_type = result.data.exercise_type;
+  if (result.data.slept_well !== undefined && result.data.slept_well !== null) updateData.slept_well = result.data.slept_well;
+  if (result.data.hydration_goal !== undefined && result.data.hydration_goal !== null) updateData.hydration_goal = result.data.hydration_goal;
+  if (result.data.moved_body !== undefined && result.data.moved_body !== null) updateData.moved_body = result.data.moved_body;
+  if (result.data.image_url !== undefined && result.data.image_url !== null) updateData.image_url = result.data.image_url;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
   }
 
   // 7. Update
-  const { data: updated, error: updateError } = await adminSupabase
+  const optionalColumns = [
+    'water_glasses', 'sleep_quality', 'stress_level', 'exercise',
+    'exercise_type', 'slept_well', 'hydration_goal', 'moved_body', 'image_url'
+  ];
+
+  let { data: updated, error: updateError } = await adminSupabase
     .from('daily_logs')
     .update(updateData)
     .eq('id', id)
     .eq('user_id', user.id)
     .select()
     .single();
+
+  if (updateError && updateError.message?.includes('column')) {
+    const safeData = { ...updateData };
+    optionalColumns.forEach(c => delete safeData[c]);
+    const retry = await adminSupabase
+      .from('daily_logs')
+      .update(safeData)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+    updated = retry.data;
+    updateError = retry.error;
+  }
 
   if (updateError) {
     return NextResponse.json({ error: 'Failed to update log' }, { status: 500 });

@@ -7,6 +7,7 @@ import { InstallBanner } from '@/components/pwa/InstallBanner';
 import { useState, useEffect, useRef } from 'react';
 import { Home, Calendar, Clock, MessageCircle, Shield } from 'lucide-react';
 import NotificationPermission from '@/components/notifications/NotificationPermission';
+import { APP_RELEASE } from '@/config/release';
 
 const tabs = [
   { href: '/dashboard', icon: Home, label: 'Home' },
@@ -137,13 +138,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
               {/* Download App Button */}
               <a
-                href="https://expo.dev/artifacts/eas/IMDgPMNFIeNJYiH6qjgwT41XvstZVxL-XVAyOgS74-8.apk"
+                href={APP_RELEASE.androidApkUrl}
                 className="flex items-center gap-1.5 text-xs font-bold text-white transition-colors px-3 py-1.5 bg-gradient-to-r from-[#E85D9A] to-[#D93F7D] hover:from-[#d44d88] hover:to-[#c2376e] rounded-full shadow-sm active:scale-95"
                 title="Download Android App"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 15.3c0 1.2-.9 2.1-2.1 2.1H8.6c-1.2 0-2.1-.9-2.1-2.1v-2.1H4v4.2c0 2.3 1.9 4.2 4.2 4.2h7.5c2.3 0 4.2-1.9 4.2-4.2v-4.2h-2.5v2.1zm-5.5-13.3v11l4.2-4.2 1.8 1.8L12 16.5 6.1 10.6l1.8-1.8 4.1 4.1v-11z"/></svg>
                 <span className="hidden sm:inline">Get App</span>
               </a>
+
+              {/* Feedback Button */}
+              <Link
+                href="/feedback"
+                className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-[#4A1B3C] hover:text-[#E85D9A] transition-colors px-3 py-1.5 bg-[#FDF8F9] hover:bg-white rounded-full border border-[#E85D9A]/20 shadow-sm active:scale-95"
+                title="Tester Feedback Questionnaire"
+              >
+                <span>💬</span> Feedback
+              </Link>
 
               {/* User Avatar Badge */}
               <div className="relative" ref={menuRef}>
@@ -164,6 +174,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     >
                       <svg className="w-4 h-4 text-[#4A1B3C]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" /><circle cx="12" cy="12" r="3" /></svg>
                       Settings
+                    </button>
+                    <button
+                      onClick={() => { router.push('/feedback'); setShowUserMenu(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-[#4A1B3C] hover:bg-[#FDF8F9] transition-colors cursor-pointer"
+                    >
+                      <svg className="w-4 h-4 text-[#E85D9A]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                      Give Feedback
                     </button>
                     <div className="mx-3 border-t border-gray-100" />
                     <button

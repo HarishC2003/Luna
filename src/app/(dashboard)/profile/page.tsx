@@ -387,6 +387,19 @@ export default function ProfilePage() {
 
       {activeTab === 'account' && (
         <div className="space-y-6 animate-fade-in">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-[#E85D9A]/15 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-lg">💬</span>
+                <h3 className="text-xl font-bold text-[#4A1B3C]">Tester Feedback</h3>
+              </div>
+              <p className="text-[#4A1B3C]/70 text-sm">Help us improve Luna by completing the user feedback questionnaire.</p>
+            </div>
+            <button onClick={() => router.push('/feedback')} className="px-6 py-2.5 bg-gradient-to-r from-[#E85D9A] to-[#D93F7D] hover:from-[#d44d88] hover:to-[#c2376e] text-white font-bold rounded-xl shadow-sm w-full sm:w-auto">
+              Give Feedback ✨
+            </button>
+          </div>
+
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-[#E85D9A]/10">
             <h3 className="text-xl font-bold text-[#4A1B3C] mb-2">Reset Password</h3>
             <p className="text-[#4A1B3C]/70 text-sm mb-4">You will receive an email instruction at {profile.email} to securely reset your credentials.</p>

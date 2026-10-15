@@ -53,7 +53,7 @@ export const dailyLogSchema = z.object({
   flow: z.enum(['none', 'spotting', 'light', 'medium', 'heavy']).optional().nullable(),
   symptoms: z.array(z.string().max(50)).max(10).optional().nullable(),
   notes: z.string().max(300).refine((val) => val === null || val === '' || stripHtml(val), 'HTML tags not allowed').optional().nullable(),
-  waterGlasses: z.number({ message: 'Water intake is compulsory' }).int().min(0).max(20),
+  waterGlasses: z.number().int().min(0).max(20).optional().nullable(),
   sleep_quality: z.number().int().min(1).max(5).optional().nullable(),
   stress_level: z.number().int().min(0).max(5).optional().nullable(),
   exercise: z.boolean().optional().nullable(),

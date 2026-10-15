@@ -6,9 +6,32 @@ export interface AdminStats {
   totalDailyLogs: number;
   notificationsSentToday: number;
   chatFeedbackCount: number;
+  userFeedbackCount?: number;
   crisisDetectedTotal: number;
   pendingDeletions: number;
   suspendedUsers: number;
+}
+
+export interface UserFeedbackEntry {
+  id: string;
+  user_id: string | null;
+  user_email?: string | null;
+  user_name?: string | null;
+  platform: 'Android' | 'iPhone' | 'Web';
+  test_duration: 'Less than 5 minutes' | '5–15 minutes' | 'More than 15 minutes' | string;
+  features_tested: string[];
+  ease_of_use: number;
+  design_rating: number;
+  clarity: 'Yes' | 'Partly' | 'No' | string;
+  confusing_aspects?: string | null;
+  energy_sleep_rating: 'Yes' | 'Partly' | 'No' | "Didn't test" | string;
+  bugs_encountered?: string | null;
+  notifications_working: 'Yes' | 'No' | "Didn't test" | string;
+  liked_most?: string | null;
+  improve_first?: string | null;
+  future_features?: string | null;
+  additional_suggestions?: string | null;
+  created_at: string;
 }
 
 export interface AdminUser {

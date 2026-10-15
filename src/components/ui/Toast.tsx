@@ -1,5 +1,5 @@
 'use client'
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react'
+import { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react'
 import { CheckCircle2, XCircle, Info, X, AlertTriangle } from 'lucide-react'
 
 type ToastType = 'success' | 'error' | 'info' | 'warning'
@@ -41,8 +41,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     warning: 'border-l-4 border-l-amber-500',
   }
 
+  const contextValue = useMemo(() => ({ toast }), [toast]);
+
   return (
-    <ToastCtx.Provider value={{ toast }}>
+    <ToastCtx.Provider value={contextValue}>
       {children}
       <div className="fixed top-4 right-4 z-[999] flex flex-col gap-2 max-w-xs w-full">
         {toasts.map(t => (
@@ -79,14 +81,16 @@ export const useToast = (): ToastHookResult => {
   const ctx = useContext(ToastCtx)
   if (!ctx) throw new Error('useToast must be inside ToastProvider')
 
-  const callable = ((type: ToastType, title: string, message?: string) => {
-    ctx.toast(type, title, message)
-  }) as ToastHookResult;
+  return useMemo(() => {
+    const callable = ((type: ToastType, title: string, message?: string) => {
+      ctx.toast(type, title, message)
+    }) as ToastHookResult;
 
-  callable.toast = ctx.toast;
-  callable.showToast = (type: 'success' | 'error' | 'info', message: string) => {
-    ctx.toast(type as ToastType, message);
-  };
+    callable.toast = ctx.toast;
+    callable.showToast = (type: 'success' | 'error' | 'info', message: string) => {
+      ctx.toast(type as ToastType, message);
+    };
 
-  return callable;
+    return callable;
+  }, [ctx.toast]);
 }

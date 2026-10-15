@@ -8,18 +8,31 @@ import Confetti from '@/components/ui/Confetti';
 
 interface Props {
   phase: CyclePhase;
+  glasses?: number;
+  onUpdate?: (newCount: number) => void;
 }
 
-export function HydrationWidget({ phase }: Props) {
-  const [glasses, setGlasses] = useState(0);
-  const [loading, setLoading] = useState(true);
+export function HydrationWidget({ phase, glasses: controlledGlasses, onUpdate }: Props) {
+  const [glasses, setGlasses] = useState(controlledGlasses ?? 0);
+  const [loading, setLoading] = useState(controlledGlasses === undefined);
   const [mounted, setMounted] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [wasGoalMet, setWasGoalMet] = useState(false);
 
   const goal = getDailyWaterGoal(phase);
 
+  // Sync with controlled glasses prop whenever it changes
+  useEffect(() => {
+    if (controlledGlasses !== undefined) {
+      setGlasses(controlledGlasses);
+      setWasGoalMet(controlledGlasses >= goal.glasses);
+      setLoading(false);
+      setMounted(true);
+    }
+  }, [controlledGlasses, goal.glasses]);
+
   const fetchToday = useCallback(async () => {
+    if (controlledGlasses !== undefined) return;
     try {
       const today = new Date();
       const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
@@ -36,10 +49,9 @@ export function HydrationWidget({ phase }: Props) {
       setLoading(false);
       setTimeout(() => setMounted(true), 100);
     }
-  }, [goal.glasses]);
+  }, [controlledGlasses, goal.glasses]);
 
   useEffect(() => {
-     
     fetchToday();
   }, [fetchToday]);
 
@@ -47,6 +59,7 @@ export function HydrationWidget({ phase }: Props) {
     const clamped = Math.max(0, Math.min(20, newCount));
     const previousGlasses = glasses;
     setGlasses(clamped);
+    onUpdate?.(clamped);
 
     // trigger confetti if goal is newly met
     if (clamped >= goal.glasses && !wasGoalMet && clamped > previousGlasses) {
@@ -71,6 +84,7 @@ export function HydrationWidget({ phase }: Props) {
     } catch (e) {
       console.error(e);
       setGlasses(previousGlasses);
+      onUpdate?.(previousGlasses);
     }
   };
 

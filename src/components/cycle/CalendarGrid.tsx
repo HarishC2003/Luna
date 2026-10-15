@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import { Prediction, CycleLog, DailyLog } from '@/types/cycle';
-import { DayDrawer } from './DayDrawer';
-import { CycleLogModal } from './CycleLogModal';
 import { DailyFeelingsModal } from './DailyFeelingsModal';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -17,9 +15,6 @@ interface Props {
 export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-
-  const [isCycleModalOpen, setCycleModalOpen] = useState(false);
-  const [selectedCycleData, setSelectedCycleData] = useState<CycleLog | undefined>();
 
   const [isDailyModalOpen, setDailyModalOpen] = useState(false);
   const [selectedDailyData, setSelectedDailyData] = useState<Partial<DailyLog> | undefined>();
@@ -88,18 +83,13 @@ export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
   };
 
   const handleDayClick = (date: Date) => {
+    const dStr = toLocalString(date);
+    const existingLog = logs.find(l => l.log_date === dStr) || null;
+    setSelectedDailyData(existingLog || { log_date: dStr });
     setSelectedDate(date);
-  };
-
-  const handleEditCycle = (log: CycleLog) => {
-    setSelectedCycleData(log);
-    setCycleModalOpen(true);
-  };
-
-  const handleEditDaily = (date: Date, existingLog: DailyLog | null) => {
-    setSelectedDailyData(existingLog || { log_date: toLocalString(date) });
     setDailyModalOpen(true);
   };
+
 
   const getDayContent = (date: Date) => {
     const isToday = date.getTime() === today.getTime();
@@ -152,12 +142,6 @@ export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
     );
   };
 
-  const selectedDaily = selectedDate ? logs.find(l => l.log_date === toLocalString(selectedDate)) || null : null;
-  const selectedCycle = selectedDate ? cycles.find(c => {
-    const s = toLocalDate(c.period_start);
-    const e = c.period_end ? toLocalDate(c.period_end) : new Date(s.getFullYear(), s.getMonth(), s.getDate() + 5);
-    return selectedDate >= s && selectedDate <= e;
-  }) || null : null;
 
   return (
     <div className="bg-white/80 backdrop-blur-md rounded-[2rem] shadow-lg border border-[#E85D9A]/10 overflow-hidden">
@@ -206,32 +190,18 @@ export function CalendarGrid({ prediction, cycles, logs, onRefresh }: Props) {
         <div className="flex items-center gap-2"><div className="w-2 h-2 bg-[#E85D9A] rounded-full"></div> Logged Data</div>
       </div>
 
-      {selectedDate && (
-        <>
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity" onClick={() => setSelectedDate(null)} />
-          <DayDrawer 
-            date={selectedDate} 
-            isOpen={true} 
-            onClose={() => setSelectedDate(null)} 
-            dailyLog={selectedDaily}
-            cycleLog={selectedCycle}
-            onEditDaily={() => { setSelectedDate(null); handleEditDaily(selectedDate, selectedDaily); }}
-            onEditCycle={handleEditCycle}
-          />
-        </>
-      )}
-
-      <CycleLogModal
-        isOpen={isCycleModalOpen}
-        onClose={() => setCycleModalOpen(false)}
-        onSuccess={() => { setCycleModalOpen(false); onRefresh(); }}
-        initialData={selectedCycleData}
-      />
-
       <DailyFeelingsModal
         isOpen={isDailyModalOpen}
-        onClose={() => setDailyModalOpen(false)}
-        onSuccess={() => { setDailyModalOpen(false); onRefresh(); }}
+        onClose={() => {
+          setDailyModalOpen(false);
+          setSelectedDate(null);
+        }}
+        onSuccess={() => {
+          setDailyModalOpen(false);
+          setSelectedDate(null);
+          onRefresh();
+        }}
+        selectedDate={selectedDate ? toLocalString(selectedDate) : undefined}
         initialData={selectedDailyData}
       />
     </div>

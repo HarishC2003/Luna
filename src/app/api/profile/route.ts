@@ -5,10 +5,24 @@ import { apiLimiter } from '@/lib/rate-limit/limiter';
 import { profileUpdateSchema } from '@/lib/validations/settings';
 import { computePrediction } from '@/lib/cycle/predictor';
 
-export async function GET(_request: Request) {
+async function getAuthUser(request: Request) {
+  const authHeader = request.headers.get('authorization');
+  const admin = createAdminClient();
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const { data } = await admin.auth.getUser(token);
+    return data?.user || null;
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user || null;
+}
+
+export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthUser(request);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const admin = createAdminClient();
@@ -27,7 +41,7 @@ export async function GET(_request: Request) {
       goals: onboardRes.data?.goals || [],
       avgCycleLength: onboardRes.data?.avg_cycle_length || null,
       avgPeriodLength: onboardRes.data?.avg_period_length || null,
-      onboardingCompleted: onboardRes.data?.completed || false,
+      onboardingCompleted: profileRes.data?.onboarding_completed || false,
       partner_share_enabled: profileRes.data?.partner_share_enabled || false,
       partner_share_token: profileRes.data?.partner_share_token || null
     });
@@ -40,8 +54,7 @@ export async function GET(_request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthUser(request);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { success } = await apiLimiter.limit(user.id);

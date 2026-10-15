@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PhaseStatusCard } from '@/components/cycle/PhaseStatusCard';
@@ -47,24 +47,42 @@ export default function DashboardClient() {
   const [earnedBadgeKeys, setEarnedBadgeKeys] = useState<string[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
 
+  const routerRef = useRef(router);
+  routerRef.current = router;
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const fetchDashboard = useCallback(async () => {
     try {
       const res = await fetch('/api/dashboard/summary');
       const json = await res.json();
       
+      if (!isMountedRef.current) return;
+
       if (json.needsOnboarding) {
-        router.push('/onboarding');
+        routerRef.current.push('/onboarding');
         return;
       }
       
       setData(json);
     } catch (e) {
+      if (!isMountedRef.current) return;
       console.error(e);
-      toast('error', 'Failed to load data', 'Could not refresh cycle predictions.');
+      toastRef.current('error', 'Failed to load data', 'Could not refresh cycle predictions.');
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
-  }, [router, toast]);
+  }, []);
 
   useEffect(() => {
     void fetchDashboard();
@@ -156,7 +174,28 @@ export default function DashboardClient() {
         <div className="md:col-span-5 lg:col-span-4 flex flex-col gap-[16px]">
           {/* Hydration Widget */}
           <div className="animate-slide-up stagger-3">
-            <HydrationWidget phase={data.prediction?.currentPhase || 'unknown'} />
+            <HydrationWidget 
+              phase={data.prediction?.currentPhase || 'unknown'} 
+              glasses={data.todayLog?.water_glasses ?? 0}
+              onUpdate={(newCount) => {
+                setData(prev => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    todayLog: {
+                      ...(prev.todayLog || {
+                        id: '',
+                        user_id: '',
+                        log_date: new Date().toISOString().split('T')[0],
+                        created_at: new Date().toISOString(),
+                        flow: null,
+                      }),
+                      water_glasses: newCount,
+                    } as DailyLog,
+                  };
+                });
+              }}
+            />
           </div>
 
           {/* Today's Log Quick-Card */}

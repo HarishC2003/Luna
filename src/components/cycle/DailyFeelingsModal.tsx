@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Mood, Symptom, DailyLog } from '@/types/cycle';
 
 interface Props {
@@ -18,6 +18,22 @@ const MOODS: { val: Mood, icon: string, label: string }[] = [
   { val: 'low', icon: '😔', label: 'Low' },
   { val: 'terrible', icon: '😫', label: 'Terrible' },
 ];
+
+export const ENERGY_LEVELS = [
+  { val: 1, label: 'Very Low', icon: '⚡' },
+  { val: 2, label: 'Low', icon: '⚡' },
+  { val: 3, label: 'Moderate', icon: '⚡' },
+  { val: 4, label: 'High', icon: '⚡' },
+  { val: 5, label: 'Very High', icon: '⚡' },
+] as const;
+
+export const SLEEP_LEVELS = [
+  { val: 1, label: 'Very Poor', icon: '🌙' },
+  { val: 2, label: 'Poor', icon: '🌙' },
+  { val: 3, label: 'Okay', icon: '🌙' },
+  { val: 4, label: 'Good', icon: '🌙' },
+  { val: 5, label: 'Excellent', icon: '🌙' },
+] as const;
 
 const SYMPTOMS: Symptom[] = ['cramps', 'headache', 'bloating', 'breast_tenderness', 'fatigue', 'acne', 'back_pain', 'nausea', 'mood_swings', 'insomnia'];
 
@@ -38,11 +54,20 @@ export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, i
   const [exerciseType, setExerciseType] = useState<string>(() => (initialData?.exercise_type && initialData.exercise_type !== 'none') ? initialData.exercise_type : 'walking');
   const [symptoms, setSymptoms] = useState<Symptom[]>(() => initialData?.symptoms || []);
   const [notes, setNotes] = useState(() => initialData?.notes || '');
-  const [waterGlasses, setWaterGlasses] = useState<number | ''>(() => (initialData as Record<string, unknown>)?.water_glasses as number ?? 0);
   const [customSymptom, setCustomSymptom] = useState('');
 
+  const wasOpenRef = useRef(false);
+  const prevInitialIdRef = useRef<string | undefined>(initialData?.id);
+  const prevDateRef = useRef<string | undefined>(selectedDate);
+
   useEffect(() => {
-    if (isOpen) {
+    // Only re-initialize form state when modal transitions from closed to open,
+    // or when the underlying record id changes, or when selectedDate changes.
+    const justOpened = isOpen && !wasOpenRef.current;
+    const recordChanged = isOpen && initialData?.id !== prevInitialIdRef.current;
+    const dateChanged = isOpen && selectedDate !== prevDateRef.current;
+    
+    if (justOpened || recordChanged || dateChanged) {
       setDate(selectedDate || (initialData?.log_date ? initialData.log_date.split('T')[0] : todayStr));
       setMood(initialData?.mood || '');
       setEnergy(initialData?.energy || '');
@@ -52,10 +77,12 @@ export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, i
       setExerciseType((initialData?.exercise_type && initialData.exercise_type !== 'none') ? initialData.exercise_type : 'walking');
       setSymptoms(initialData?.symptoms || []);
       setNotes(initialData?.notes || '');
-      setWaterGlasses((initialData as Record<string, unknown>)?.water_glasses as number ?? 0);
       setCustomSymptom('');
       setError(null);
     }
+    wasOpenRef.current = isOpen;
+    prevInitialIdRef.current = initialData?.id;
+    prevDateRef.current = selectedDate;
   }, [isOpen, selectedDate, initialData, todayStr]);
 
   const toggleSymptom = (s: string) => {
@@ -87,7 +114,6 @@ export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, i
       if (energy) payload.energy = energy;
       if (sleepQuality) payload.sleep_quality = sleepQuality;
       if (stressLevel !== '') payload.stress_level = stressLevel;
-      if (waterGlasses !== '') payload.waterGlasses = Number(waterGlasses);
       payload.exercise = exercise;
       if (exercise) payload.exercise_type = exerciseType;
       if (symptoms.length) payload.symptoms = symptoms;
@@ -115,7 +141,7 @@ export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, i
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Log your feelings">
+    <Modal isOpen={isOpen} onClose={onClose} title="Log your feelings" size="lg">
       <div className="mb-6 -mt-2">
         <p className="text-sm font-medium text-[#9E7A8A]">Track your mood, energy, sleep and symptoms.</p>
       </div>
@@ -140,25 +166,92 @@ export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, i
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-[#4A1B3C] mb-3 uppercase tracking-wide">Energy</label>
-            <div className="flex gap-1 flex-wrap">
-              {[1,2,3,4,5].map(num => (
-                <button key={num} type="button" onClick={() => setEnergy(energy === num ? '' : num)} className={`w-10 h-10 rounded-xl flex items-center justify-center text-md transition-all active:scale-95 ${energy === num ? 'bg-amber-400 text-white shadow-md transform scale-110 animate-scale-bounce' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
-                  ⚡
-                </button>
-              ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* Energy */}
+          <div className="p-4 rounded-2xl bg-[#FDF8F9] border border-[#E85D9A]/15 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm font-semibold text-[#4A1B3C] uppercase tracking-wide flex items-center gap-1.5">
+                <span>⚡</span> Energy
+              </label>
+              {energy ? (
+                <span className="text-xs font-bold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-300">
+                  {ENERGY_LEVELS.find(l => l.val === energy)?.label}
+                </span>
+              ) : (
+                <span className="text-[11px] text-[#9E7A8A]">Select level</span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-5 gap-1.5">
+              {ENERGY_LEVELS.map(level => {
+                const isSelected = energy === level.val;
+                return (
+                  <button
+                    key={level.val}
+                    type="button"
+                    onClick={() => setEnergy(level.val)}
+                    title={`${level.label} (${level.val}/5)`}
+                    className={`h-12 rounded-xl flex flex-col items-center justify-center transition-all ${
+                      isSelected
+                        ? 'bg-amber-400 text-white shadow-md ring-2 ring-amber-400/50 scale-105 font-bold'
+                        : 'bg-white text-gray-500 hover:bg-amber-50 hover:text-amber-600 border border-gray-200/80'
+                    }`}
+                  >
+                    <span className="text-sm leading-none">⚡</span>
+                    <span className="text-[10px] mt-0.5 font-medium">{level.val}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex justify-between items-center text-[10px] text-[#9E7A8A] font-medium mt-2 px-1">
+              <span>Very Low</span>
+              <span>Moderate</span>
+              <span>Very High</span>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-[#4A1B3C] mb-3 uppercase tracking-wide">Sleep</label>
-            <div className="flex gap-1 flex-wrap">
-              {[1,2,3,4,5].map(num => (
-                <button key={num} type="button" onClick={() => setSleepQuality(sleepQuality === num ? '' : num)} className={`w-10 h-10 rounded-xl flex items-center justify-center text-md transition-all active:scale-95 ${sleepQuality === num ? 'bg-indigo-500 text-white shadow-md transform scale-110 animate-scale-bounce' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
-                  🌙
-                </button>
-              ))}
+
+          {/* Sleep */}
+          <div className="p-4 rounded-2xl bg-[#FDF8F9] border border-[#E85D9A]/15 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm font-semibold text-[#4A1B3C] uppercase tracking-wide flex items-center gap-1.5">
+                <span>🌙</span> Sleep
+              </label>
+              {sleepQuality ? (
+                <span className="text-xs font-bold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-full border border-indigo-300">
+                  {SLEEP_LEVELS.find(l => l.val === sleepQuality)?.label}
+                </span>
+              ) : (
+                <span className="text-[11px] text-[#9E7A8A]">Select quality</span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-5 gap-1.5">
+              {SLEEP_LEVELS.map(level => {
+                const isSelected = sleepQuality === level.val;
+                return (
+                  <button
+                    key={level.val}
+                    type="button"
+                    onClick={() => setSleepQuality(level.val)}
+                    title={`${level.label} (${level.val}/5)`}
+                    className={`h-12 rounded-xl flex flex-col items-center justify-center transition-all ${
+                      isSelected
+                        ? 'bg-indigo-500 text-white shadow-md ring-2 ring-indigo-400/50 scale-105 font-bold'
+                        : 'bg-white text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 border border-gray-200/80'
+                    }`}
+                  >
+                    <span className="text-sm leading-none">🌙</span>
+                    <span className="text-[10px] mt-0.5 font-medium">{level.val}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex justify-between items-center text-[10px] text-[#9E7A8A] font-medium mt-2 px-1">
+              <span>Very Poor</span>
+              <span>Okay</span>
+              <span>Excellent</span>
             </div>
           </div>
         </div>
@@ -254,21 +347,6 @@ export function DailyFeelingsModal({ isOpen, onClose, onSuccess, selectedDate, i
               </div>
             </div>
           )}
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold text-[#4A1B3C] mb-3 uppercase tracking-wide">Hydration</label>
-          <div className="flex items-center gap-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-            <span className="text-2xl">💧</span>
-            <div className="flex-1">
-              <span className="text-sm font-medium text-[#4A1B3C] block mb-1">Glasses of Water</span>
-              <div className="flex gap-2 items-center">
-                <button type="button" onClick={() => setWaterGlasses(Math.max(0, (Number(waterGlasses) || 0) - 1))} className="w-8 h-8 rounded-full bg-white text-blue-500 font-bold shadow-sm active:scale-95 hover:bg-blue-50 transition-colors">-</button>
-                <span className="w-8 text-center font-bold text-lg text-blue-600">{waterGlasses || 0}</span>
-                <button type="button" onClick={() => setWaterGlasses((Number(waterGlasses) || 0) + 1)} className="w-8 h-8 rounded-full bg-white text-blue-500 font-bold shadow-sm active:scale-95 hover:bg-blue-50 transition-colors">+</button>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div>

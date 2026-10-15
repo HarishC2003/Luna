@@ -35,24 +35,76 @@ export async function POST(request: Request) {
     // admin client already created above
     const logDateNormalized = new Date(result.logDate).toISOString().split('T')[0];
 
+    // Fetch existing log for date to merge fields and preserve hydration & feelings
+    const { data: existingLog } = await admin
+      .from('daily_logs')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('log_date', logDateNormalized)
+      .maybeSingle();
+
     const insertData: Record<string, unknown> = {
         user_id: user.id,
         log_date: logDateNormalized,
-        mood: result.mood || null,
-        energy: result.energy || null,
-        flow: result.flow || null,
-        symptoms: result.symptoms || [],
-        notes: result.notes || null,
+        mood: result.mood !== undefined ? result.mood : (existingLog?.mood ?? null),
+        energy: result.energy !== undefined ? result.energy : (existingLog?.energy ?? null),
+        flow: result.flow !== undefined ? result.flow : (existingLog?.flow ?? null),
+        symptoms: result.symptoms !== undefined ? result.symptoms : (existingLog?.symptoms ?? []),
+        notes: result.notes !== undefined ? result.notes : (existingLog?.notes ?? null),
     };
-    if (result.waterGlasses !== undefined && result.waterGlasses !== null) insertData.water_glasses = result.waterGlasses;
-    if (result.sleep_quality !== undefined && result.sleep_quality !== null) insertData.sleep_quality = result.sleep_quality;
-    if (result.stress_level !== undefined && result.stress_level !== null) insertData.stress_level = result.stress_level;
-    if (result.exercise !== undefined && result.exercise !== null) insertData.exercise = result.exercise;
-    if (result.exercise_type !== undefined && result.exercise_type !== null) insertData.exercise_type = result.exercise_type;
-    if (result.slept_well !== undefined && result.slept_well !== null) insertData.slept_well = result.slept_well;
-    if (result.hydration_goal !== undefined && result.hydration_goal !== null) insertData.hydration_goal = result.hydration_goal;
-    if (result.moved_body !== undefined && result.moved_body !== null) insertData.moved_body = result.moved_body;
-    if (result.image_url !== undefined && result.image_url !== null) insertData.image_url = result.image_url;
+    if (result.waterGlasses !== undefined && result.waterGlasses !== null) {
+      insertData.water_glasses = result.waterGlasses;
+    } else if (existingLog?.water_glasses !== undefined && existingLog?.water_glasses !== null) {
+      insertData.water_glasses = existingLog.water_glasses;
+    }
+
+    if (result.sleep_quality !== undefined && result.sleep_quality !== null) {
+      insertData.sleep_quality = result.sleep_quality;
+    } else if (existingLog?.sleep_quality !== undefined && existingLog?.sleep_quality !== null) {
+      insertData.sleep_quality = existingLog.sleep_quality;
+    }
+
+    if (result.stress_level !== undefined && result.stress_level !== null) {
+      insertData.stress_level = result.stress_level;
+    } else if (existingLog?.stress_level !== undefined && existingLog?.stress_level !== null) {
+      insertData.stress_level = existingLog.stress_level;
+    }
+
+    if (result.exercise !== undefined && result.exercise !== null) {
+      insertData.exercise = result.exercise;
+    } else if (existingLog?.exercise !== undefined && existingLog?.exercise !== null) {
+      insertData.exercise = existingLog.exercise;
+    }
+
+    if (result.exercise_type !== undefined && result.exercise_type !== null) {
+      insertData.exercise_type = result.exercise_type;
+    } else if (existingLog?.exercise_type !== undefined && existingLog?.exercise_type !== null) {
+      insertData.exercise_type = existingLog.exercise_type;
+    }
+
+    if (result.slept_well !== undefined && result.slept_well !== null) {
+      insertData.slept_well = result.slept_well;
+    } else if (existingLog?.slept_well !== undefined && existingLog?.slept_well !== null) {
+      insertData.slept_well = existingLog.slept_well;
+    }
+
+    if (result.hydration_goal !== undefined && result.hydration_goal !== null) {
+      insertData.hydration_goal = result.hydration_goal;
+    } else if (existingLog?.hydration_goal !== undefined && existingLog?.hydration_goal !== null) {
+      insertData.hydration_goal = existingLog.hydration_goal;
+    }
+
+    if (result.moved_body !== undefined && result.moved_body !== null) {
+      insertData.moved_body = result.moved_body;
+    } else if (existingLog?.moved_body !== undefined && existingLog?.moved_body !== null) {
+      insertData.moved_body = existingLog.moved_body;
+    }
+
+    if (result.image_url !== undefined && result.image_url !== null) {
+      insertData.image_url = result.image_url;
+    } else if (existingLog?.image_url !== undefined && existingLog?.image_url !== null) {
+      insertData.image_url = existingLog.image_url;
+    }
 
     // Optional columns from migration 008 — may not exist yet in the DB
     const optionalColumns = [

@@ -15,8 +15,32 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Luna | Your Natural Rhythm",
-  description: "The elegant, private, and intelligent period tracker designed to harmonize with your body.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://lunalife.app'),
+  title: {
+    default: "Luna | Your Natural Rhythm",
+    template: "%s | Luna"
+  },
+  description: "The elegant, private, and intelligent period tracker designed to harmonize with your body. Understand your cycle with Luna.",
+  applicationName: "Luna",
+  authors: [{ name: "Luna Team" }],
+  keywords: ["period tracker", "free period tracker", "period tracker app", "menstrual cycle tracker", "period cycle tracker", "ovulation tracker", "fertile window tracker", "period prediction", "women's health", "cycle tracking"],
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    siteName: "Luna",
+    title: "Luna | Your Natural Rhythm",
+    description: "The elegant, private, and intelligent period tracker designed to harmonize with your body.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Luna | Your Natural Rhythm",
+    description: "The elegant, private, and intelligent period tracker designed to harmonize with your body.",
+  }
 };
 
 export default function RootLayout({

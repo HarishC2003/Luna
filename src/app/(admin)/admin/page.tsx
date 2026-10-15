@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { AdminStats, AuthLogEntry } from '@/types/admin';
 
+import Link from 'next/link';
+
 export default function AdminOverviewPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [authLogs, setAuthLogs] = useState<AuthLogEntry[]>([]);
@@ -33,20 +35,36 @@ export default function AdminOverviewPage() {
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Users', value: stats.totalUsers },
+          { label: 'Total Users', value: stats.totalUsers, href: '/admin/users' },
           { label: 'New Today', value: stats.newUsersToday },
           { label: 'Active this Week', value: stats.activeThisWeek },
           { label: 'Cycle Logs', value: stats.totalCycleLogs },
+          { label: 'User Feedback', value: stats.userFeedbackCount ?? 0, href: '/admin/feedback' },
           { label: 'Notifications Sent', value: stats.notificationsSentToday },
           { label: 'Pending Deletions', value: stats.pendingDeletions },
           { label: 'Suspended Users', value: stats.suspendedUsers },
           { label: 'Crisis Events (All Time)', value: stats.crisisDetectedTotal, danger: true }
-        ].map((s, i) => (
-          <div key={i} className={`bg-white p-6 rounded-3xl shadow-sm border ${s.danger ? 'border-red-500' : 'border-[#E85D9A]/10'}`}>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{s.label}</p>
-            <p className={`text-4xl font-black mt-2 ${s.danger ? 'text-red-500' : 'text-[#E85D9A]'}`}>{s.value}</p>
-          </div>
-        ))}
+        ].map((s, i) => {
+          const content = (
+            <div className={`bg-white p-6 rounded-3xl shadow-sm border transition-all h-full ${
+              s.danger ? 'border-red-500' : 'border-[#E85D9A]/10 hover:border-[#E85D9A]/40'
+            }`}>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{s.label}</p>
+                {s.href && <span className="text-xs text-[#E85D9A] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">View →</span>}
+              </div>
+              <p className={`text-4xl font-black mt-2 ${s.danger ? 'text-red-500' : 'text-[#E85D9A]'}`}>{s.value}</p>
+            </div>
+          );
+
+          return s.href ? (
+            <Link key={i} href={s.href} className="group block focus:outline-none focus:ring-2 focus:ring-[#E85D9A] rounded-3xl">
+              {content}
+            </Link>
+          ) : (
+            <div key={i}>{content}</div>
+          );
+        })}
       </div>
 
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-[#E85D9A]/10">

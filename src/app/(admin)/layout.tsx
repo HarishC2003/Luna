@@ -38,6 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const links = [
     { name: 'Overview', href: '/admin' },
     { name: 'Users', href: '/admin/users' },
+    { name: 'Feedback', href: '/admin/feedback' },
     { name: 'Auth Logs', href: '/admin/auth-logs' },
     { name: 'Abuse Logs', href: '/admin/abuse-logs' },
     { name: 'Analytics', href: '/admin/analytics' },

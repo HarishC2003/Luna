@@ -1,5 +1,6 @@
 'use client'
-import { ReactNode, useEffect, useRef } from 'react'
+import { ReactNode, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 interface ModalProps {
@@ -11,7 +12,12 @@ interface ModalProps {
 }
 
 export default function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+  const [mounted, setMounted] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (isOpen) {
@@ -30,20 +36,20 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
     return () => window.removeEventListener('keydown', handleEsc)
   }, [onClose])
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
   const maxWidths = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', full: 'max-w-full' }
 
-  return (
+  const modalContent = (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-      style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
       onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
     >
       <div
         className={`animate-slide-up bg-white w-full ${maxWidths[size]} rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[90vh] flex flex-col`}
-        style={{ boxShadow: '0 25px 60px rgba(0,0,0,0.2)' }}
+        style={{ boxShadow: '0 25px 60px rgba(0,0,0,0.25)' }}
       >
         {/* Mobile drag handle */}
         <div className="sm:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
@@ -55,7 +61,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
           <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors active:scale-95"
+            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors active:scale-95 cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -68,4 +74,6 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
       </div>
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 }

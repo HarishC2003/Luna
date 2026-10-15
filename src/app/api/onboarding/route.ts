@@ -5,10 +5,49 @@ import { apiLimiter } from '@/lib/rate-limit/limiter';
 import { onboardingSchema } from '@/lib/validations/cycle';
 import { computePrediction } from '@/lib/cycle/predictor';
 
-export async function POST(request: Request) {
+async function getAuthUser(request: Request) {
+  const authHeader = request.headers.get('authorization');
+  const admin = createAdminClient();
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const { data } = await admin.auth.getUser(token);
+    return data?.user || null;
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
+  return user || null;
+}
+
+export async function GET(request: Request) {
+  const user = await getAuthUser(request);
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const admin = createAdminClient();
+  const [profileRes, onboardRes] = await Promise.all([
+    admin.from('profiles').select('onboarding_completed, role, display_name').eq('id', user.id).maybeSingle(),
+    admin.from('onboarding_data').select('*').eq('user_id', user.id).maybeSingle()
+  ]);
+
+  return NextResponse.json({
+    onboardingCompleted: !!profileRes.data?.onboarding_completed,
+    role: profileRes.data?.role || 'user',
+    displayName: profileRes.data?.display_name || '',
+    data: onboardRes.data ? {
+      lastPeriodStart: onboardRes.data.last_period_start,
+      avgCycleLength: onboardRes.data.avg_cycle_length,
+      avgPeriodLength: onboardRes.data.avg_period_length,
+      conditions: onboardRes.data.conditions || [],
+      goals: onboardRes.data.goals || []
+    } : null
+  }, { status: 200 });
+}
+
+export async function POST(request: Request) {
+  const user = await getAuthUser(request);
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -63,7 +102,7 @@ export async function POST(request: Request) {
       computed_at: new Date().toISOString()
     }, { onConflict: 'user_id' });
 
-    return NextResponse.json({ message: 'Onboarding complete' }, { status: 200 });
+    return NextResponse.json({ message: 'Onboarding complete', success: true }, { status: 200 });
 
   } catch (error) {
     console.error('[onboarding] Internal server error:', error);

@@ -48,7 +48,8 @@ export async function GET(request: Request) {
       { count: chatFeedback },
       { count: crisisCount },
       { count: pendingDel },
-      { count: suspUsers }
+      { count: suspUsers },
+      { count: userFeedbackCount }
     ] = await Promise.all([
       admin.from('profiles').select('*', { count: 'exact', head: true }),
       admin.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', todayStr),
@@ -60,6 +61,7 @@ export async function GET(request: Request) {
       admin.from('chat_abuse_log').select('*', { count: 'exact', head: true }).eq('reason', 'crisis_detected'),
       admin.from('account_deletion_requests').select('*', { count: 'exact', head: true }).is('completed_at', null).is('cancelled_at', null),
       admin.from('user_suspensions').select('*', { count: 'exact', head: true }).is('lifted_at', null),
+      admin.from('user_feedback').select('*', { count: 'exact', head: true }),
     ]);
 
     const uniqueActiveUsers = new Set((activeThisWeek || []).map(r => r.user_id)).size;
@@ -72,6 +74,7 @@ export async function GET(request: Request) {
       totalDailyLogs: totalDailyLogs || 0,
       notificationsSentToday: notifsToday || 0,
       chatFeedbackCount: chatFeedback || 0,
+      userFeedbackCount: userFeedbackCount || 0,
       crisisDetectedTotal: crisisCount || 0,
       pendingDeletions: pendingDel || 0,
       suspendedUsers: suspUsers || 0
